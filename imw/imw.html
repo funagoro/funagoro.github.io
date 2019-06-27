@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="imw.appcache">
+
+<head>
+
+<title>いきるマン</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="imt_icon_152.png" />
+
+<!-- ★ iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=660, user-scalable=no">
+
+<!-- ★ Windows 用 -->
+<style>
+  @-ms-viewport{ width:660px;}
+  body{ -ms-content-zooming:none;}
+</style>
+
+<script>
+
+var test;
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+//var a; 変数を宣言する
+
+//a = loadImage( "ファイル名.png"); 画像を読み込む
+//a = loadSound( "ファイル名.mp3"); 音を読み込む
+
+//fillRect( 0, 0, 600, 550, 0x00ffff); 四角を塗りつぶす
+
+//ctx.fillStyle = "rgba( 255, 255, 0, 0.5)";  半透明
+//ctx.fillRect( 0, 0, REFW, REFH);  四角を塗りつぶす
+
+//for( i = 1; i <= 100; i++) a = a + i;  ループ
+
+//drawStringSizeColor( 300, 400, "abc", 50, 0x000000);  文字を描画する
+
+//if( 条件 ) 条件がYESの時の処理 else 条件がNOの時の処理
+
+//for( 最初に一回すること; 条件; 命令の後で毎回すること) 命令
+
+//●==========●==========●==========●==========●==========●==========●
+
+var IMAGENUM = 0;
+var AUDIONUM = 0;
+
+var MAXTOUCH = 5;
+
+var REFW = 600, REFH = 800;
+var mypadding = 30;
+var myorientation = 0;
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+var c;  //変数を宣言
+var t;
+var jk, jk2;
+
+var p;
+var b;
+var d;
+
+var x, y;
+
+//var tx, ty;
+var tx = new Array( 100);
+var ty = new Array( 100);
+
+var jx = new Array( 50);
+var jy = new Array( 50);
+var jn = new Array( 50);
+
+ 
+var s;
+
+var jspeed;
+
+var count;
+
+var bamen;
+
+
+onload = function(){  //起動された時に、１回だけ呼び出される関数
+  var i;
+
+  skeleton( document.getElementById( 'canvas1'));
+
+  c = loadImage( "man.png");
+  t = loadImage( "tama.png");
+  jk = loadImage( "teki.png");
+  jk2 = loadImage( "teki2.png");
+
+
+  p = loadAudio( "poin.mp3");
+  b = loadAudio( "BGM.mp3");
+  d = loadAudio( "dead.mp3");
+
+  x = 50;
+  y = 450;
+
+  for( i = 0; i < 100; i++) tx[ i] = -1;
+
+  for( i = 0; i < 50; i++) jn[ i] = -1;
+  //-1: いない 0:ふつう 1:上に行く 2:下に行く
+
+  s = 0;
+
+  jspeed = 7;
+
+  bamen = 1;
+  count = 0;
+
+  setFPS( 30);
+};
+
+function main(){  //フレーム毎に、何度も呼び出される関数
+  var a, i, j;
+
+  if( bamen == 1){
+    //●ゲーム中 (bamen が 1) の時の処理
+
+    //●背景を描画
+    fillRectColor( 0, 0, 600, 550, 0x00ffff);
+    fillRectColor( 0, 550, 600, 250, 0x00ff00);
+    drawStringSizeColor( 140, 50, "いきるマン", 50, 0xff0000);
+
+
+    //●スコアを描画
+    drawStringSizeColor( 10, 100, s, 50, 0x000000); // 文字を描画する
+
+    //for( i = 0; i <= 4; i++){
+    //  drawStringSizeColor( 10+i*10, 300+i*30, i, 30, 0x000000);
+    //}
+
+    if( count == 30)  playAudioLoop( b); 
+
+    //●マンの処理
+    if( touching) y = y - 10; else y = y + 10;
+    if( y > 450 ) y = 450;
+    if( y < 0 ) y = 0;
+    drawImage( c, x, y);
+
+    //●ジェイソンくんの処理
+    if( count % 6 == 0){
+      //●新しいジェイソンくんが登場！
+      for( i = 0; i < 50; i++){
+        if( jn[ i] == -1){
+          if( count < 600) a = count; else a = 600;
+          if( Math.random() < 0.3 * a / 600) a = 3;
+          else a = Math.floor( Math.random() * 3);
+          jn[ i] = a;
+          jx[ i] = 600;
+          jy[ i] = Math.random() * 450;
+          break;
+        }
+      }
+    }
+
+    for( i= 0; i < 50; i++){
+      if( 0 <= jn[ i]){
+        if( -100 < jx[ i] ){
+          if( jn[ i] == 0){
+            //★ジェイソンくん０の動き
+            jx[ i] -= jspeed;
+            drawImage( jk, jx[ i], jy[ i]);
+          } else if( jn[ i] == 1){
+            //★ジェイソンくん１の動き
+            jx[ i] -= jspeed;
+            jy[ i] -= jspeed;
+            if( jy[ i] < 0){ jy[ i] = 0; jn[ i] = 2;} 
+            drawImage( jk, jx[ i], jy[ i]);
+          } else if( jn[ i] == 2){
+            //★ジェイソンくん２の動き
+            jx[ i] -= jspeed;
+            jy[ i] += jspeed;
+            if( 450 < jy[ i]){ jy[ i] = 450; jn[ i] = 1;}
+            drawImage( jk, jx[ i], jy[ i]);
+          } else if( jn[ i] == 3){
+            //★ピーマンの動き
+            jx[ i] -= 2 * jspeed;
+            //jy[ i] += jspeed;
+            drawImage( jk2, jx[ i], jy[ i]);
+          }
+        } else{
+          jn[ i] = -1;
+        }
+      }
+    }
+
+    //●弾の処理
+    if( count % 5== 0){
+      //●新しい弾を発射！
+      for( i = 0; i <= 99; i++){
+        if( tx[ i] == -1){
+          tx[ i] = x + 50;
+          ty[ i] = y;
+          break;
+        }
+      }
+    }
+
+    for( i = 0; i < 100; i++){
+      if( 0 <= tx[ i]){
+        if( 600 < tx[ i]) tx[ i] = -1;
+        else{
+          tx[ i] = tx[ i] + 15;
+          for( j = 0; j < 50; j++) if( 0 <= jn[ j] && jn[ j] != 3){
+            if( tx[ i] - 40 < jx[ j] && tx[ i] + 40 > jx[ j] && ty[ i] - 40 < jy[ j] && ty[ i] + 40 > jy[ j]){
+              s = s + 100;
+              jn[ j] = -1;
+              tx[ i] = -1;
+              playAudio( p);
+              break;
+            }
+          }
+          if( j == 50) drawImage( t, tx[ i], ty[ i]);
+        }
+      }
+    }
+
+    //●マンとジェイソンくんとの当たり判定
+    for( i = 0; i < 50; i++) if( 0 <= jn[ i]){
+      if( x - 40 < jx[ i] && x + 40 > jx[ i] && y - 40 < jy[ i] && y + 40 > jy[ i]){
+        bamen = 2;
+        count = 0;
+
+        stopAudio( b);
+        playAudio( d);
+
+        break;
+      }
+    }
+
+    s++;
+
+  } else{
+    //●ゲームオーバー (bamen が 2) の時の処理
+    if( count == 0)  playAudio( d); 
+
+
+    fillRectColor( 0, 0, 600, 550, 0x000000);
+    fillRectColor( 0, 550, 600, 250, 0x00ff00);
+    drawStringSizeColor( 10, 100, s + "点！", 50, 0xff0000); // 文字を描画する
+
+    if( 30 <= count){
+      drawStringSizeColor( 140, 300, "タップでもう一度", 30, 0x00ffff); // 文字を描画する
+     
+
+      if( touch){
+        bamen = 1;
+        count = 0;
+
+        x = 50;
+        y = 450;
+
+        for( i = 0; i < 100; i++) tx[ i] = -1;
+
+        for( i = 0; i < 50; i++) jn[ i] = -1;
+
+        s = 0;
+      }
+    }
+  }
+
+  count++;
+} 
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+</script>
+
+<script src="skeleton.js"></script>
+
+</head>
+
+<body style="background-color:#cccccc;"><center>
+
+<br>
+
+<canvas id='canvas1' width=600 height=800 style="
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  -webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+  touch-action:none;
+"></canvas><br>
+
+</center></body>
+
+</html>

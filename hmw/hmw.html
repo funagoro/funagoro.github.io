@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="hmw.appcache">
+
+<head>
+
+<title>はしるマン</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="hmt_icon_152.png" />
+
+<!-- ★ iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=660, user-scalable=no">
+
+<!-- ★ Windows 用 -->
+<style>
+@-ms-viewport { width:660px;}
+body { -ms-content-zooming:none;}
+</style>
+
+<script>
+
+var ctx;
+
+var fps;
+var myTimerID;
+var latestTimer = 0;
+var test;
+
+//========== ========== ========== ========== ==========
+
+var MAXTOUCH = 5;
+var NOID = -1, MOUSEID = -2;
+var NOWHERE = 1000000;
+var touch = new Array( MAXTOUCH);
+var touchID = new Array( MAXTOUCH);
+var touchX = new Array( MAXTOUCH), touchY = new Array( MAXTOUCH);
+var touchBX = new Array( MAXTOUCH), touchBY = new Array( MAXTOUCH);
+var touchMX = new Array( MAXTOUCH), touchMY = new Array( MAXTOUCH);
+var touchBegan = new Array( MAXTOUCH), touchEnded = new Array( MAXTOUCH);
+var latestTouch = 0;
+var latestMouse = 0;
+
+//========== ========== ========== ========== ==========
+
+var MAXIMGNUM = 100;
+var img;
+var imgCount;
+var imgTryCount;
+
+//========== ========== ========== ========== ==========
+
+var actx;
+var isAudioPlaying;
+
+var MAXAUDIONUM = 100;
+var ab;
+var absNode;
+var audioCount;
+var audioTryCount;
+
+//========== ========== ========== ========== ==========
+
+function myTouchBegan( n, x, y){
+  var i;
+
+  for( i = 0; i < MAXTOUCH; i++) if( touchID[ i] == NOID){
+    touchID[ i] = n;
+    touchX[ i] = touchBX[ i] = x;
+    touchY[ i] = touchBY[ i] = y;
+    touchMX[ i] = NOWHERE;
+    touchBegan[ i] = true;
+    touchEnded[ i] = false;
+    break;
+  }
+}
+
+function myTouchMoved( n, x, y){
+  var i;
+
+  for( i = 0; i < MAXTOUCH; i++) if( touchID[ i] == n){
+    if( touchMX[ i] == NOWHERE){
+      touchMX[ i] = touchX[ i];
+      touchMY[ i] = touchY[ i];
+    }
+    touchX[ i] = x;
+    touchY[ i] = y;
+    break;
+  }
+}
+
+function myTouchEnded( n){
+  var i;
+
+  for( i = 0; i < MAXTOUCH; i++) if( touchID[ i] == n){
+    touchEnded[ i] = true;
+    break;
+  }
+}
+
+//========== ========== ========== ========== ==========
+
+onload = function(){
+  var f;
+  var c;
+
+  c = document.getElementById( 'canvas1');
+  ctx = c.getContext( '2d');
+
+  resetTouches();
+
+  f = false;
+
+  if( window.PointerEvent){
+    //★windows 用
+    c.addEventListener( "pointerdown", touchBegan, f);
+    c.addEventListener( "pointermove", touchMoved, f);
+    c.addEventListener( "pointerup", touchEnded, f);
+    c.addEventListener( "pointerout", touchOut, f);
+    c.addEventListener( "pointercancel", touchOut, f);
+    c.addEventListener( "pointerleave", touchOut, f);
+  } else{
+    //★windows 以外用
+    c.addEventListener( "touchstart", touchBegan, f);
+    c.addEventListener( "touchmove", touchMoved, f);
+    c.addEventListener( "touchend", touchEnded, f);
+    c.addEventListener( "touchout", touchOut, f);
+
+    c.addEventListener( "mousedown", touchBegan, f);
+    c.addEventListener( "mousemove", touchMoved, f);
+    c.addEventListener( "mouseup", touchEnded, f);
+    c.addEventListener( "mouseout", touchOut, f);
+  }
+
+  function touchBegan( e){
+    var i;
+    var t;
+
+    e.preventDefault();
+    //e.stopPropagation();
+
+    var r = e.target.getBoundingClientRect();
+    var x = r.left;
+    var y = r.top;
+    var n = Date.now();
+
+    //if( snd.isAvailable && !snd.isPlaying) snd.start();
+
+    if( window.PointerEvent){
+      //★Windows 用
+      myTouchBegan( e.pointerId, e.clientX - x, e.clientY - y);
+    } else if( e.changedTouches){
+      //★タッチ
+      if( latestMouse + 500 < n){
+        latestTouch = n;
+        for( i = 0; i < e.changedTouches.length; i++){
+          t = e.changedTouches[ i];
+          myTouchBegan( 1 + t.identifier, t.clientX - x, t.clientY - y);
+        }
+      }
+    } else{
+      //★マウス
+      if( latestTouch + 500 < n){
+        latestMouse = n;
+        myTouchBegan( MOUSEID, e.clientX - x, e.clientY - y);
+      }
+    }
+    return false;
+  }
+
+  function touchMoved( e){
+    var i;
+    var t;
+
+    //e.preventDefault();
+    //e.stopPropagation();
+
+    var r = e.target.getBoundingClientRect();
+    var x = r.left;
+    var y = r.top;
+
+    if( window.PointerEvent){
+      //★Windows 用
+      myTouchMoved( e.pointerId, e.clientX - x, e.clientY - y);
+    } else if( e.changedTouches){
+      for( i = 0; i < e.changedTouches.length; i++){
+        t = e.changedTouches[ i];
+        myTouchMoved( 1 + t.identifier, t.clientX - x, t.clientY - y);
+      }
+    } else myTouchMoved( MOUSEID, e.clientX - x, e.clientY - y);
+    //return false;
+  }
+
+  function touchEnded( e){
+    //★タッチイベントのタイミングで実行する必要がある
+    if( actx && !isAudioPlaying) startAudio();
+    touchOut( e);
+  }
+
+  function touchOut( e){
+    var i;
+    var t;
+
+    //e.preventDefault();
+    //e.stopPropagation();
+
+    if( window.PointerEvent){
+      //★Windows 用
+      myTouchEnded( e.pointerId);
+    } else if( e.changedTouches){
+      for( i = 0; i < e.changedTouches.length; i++){
+        t = e.changedTouches[ i];
+        myTouchEnded( 1 + t.identifier);
+      }
+    } else myTouchEnded( MOUSEID);
+    //return false;
+  }
+
+  if( screen.orientation) screen.orientation.lock( 'portrait');
+
+  initImage();
+
+  initAudio();
+
+  start();
+};
+
+//========== ========== ========== ========== ==========
+
+function setFPS( n){
+  fps = n;
+  myTimerID = requestAnimationFrame( onTimer);
+}
+
+function onTimer(){
+  var i;
+
+  myTimerID = requestAnimationFrame( onTimer);
+  if( Math.floor( Date.now() * fps / 1000) == Math.floor( latestTimer * fps / 1000)) return;
+  latestTimer = Date.now();
+
+  for( i = 0; i < MAXTOUCH; i++) if( touchID[ i] != NOID && touchBegan[ i]) touch[ i] = true;
+
+  main();
+
+  for( i = 0; i < MAXTOUCH; i++){
+    touch[ i] = false;
+    touchBegan[ i] = false;
+    if( touchEnded[ i]) touchID[ i] = NOID;
+  }
+
+	//★デバグ用表示
+	//ctx.fillStyle = 'rgba( 0, 0, 0, 0.3)';
+	//ctx.fillRect( 0, 800 - 30, 600, 30);
+	//drawString( 0, 800, test, 30, 0xffffff);
+}
+
+//========== ========== ========== ========== ==========
+
+function resetTouches(){
+  var i;
+
+  for( i = 0; i < MAXTOUCH; i++){
+    touch[ i] = false;
+    touchID[ i] = NOID;
+  }
+}
+
+//========== ========== ========== ========== ==========
+
+function initImage(){
+  img = new Array( MAXIMGNUM);
+  imgCount = 0;
+  imgTryCount = new Array( MAXIMGNUM);
+}
+
+function loadImage( s){
+  var n;
+
+  n = imgCount;
+
+  img[ n] = new Image();
+
+  img[ n].onerror = function(){
+    imgTryCount[ n]++;
+    console.log( "err img " + n + " (" + imgTryCount[ n] + ")");
+    if( imgTryCount[ n] < 5) setTimeout( ldi, 500);
+  };
+
+  imgTryCount[ n] = 0;
+
+  ldi();
+
+  return imgCount++;
+
+  function ldi(){
+    img[ n].src = s;
+  }
+};
+
+function drawImage( n, x, y){
+  if( img[ n].complete){
+    ctx.drawImage( this.img[ n], x, y);
+  }
+}
+
+//========== ========== ========== ========== ==========
+
+function fillRect( x, y, w, h, c){
+  ctx.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
+  ctx.fillRect( x, y, w, h);
+}
+
+function drawString( x, y, s, p, c){
+  ctx.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
+  ctx.font = "" + p + "pt 'Arial'";
+  ctx.textAlign = "left";
+  ctx.fillText( s, x, y);
+}
+
+//========== ========== ========== ========== ==========
+
+function initAudio(){
+  isAudioPlaying = false;
+
+  actx = new( window.AudioContext || window.webkitAudioContext);
+  if( !actx) return;
+
+  ab = new Array( MAXAUDIONUM);
+  absNode = new Array( MAXAUDIONUM);
+  audioCount = 0;
+  audioTryCount = new Array( MAXAUDIONUM);
+}
+
+function loadSound( s){
+  var a;
+  var n;
+  var r;
+  var res;
+
+test = s;
+
+  n = audioCount;
+
+  r = new XMLHttpRequest();
+
+  r.onreadystatechange = function(){
+    a = r.readyState;
+    //console.log( "snd " + n + " : rs " + a);
+    if( a == 4){//★4 は完了を表す。 (成功でも失敗でも。)
+      a = r.status;
+      res = r.response;
+      //console.log( "snd " + n + " : status " + a);
+      if( ( a == 0 || a == 200) && res){//★0 はオフライン、200 は成功を表す。
+        //console.log( "snd " + n + " : res " + res);
+        actx.decodeAudioData(
+          res,
+          function onSuccess( buf){
+            ab[ n] = buf;
+          },
+          function onFailure(){ console.log( "err dec snd " + n);}
+        );
+      } else{
+        audioTryCount[ n]++;
+        console.log( "err snd " + n + " (" + audioTryCount[ n] + ")");
+        if( audioTryCount[ n] < 5) setTimeout( lda, 500);
+      }
+    }
+  };
+
+  audioTryCount[ n] = 0;
+
+  lda();
+
+  return audioCount++;
+
+  function lda(){
+    try{
+      r.open( 'GET', s, true);
+      r.responseType = 'arraybuffer';
+      r.send();
+    } catch( e){}
+  }
+}
+
+function playSound( n){
+  if( !actx || !ab[ n]) return;
+
+  if( absNode[ n]) absNode[ n].stop( 0);
+
+  absNode[ n] = actx.createBufferSource();
+  absNode[ n].buffer = ab[ n];
+  absNode[ n].connect( actx.destination);
+  absNode[ n].start( 0);
+}
+
+function playSoundLoop( n){
+  if( !actx || !ab[ n]) return;
+
+  if( absNode[ n]) absNode[ n].stop( 0);
+
+  absNode[ n] = actx.createBufferSource();
+  absNode[ n].buffer = ab[ n];
+  absNode[ n].loop = true;
+  absNode[ n].connect( actx.destination);
+  absNode[ n].start( 0);
+}
+
+function stopSound( n){
+  if( absNode[ n]){ absNode[ n].stop( 0); absNode[ n] = undefined;}
+}
+
+function startAudio(){
+  actx.createBufferSource().start( 0);//★iOS 対応
+  isAudioPlaying = true;
+}
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+var manImg1, manImg2, boxImg, fuImg;
+
+var jumpSnd, deadSnd, bgmSnd, coinSnd; 
+
+var bamen, nextBamen;
+var c;  //★カウンタ。
+
+var s;  //★スコア。
+
+var manX, manY, manVY;
+var boxX, boxY, boxVX;
+
+var fuX = new Array( 3);
+var fuY = new Array( 3);
+var fuVX = new Array( 3);
+
+function start(){  //==================== 初期設定 ====================
+
+  manImg1 = loadImage( "man_1.png");
+  manImg2 = loadImage( "man_2.png");
+  boxImg = loadImage( "box.png");
+  fuImg = loadImage( "fu.png");
+
+  jumpSnd = loadSound( "jump.mp3");
+  deadSnd = loadSound( "dead.mp3");
+  bgmSnd = loadSound( "bgm.mp3");
+  coinSnd = loadSound( "coin.mp3");
+
+  bamen = 0; nextBamen = 1;
+
+  setFPS( 30);
+}
+
+function main(){
+  var i;
+
+  if( bamen != nextBamen){ bamen = nextBamen; c = 0;}
+
+  if( bamen == 1){  //==================== ゲーム中 ====================
+
+    if( c == 0){
+      s = 0;
+      manX = 200; manY = 500; manVY = 0;
+      boxX = 600; boxY = 500; boxVX = -5;
+
+      for( i = 0; i < 3; i++){
+        fuX[ i] = 600;
+        fuY[ i] = 270 + i *30;
+        fuVX[ i] = -10 - Math.random() * 5;
+      }
+    }
+
+    //★1秒後に BGM をスタート。
+    if( c == 30) playSound( bgmSnd);
+
+    if( touch[ 0]){  //★タッチされた。
+      if( manY == 500){ manVY = -10; playSound( jumpSnd);}
+    }
+
+    //★マンの動き。
+    manY = manY + manVY;
+    if( manY < 320) manVY = 10;
+    if( manY > 500){ manVY = 0;  manY = 500;}
+
+    //★箱の動き。
+    boxX = boxX + boxVX; 
+    if( 0 > boxX){
+      boxX = 600;
+      boxVX = boxVX -1;
+      if( boxVX < -18) boxVX = -18;
+      s = s + 10;
+    }
+
+    //★風船の動き。
+    for( i = 0; i < 3; i++){
+      fuX[ i] = fuX[ i] + fuVX[ i]; 
+      if( 0 > fuX[ i]){
+        fuX[ i] = 600;
+        fuVX[ i] = -10 - Math.random() * 5;
+      }
+    }
+
+    //★箱とマンの当たり判定。
+    if( manX - 50 < boxX && boxX < manX + 50){
+      if( manY - 50 < boxY && boxY < manY + 50){
+        nextBamen = 2;
+        stopSound( bgmSnd);
+        playSound( deadSnd);
+      }
+    }
+
+    //★風船とマンの当たり判定。
+    for( i = 0; i < 3; i++){
+      if( manX - 50 < fuX[ i] && fuX[ i] < manX + 50){
+        if( manY - 50 < fuY[ i] && fuY[ i] < manY + 50){
+          playSound( coinSnd);
+          fuX[ i] = 600;
+          fuVX[ i] = -10 - Math.random() * 5;
+          s = s + 100;
+        }
+      }
+    }
+
+    s++;
+
+    //★背景を描画。
+    fillRect( 0, 0, 600, 550, 0x00ffff);
+    fillRect( 0, 550, 600, 250, 0x00ff00);
+    drawString( 140, 50, "はしるマン", 50, 0xff0000);
+    drawString( 300, 100, "scoreは " + s + " です", 30, 0x000000);
+
+    //★箱を描画。
+    drawImage( boxImg, boxX - 50, boxY - 50);
+
+    //★風船を描画。
+    for( i = 0; i < 3; i++){
+      drawImage( fuImg, fuX[ i] - 50, fuY[ i] - 50);
+    }
+
+    //★マンを描画。
+    if( c % 2 == 1) drawImage( manImg1, manX - 50, manY - 50);
+    else drawImage( manImg2, manX - 50, manY - 50);
+
+  } else{  //==================== ゲームオーバー ====================
+
+    if( touch[ 0] && 30 < c) nextBamen = 1;
+
+    fillRect( 0, 0, 600, 550, 0x000000);
+    fillRect( 0, 550, 600, 250, 0x00ff00);
+    drawString( 50, 200, "ゲーム　オーバー", 50, 0xff0000);
+    drawString( 350, 350, "scoreは " + s + " でした", 20, 0x00ff00);
+
+    drawImage( boxImg, boxX - 50, boxY - 50);
+    drawImage( manImg1, manX - 50, manY - 50);
+
+    //★1秒以上たっている時だけ、描画。
+    if( 30 < c) drawString( 140, 300, "タッチでもう一度", 30, 0x00ffff);
+  }
+
+  c++;
+}
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+</script>
+
+</head>
+
+<body style="background-color:#cccccc;"><center>
+
+<br>
+
+<canvas id='canvas1' width=600 height=800 style="
+  user-select:none;
+  -moz-user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+
+  -webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+
+  touch-action:none;
+"></canvas><br>
+
+</center></body>
+
+</html>

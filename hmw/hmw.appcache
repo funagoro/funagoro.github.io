@@ -1,0 +1,15 @@
+CACHE MANIFEST
+# 2018-01-29
+
+CACHE:
+bgm.mp3
+box.png
+coin.mp3
+dead.mp3
+fu.png
+jump.mp3
+man_1.png
+man_2.png
+
+NETWORK:
+*

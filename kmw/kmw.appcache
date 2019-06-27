@@ -1,0 +1,35 @@
+CACHE MANIFEST
+# 2018-01-29
+
+CACHE:
+audio/1.mp3
+audio/2.mp3
+audio/3.mp3
+audio/4.mp3
+audio/5.mp3
+audio/6.mp3
+audio/7.mp3
+audio/8.mp3
+audio/9.mp3
+audio/10.mp3
+audio/11.mp3
+audio/12.mp3
+audio/dead.mp3
+audio/decide.mp3
+image/audio.png
+image/bg_game.png
+image/button_author.png
+image/button_info.png
+image/explosion.png
+image/game_over.png
+image/info.png
+image/loading1.png
+image/loading2.png
+image/men.png
+image/numbers.png
+image/start.png
+kmw_bg.png
+kmw.js
+
+NETWORK:
+*

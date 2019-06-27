@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="kmw.appcache">
+
+<head>
+
+<title>かせぐマン</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="kmt_icon_152.png" />
+
+<!-- iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=660, user-scalable=no">
+
+<!-- Windows 用 -->
+<style>
+  @-ms-viewport{ width:660px;}
+  body{ -ms-content-zooming:none;}
+</style>
+
+<script src="kmw.js"></script>
+<script src="skeleton.js"></script>
+
+<style type="text/css">
+  html,body{ height:100%;}
+</style>
+
+</head>
+
+<body style="
+  display:table;
+  width:100%;
+  margin:0px;
+  background-color:#cccccc;
+  background-image:url( kmw_bg.png);
+
+  font-family:Century Gothic;
+  font-size:15px;
+  color:#445566;
+  line-height:1.2;
+">
+
+<div style="
+  display:table-cell;
+  text-align:center;
+  vertical-align:middle;
+">
+
+<canvas id="canvas1" width=640 height=920 style="
+  -webkit-user-select:none;
+  -webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+  -ms-touch-action:none; touch-action:none;
+"></canvas>
+
+</div>
+
+</body>
+
+</html>
