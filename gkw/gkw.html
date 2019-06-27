@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="gkw.appcache">
+
+<head>
+
+<title>ゲキカラ</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="gkt_icon_152.png" />
+
+<!-- ★ iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=700, user-scalable=no">
+
+<!-- ★ Windows 用 -->
+<style> @-ms-viewport { width:700px;} body { -ms-content-zooming:none;} </style>
+
+<script src="skeleton.js"></script>
+
+<script>
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+var s = new Array( 6);
+
+onload = function(){
+  skeleton( document.getElementById( 'canvas1'));
+
+  s[ 0] = 15;
+  s[ 1] = 15;
+  s[ 2] = 15;
+  s[ 3] = 15;
+  s[ 4] = 15;
+  s[ 5] = 15;
+
+  setFPS( 30);
+};
+
+function main(){
+  var i;
+  var r, g, b;
+
+  if( touching){
+    if( 150 < touch_y){
+      i = Math.floor( touch_x / 100);
+      s[ i] = Math.floor( ( 800 - touch_y) / ( 650 / 16));
+    }
+  }
+
+  fillRect( 0, 0, 600, 800, 0x000000);
+
+  r = s[ 0] * 16 + s[ 1];
+  g = s[ 2] * 16 + s[ 3];
+  b = s[ 4] * 16 + s[ 5];
+
+  fillRect( 0, 0, 600, 100, r * 0x010000 + g * 0x000100 + b);
+
+  fillRect(   0, 100, 200, 50, r * 0x010000);
+  fillRect( 200, 100, 200, 50, g * 0x000100);
+  fillRect( 400, 100, 200, 50, b);
+
+  drawString(  45, 140, s[ 0].toString( 16), 30, 0xffffff);
+  drawString( 145, 140, s[ 1].toString( 16), 30, 0xffffff);
+  drawString( 245, 140, s[ 2].toString( 16), 30, 0xffffff);
+  drawString( 345, 140, s[ 3].toString( 16), 30, 0xffffff);
+  drawString( 445, 140, s[ 4].toString( 16), 30, 0xffffff);
+  drawString( 545, 140, s[ 5].toString( 16), 30, 0xffffff);
+
+  drawLine( 100, 150, 100, 800, 0x333333, 2);
+  drawLine( 200, 150, 200, 800, 0x333333, 2);
+  drawLine( 300, 150, 300, 800, 0x333333, 2);
+  drawLine( 400, 150, 400, 800, 0x333333, 2);
+  drawLine( 500, 150, 500, 800, 0x333333, 2);
+}
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+</script>
+
+</head>
+
+<body style="background-color:#cccccc;"><center>
+
+<br><br>
+
+<canvas id='canvas1' width=600 height=800 style="
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  -webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+  touch-action:none;
+"></canvas>
+
+</center></body>
+
+</html>

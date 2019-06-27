@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="gtw.appcache">
+
+<head>
+
+<link rel="shortcut icon" href="img/favicon.ico"/>
+
+<title>ゲキトメ</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="gtt_icon_152.png" />
+
+<!-- iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=700, user-scalable=no">
+
+<!-- Windows 用 -->
+<style>
+  @-ms-viewport{ width:700px;}
+  body{ -ms-content-zooming:none;}
+</style>
+
+<script>
+
+var MAXTOUCH = 5;
+
+var IMAGENUM = 0;
+var AUDIONUM = 0;
+
+var REFW = 600, REFH = 800;
+var mypadding = 30;
+var myorientation = 0;
+
+var FPS = 30;
+
+var hajimari;
+var moji;
+
+onload = function(){
+  skeleton( document.getElementById( "canvas1"));
+
+  hajimari = 0;
+  moji = "ゲキトメ";
+
+  setFPS( FPS);
+};
+
+function main(){
+  var i;
+
+  ctx.fillStyle="#999999";
+  ctx.fillRect( 0, 0, REFW, REFH);
+
+  ctx.fillStyle="#cc9999";
+  ctx.fillRect( ( 0.5 + 0.5 * accX) * REFW - 5, ( 0.5 + 0.5 * accY) * REFH - 5, 10, 10);
+
+  for( i = 0; i < MAXTOUCH; i++){
+    if( touchID[ i] != NOID){
+      ctx.fillStyle="#666666";
+      ctx.fillRect( touchX[ i] - 15, touchY[ i] - 15, 30, 30);
+    }
+  }
+
+  ctx.font = "18pt 'Arial'";
+
+  ctx.fillStyle = "rgba( 0, 0, 0, 0.3)";
+  ctx.fillRect( 0, REFH - MAXTOUCH * 30, REFW, MAXTOUCH * 30);
+  ctx.fillStyle = "#ffffff";
+  for( i = 0; i < MAXTOUCH; i++){
+    ctx.fillText(
+      "" + touchID[ i] +
+      " : " + Math.floor( touchX[ i]) +
+      " " + Math.floor( touchY[ i]),
+      7,
+      REFH - ( MAXTOUCH - 1 - i) * 30 - 7
+    );
+  }
+
+  ctx.fillStyle = "rgba( 0, 0, 0, 0.3)";
+  ctx.fillRect( 0, REFH - 6.5 * 30, REFW, 30);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText( loadedCount, 7, REFH - ( 6.5 - 1) * 30 - 7);
+
+  if( 0 < hajimari) moji = Math.floor( ( Date.now() - hajimari) / 10) / 100;
+  drawStringSizeColor( 30, 330, moji, 100, 0xffff00);
+}
+
+function touchEventHook(){
+  if( hajimari == 0){
+    hajimari = Date.now();
+  }else{
+    moji = Math.floor( ( Date.now() - hajimari) / 10) / 100;
+    hajimari = 0;
+  }
+}
+
+</script>
+
+<script src="skeleton.js"></script>
+
+<style type="text/css">
+  a{ color:#ff5500;}
+  hr{ border:0px; background-color:#bbaacc; height:3px;}
+
+  .paper{ background-color:rgba( 255, 255, 255, 0.7);}
+  .free{ font-size:12px; font-weight:600; background:#666666; color:#ffffff;}
+  .t{ border:3px #bbaacc solid;}
+</style>
+
+</head>
+
+<body style="
+  background-color:#cccccc;
+
+  font-family:Century Gothic;
+  font-size:15px;
+  color:#666666;
+  line-height:1.2;
+">
+
+<center>
+
+<canvas id="canvas1" width=640 height=920 style="
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: rgba( 0, 0, 0, 0);
+  touch-action: none;
+"></canvas><br>
+
+<br>
+
+</center>
+
+</body>
+
+</html>

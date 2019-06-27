@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="guw.appcache">
+
+<head>
+
+<title>ゲキウチ</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<link rel="apple-touch-icon-precomposed" href="gut_icon_152.png" />
+
+<!-- ★ iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=660, user-scalable=no">
+
+<!-- ★ Windows 用 -->
+<style> @-ms-viewport { width:660px;} body { -ms-content-zooming:none;} </style>
+
+<script src="skeleton.js"></script>
+
+<script>
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+var bamen;
+var goodSnd, badSnd;
+var c;
+
+onload = function(){
+  skeleton( document.getElementById( 'canvas1'));
+
+  goodSnd = loadSound( "coin.mp3");
+  badSnd = loadSound( "boink.mp3");
+
+  bamen = 0;
+
+  setFPS( 30);
+};
+
+function main(){
+  var a;
+  var i;
+  var x, y;
+  var s;
+
+  if( bamen == 0){
+    fillRect( 0, 0, 600, 600, 0x000000);
+    drawString( 35, 185, "ゲキウチ", 100, 0xcc3366);
+    drawString( 30, 180, "ゲキウチ", 100, 0xff6699);
+    drawString( 50, 550, "return キーを押してください", 30, 0xffffff);
+  } else if( 1 <= bamen && bamen <= 26){
+    fillRect( 0, 0, 600, 600, 0xffffff);
+    for( i = 0; i < 26; i++){
+      x = 20 + ( i % 6) * 100;
+      y = 80 + Math.floor( i / 6) * 120;
+      s = String.fromCharCode( 65 + i);
+      if( 64 + bamen <= 65 + i) drawString( x, y, s, 30, 0xcccccc);
+      else drawString( x, y, s, 50, 0xcc9900);
+    }
+
+    a = Math.floor( c / 30 * 100)/100;
+    drawString( 350, 570, a, 50, 0x000000);
+
+    c++;
+  } else{
+    fillRect( 0, 0, 600, 600, 0xffff00);
+    a = Math.floor( c / 30 * 100)/100;
+    drawString( 50, 200, "記録は" + a + "でした", 30, 0x000000);
+    drawString( 50, 550, "return キーを押してください", 30, 0x000000);
+  }
+}
+
+onkeydown = function( e){
+  var k = e.keyCode;
+
+  if( bamen == 0){  //タイトル画面でキーが押された
+    if( k == 13){
+      //そのキーはリターンキーだった
+      playSound( goodSnd);
+      bamen = 1;
+      c = 0;
+    }
+  } else if( 1 <= bamen && bamen <= 26){  //ゲーム中にキーが押された
+    if( k == 64 + bamen){
+      //そのキーが、押してほしいキーだった
+      playSound( goodSnd);
+      bamen++;
+    }else{
+       //そのキーが、押してほしくないキーだった
+      playSound( badSnd);
+   }
+  } else{  //ゲームオーバー画面でキーが押された
+    if( k == 13){
+      //そのキーはリターンキーだった
+      playSound( goodSnd);
+      bamen = 0;
+    }
+  }
+};
+
+//●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●● ●●●●●●●●●●
+
+</script>
+
+</head>
+
+<body style="background-color:#cccccc;"><center>
+
+<canvas id='canvas1' width=600 height=600 style="
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  -webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+  touch-action:none;
+"></canvas>
+
+</center></body>
+
+</html>
