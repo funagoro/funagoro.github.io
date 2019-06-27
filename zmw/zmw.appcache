@@ -1,0 +1,28 @@
+CACHE MANIFEST
+# 2018-01-29
+
+CACHE:
+audio/decide.wav
+box2d_web_2_1_a_3_min.js
+image/audio.png
+image/author.png
+image/bg_game.png
+image/bg_title.png
+image/border_s.png
+image/halfway.png
+image/letters.png
+image/loading1.png
+image/loading2.png
+image/p_h_n.png
+image/p_h_s.png
+image/p_p_n.png
+image/p_p_s.png
+image/p_s_n.png
+image/p_s_s.png
+image/p_v_n.png
+image/p_v_s.png
+skeleton.js
+zmw.js
+
+NETWORK:
+*
