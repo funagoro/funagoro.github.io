@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<link rel="shortcut icon" href="../img/favicon.ico"/>
+
+<title>GRAVISPHERE</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<!-- iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=700, user-scalable=no">
+
+<!-- Windows 用 -->
+<style>
+	@-ms-viewport{ width: 700px;}
+	body{ -ms-content-zooming: none;}
+</style>
+
+<style type="text/css">
+	a{ color: #666633; font-size: 22px; font-weight: 600;}
+	hr{ border: 0px; background-color: #773344; height: 3px;}
+
+	.paper1{ width: 600px; padding: 20px; background-color: #333333; color: #666666;}
+	.paper2{ width: 600px; padding: 20px; background-color: #222222; color: #555555; text-align: left;}
+	.iD { color: #666666; font-size: 9px; font-family: sans-serif;}
+	.iF { color: #eedddd; font-size: 10px; background: #666666;}
+	.free{ font-size: 12px; font-weight: 600; background: #666666; color: #ffffff;}
+	.t{ border: 3px #446633 solid; padding: 10px;}
+</style>
+
+</head>
+
+<body style="
+	-webkit-text-size-adjust: 100%;
+	background-color: #666666;
+	background-image: url( gsw_bg.png);
+
+	font-family: arial, sans-serif;
+	font-size: 18px;
+	line-height: 1.2;
+">
+
+<center>
+
+
+
+<div style="height: 100px;"></div>
+
+
+
+<script src="gsw.js"></script>
+<script src="../skeleton_2.js"></script>
+
+<canvas id="canvas1" width=640 height=920 style="
+	-webkit-user-select: none;
+	-webkit-tap-highlight-color: rgba( 0, 0, 0, 0);
+	touch-action: none;
+"></canvas><br>
+
+<script> myonload(); </script>
+
+<script src="audio/bgm_title.js"></script>
+<script src="audio/bgm_game.js"></script>
+
+<script src="audio/clear.js"></script>
+<script src="audio/clear_all.js"></script>
+
+<script src="audio/comet_1.js"></script>
+<script src="audio/comet_2.js"></script>
+<script src="audio/comet_3.js"></script>
+<script src="audio/comet_4.js"></script>
+<script src="audio/comet_5.js"></script>
+<script src="audio/comet_6.js"></script>
+<script src="audio/comet_7.js"></script>
+
+<script src="audio/hit_1.js"></script>
+<script src="audio/hit_2.js"></script>
+
+<script src="audio/move_1.js"></script>
+<script src="audio/move_2.js"></script>
+<script src="audio/move_3.js"></script>
+<script src="audio/move_4.js"></script>
+<script src="audio/move_5.js"></script>
+<script src="audio/move_6.js"></script>
+<script src="audio/move_7.js"></script>
+<script src="audio/move_8.js"></script>
+
+<script src="audio/rewind.js"></script>
+<script src="audio/start.js"></script>
+
+<br>
+
+<input type="button" value="rotate / 画面回転" onclick="onMyorientation();"/><br>
+
+<br>
+
+<div class="paper1">
+<br>
+<span style="color: #445566; font-size: 60px; font-weight: 600;">"GRAVISPHERE"</span><br>
+<span style="font-size: 15px;">&copy;2010, 2020 TPM. CO SOFT WORKS &amp; 米屋のチャチャチャ</span><br>
+<br>
+music &amp; sound by:<br>
+<a href="http://www.tpmcosoft.com">TPM. CO SOFT WORKS (www.tpmcosoft.com)</a><br>
+<br>
+program &amp; graphics by:<br>
+<a href="http://www.mameson.com/">米屋のチャチャチャ (www.mameson.com)</a><br>
+<br>
+"GRAVISPHERE" is a remade version of<br>
+"SPHERE" &copy;1986 TPM. CO SOFT WORKS<br>
+<br>
+</div>
+
+<br>
+
+<div class="paper2">
+
+<div style="text-align: center;">
+
+<a href="https://itunes.apple.com/jp/app/gravisphere/id1121896864?l=ja&ls=1&mt=8" target="itunes_store">
+<img src="gsw_256.png" style="width: 100px; height: 100px; border-radius: 22%;"></a>
+<div style="display: inline-block;">
+	<img src="../img/for_ios.png" width=80><br>
+	<span class="free">　無料　</span>
+</div>
+
+<span style="margin-left: 50px;"></span>
+
+<a href="https://play.google.com/store/apps/details?id=com.mameson.gsa" target="_blank">
+<img src="gsw_256.png" style="width: 100px; height: 100px; border-radius: 22%;"></a>
+<div style="display: inline-block;">
+	<img src="../img/for_android.png" width=80><br>
+	<span class="free">　無料　</span>
+</div>
+
+</div>
+
+<br><hr><br>
+
+傑作パズル。<br>
+
+<br><hr><br>
+
+2019/12/31<br>
+・スマホで文字が大きくならないように。<br>
+body{ -webkit-text-size-adjust: 100%;}<br>
+
+<br>
+
+2019/12/30<br>
+・Chrome やスマホでのページレイアウトを調整。<br>
+・visibilitychange で BGM を止める。<br>
+
+<br>
+
+2018/11/04<br>
+・skeleton_2.js。ゲーム画面が大きくなりすぎないように。<br>
+
+<br>
+
+2016/10/26<br>
+・WebAudio は XMLHttpRequest やめて Base64 に。<br>
+・skeleton.js<br>
+
+<br>
+
+2016/06/07 ・伸縮 canvas 方式。<br>
+
+<br>
+
+2016/05/15<br>
+・screen.orientation.lock() をプロミスに。<br>
+
+<br>
+
+2016/04/28<br>
+・ScriptProcessorNode → AudioBufferSourceNode。<br>
+・音・画像リソースのロード失敗時にリトライ。<br>
+・Windows 用 viewport と pointerdown。<br>
+・setInterval → requestAnimationFrame。<br>
+・タッチとマウスを 0.5 秒間排他。<br>
+・永続をスリム化。<br>
+
+<br>
+
+2015/11/20 ・HTML5 版。<br>
+
+<br>
+
+<div class="t">
+
+com.mameson.gsa (Android)<br>
+<br>
+アイコン
+<a href="gsa/gsa_icon_72.png">★</a><br>
+<br>
+2016/07/09 1 (1) WebView。Firebase。<br>
+
+<br>
+
+＝＝＝＝＝＝ gaf → gsa ＝＝＝＝＝＝<br>
+
+<br>
+
+com.mameson.gaf (Android)<br>
+<br>
+アイコン
+<a href="gsa/gaf_icon_0.png">★</a>
+<a href="gsa/gaf_icon.png">★</a>
+　　画面
+<a href="gsa/gaf_1_game.png">★</a>
+<a href="gsa/gaf_2_title.png">★</a>
+<a href="gsa/gaf_3_menu.png">★</a>
+<a href="gsa/gaf_4_howto.png">★</a>
+<a href="gsa/gaf_5_default.png">★</a>
+　　広告
+<a href="gsa/gsa_1280x720.png">★</a>
+<a href="gsa/gsa_1024x500.png">★</a>
+<a href="gsa/gsa_180x120.png">★</a><br>
+<br>
+2016/07/09 Google Play から削除。<br>
+<br>
+2014/04/12 1.2 傾きセンサー。<br>
+<br>
+2014/04/07 1.1 バグ訂正。<br>
+<br>
+2012/08/06 1.0<br>
+
+</div>
+
+<br>
+
+<div class="t">
+
+com.mameson.gst (iOS)<br>
+<br>
+2016/11/01 2 (2) WKWebView。<br>
+<br>
+2016/06/08 1.0 (1) UIWebView。AdMob。Firebase。<br>
+
+<br>
+
+＝＝＝＝＝＝ gravisphere → gst ＝＝＝＝＝＝<br>
+
+<br>
+
+com.mameson.gravisphere (iOS) (有料)<br>
+<br>
+アイコン
+<a href="gst/g_icon.png">★</a>
+　　画面
+<a href="gst/g_1_game_f.png">★</a>
+<a href="gst/g_2_title_f.png">★</a>
+<a href="gst/g_3_menu_f.png">★</a>
+<a href="gst/g_4_howto_f.png">★</a>
+<a href="gst/g_5_default_f.png">★</a>
+<a href="gst/g_6_failed_f.png">★</a><br>
+<br>
+the iTunes Stoe から削除。<br>
+<br>
+2016/06/08 1.3 UIWebView。AdMob。Firebase。<br>
+<br>
+2011/08/28 1.2 洗練された効果音。マルチタスク。<br>
+<br>
+2011/01/26 1.1 iPad / iPhone 4。<br>
+<br>
+2010/02/23 0.1<br>
+
+</div>
+
+<br>
+
+＜参考デザイン＞<br>
+<img src="as/1.jpg" style="width: 180px;">
+<img src="as/2.jpg" style="width: 180px;">
+<img src="as/3.jpg" style="width: 180px;"><br>
+
+</div>
+
+
+
+<div style="height: 1000px;"></div>
+
+
+
+</center></body>
+
+</html>
