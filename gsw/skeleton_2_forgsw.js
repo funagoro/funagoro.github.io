@@ -234,7 +234,7 @@ function init_acc(){
 accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
-accX = 2.34;
+accX = 2.3;
 /*
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 accX = 3.45;
@@ -248,8 +248,9 @@ accX = 5.67;
 			}
 		}).catch();
 */
-		DeviceMotionEvent.requestPermission();
-accX = 2.3456;
+		DeviceMotionEvent.requestPermission().then( function(){
+accX = 2.345;
+		});
 	} else{
 accX = 6.78;
 		ua = navigator.userAgent;
