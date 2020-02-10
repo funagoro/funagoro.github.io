@@ -234,8 +234,8 @@ function init_acc(){
 accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
-accX = 2.32;
-/*
+accX = 2.33;
+
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 accX = 3.45;
 			if( permissionState === "granted"){
@@ -247,9 +247,9 @@ accX = 4.56;
 accX = 5.67;
 			}
 		}).catch();
-*/
-		DeviceMotionEvent.requestPermission().then( function(){
-accX = 2.3454;
+
+		//DeviceMotionEvent.requestPermission().then( function(){
+//accX = 2.345;
 		});
 	} else{
 accX = 6.78;
@@ -420,7 +420,6 @@ function skeleton( c){
   function eveTouchStart( e){
     var i;
     var t;
-    if( typeof touchEventHook == "function") touchEventHook();
 
     e.preventDefault();
     //e.stopPropagation();
@@ -472,6 +471,7 @@ function skeleton( c){
       }
     }
 
+    if( typeof touchEventHook == "function") touchEventHook();
 
     //return false;
   }
