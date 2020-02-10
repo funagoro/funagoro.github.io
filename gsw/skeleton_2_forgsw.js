@@ -250,7 +250,7 @@ accX = 5.67;
 
 		//DeviceMotionEvent.requestPermission().then( function(){
 //accX = 2.345;
-		});
+		//});
 	} else{
 accX = 6.78;
 		ua = navigator.userAgent;
