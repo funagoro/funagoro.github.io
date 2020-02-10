@@ -352,11 +352,7 @@ function main(){
 	ctx.fillStyle = "#ffffff";
 	ctx.font = "12pt 'Arial'";
 	ctx.textAlign = "left";
-	if( typeof DeviceMotionEvent === "function"){
-		ctx.fillText( "fct", 5, REFH - 5);
-	} else{
-		ctx.fillText( "non", 5, REFH - 5);
-	}
+	ctx.fillText( accX, 5, REFH - 5);
 }
 
 //●==========●==========●==========●==========●==========●==========●

@@ -231,16 +231,22 @@ function init_acc(){
 	var ua;
 
 	accX = accY = 0;
+accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
+accX = 2.34;
 		DeviceMotionEvent.requestPermission().then( permissionState => {
+accX = 3.45;
 			if( permissionState === "granted"){
+accX = 4.56;
 				addEventListener( "devicemotion", handle_acc, false);
 			} else {
 				//★許可を得られなかった。
+accX = 5.67;
 			}
 		}).catch();
 	} else{
+accX = 6.78;
 		ua = navigator.userAgent;
 		isAcc = (
 			0 <= ua.indexOf( 'iPhone') ||
@@ -249,7 +255,10 @@ function init_acc(){
 			0 <= ua.indexOf( 'Android')
 		);
 
-		if( isAcc) addEventListener( "devicemotion", handle_acc, false);
+		if( isAcc){
+accX = 7.89;
+			addEventListener( "devicemotion", handle_acc, false);
+		}
 	}
 }
 
