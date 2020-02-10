@@ -33,7 +33,7 @@ function touchEventHook(){
 	if( initCount == 4){
 		initCount++;
 
-		init_acc();
+		//init_acc();
 
 		if( isAudio){
 			if( currentState == MENU) v = 0.4; else v = 1;
@@ -138,7 +138,10 @@ var dustD = new Float32Array( MAXDUSTNUM), dustV = new Float32Array( MAXDUSTNUM)
 
 //●==========●==========●==========●==========●==========●==========●
 
-function onMyorientation(){ myorientation = ( myorientation + 90) % 360;}
+//function onMyorientation(){ myorientation = ( myorientation + 90) % 360;}
+function onMyorientation(){
+	init_acc();
+}
 
 function gswPlayAudio( n){
 	if( isAudio){
