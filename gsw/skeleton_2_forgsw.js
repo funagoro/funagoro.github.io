@@ -234,7 +234,7 @@ function init_acc(){
 accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
-accX = 2.33;
+accX = 2.344;
 
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 accX = 3.45;
@@ -252,7 +252,7 @@ accX = 5.67;
 //accX = 2.345;
 		//});
 	} else{
-accX = 6.78;
+accX = 6.789;
 		ua = navigator.userAgent;
 		isAcc = (
 			0 <= ua.indexOf( 'iPhone') ||

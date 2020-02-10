@@ -30,6 +30,8 @@ var dpr = 1;
 function touchEventHook(){
 	var v;
 
+init_acc();
+
 	if( initCount == 4){
 		initCount++;
 
@@ -138,10 +140,8 @@ var dustD = new Float32Array( MAXDUSTNUM), dustV = new Float32Array( MAXDUSTNUM)
 
 //●==========●==========●==========●==========●==========●==========●
 
-//function onMyorientation(){ myorientation = ( myorientation + 90) % 360;}
-function onMyorientation(){
-	init_acc();
-}
+function onMyorientation(){ myorientation = ( myorientation + 90) % 360;}
+//function onMyorientation(){ init_acc();}
 
 function gswPlayAudio( n){
 	if( isAudio){
