@@ -234,7 +234,7 @@ function init_acc(){
 accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
-accX = 2.3;
+accX = 2.32;
 /*
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 accX = 3.45;
@@ -249,7 +249,7 @@ accX = 5.67;
 		}).catch();
 */
 		DeviceMotionEvent.requestPermission().then( function(){
-accX = 2.345;
+accX = 2.3454;
 		});
 	} else{
 accX = 6.78;
@@ -420,6 +420,7 @@ function skeleton( c){
   function eveTouchStart( e){
     var i;
     var t;
+    if( typeof touchEventHook == "function") touchEventHook();
 
     e.preventDefault();
     //e.stopPropagation();
@@ -471,7 +472,6 @@ function skeleton( c){
       }
     }
 
-    if( typeof touchEventHook == "function") touchEventHook();
 
     //return false;
   }
