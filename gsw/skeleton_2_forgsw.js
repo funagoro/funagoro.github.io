@@ -235,6 +235,7 @@ accX = 1.23;
 
 	if( typeof DeviceMotionEvent === "function"){
 accX = 2.34;
+/*
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 accX = 3.45;
 			if( permissionState === "granted"){
@@ -242,9 +243,13 @@ accX = 4.56;
 				addEventListener( "devicemotion", handle_acc, false);
 			} else {
 				//★許可を得られなかった。
+//httpsじゃなくhttpだと、ここに来るみたい。
 accX = 5.67;
 			}
 		}).catch();
+*/
+		DeviceMotionEvent.requestPermission();
+accX = 2.3456;
 	} else{
 accX = 6.78;
 		ua = navigator.userAgent;
