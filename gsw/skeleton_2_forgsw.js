@@ -472,7 +472,7 @@ function skeleton( c){
       }
     }
 
-    if( typeof touchEventHook == "function") touchEventHook();
+    //if( typeof touchEventHook == "function") touchEventHook();
 
     //return false;
   }
@@ -517,6 +517,8 @@ function skeleton( c){
   function eveTouchEnd( e){
     var i;
     var t;
+
+    if( typeof touchEventHook == "function") touchEventHook();
 
     //e.preventDefault();
     //e.stopPropagation();
