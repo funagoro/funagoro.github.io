@@ -33,6 +33,7 @@
 
 var isAcc;
 var accX, accY;
+var acc_test = 0;
 
 var can;
 var ctx;

@@ -30,12 +30,12 @@ var dpr = 1;
 function touchEventHook(){
 	var v;
 
-init_acc();
+	//init_acc();
 
 	if( initCount == 4){
 		initCount++;
 
-		//init_acc();
+		init_acc();
 
 		if( isAudio){
 			if( currentState == MENU) v = 0.4; else v = 1;
@@ -355,7 +355,7 @@ function main(){
 	ctx.fillStyle = "#ffffff";
 	ctx.font = "12pt 'Arial'";
 	ctx.textAlign = "left";
-	ctx.fillText( accX, 5, REFH - 5);
+	ctx.fillText( "" + acc_test + " : " + accX, 5, REFH - 5);
 }
 
 //●==========●==========●==========●==========●==========●==========●
