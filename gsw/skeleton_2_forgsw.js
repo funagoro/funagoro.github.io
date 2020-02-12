@@ -33,7 +33,7 @@
 
 var isAcc;
 var accX, accY;
-var acc_test = 0;
+var acc_test = 1;
 
 var can;
 var ctx;
@@ -518,7 +518,10 @@ function skeleton( c){
     var i;
     var t;
 
-    if( typeof touchEventHook == "function") touchEventHook();
+	if( typeof touchEventHook == "function"){
+		acc_test = 2;
+		touchEventHook();
+	}
 
     //e.preventDefault();
     //e.stopPropagation();
