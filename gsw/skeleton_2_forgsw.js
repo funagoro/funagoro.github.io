@@ -31,8 +31,8 @@
 
 //●==========●==========●==========●==========●==========●==========●
 
-var isAcc;
-var accX, accY;
+var isAcc = false;
+var accX = accY = 0;
 
 var ua = navigator.userAgent;
 
@@ -230,46 +230,33 @@ function myTouchOut( n){
 //●==========●==========●==========●==========●==========●==========●
 
 function init_acc(){
-	accX = accY = 0;
-accX = 1.23;
-
-//var BUILD_BROWSER = 0, BUILD_IOS = 1, BUILD_ANDROID = 2;
-//var build = BUILD_BROWSER;
-		isAcc = ( 0 <= ua.indexOf( 'Android'));
-		if( isAcc){
-accX = 1.11;
-			addEventListener( "devicemotion", handle_acc, false);
-			return; //★抜ける。
-		}
-
-	if( typeof DeviceMotionEvent === "function"){
-accX = 2.344;
-
-		DeviceMotionEvent.requestPermission().then( permissionState => {
-			//★iOS 13。
-accX = 3.45;
-			if( permissionState === "granted"){
-accX = 4.56;
-				//★ダイアログでプレイヤーの許可が得られた。
-				isAcc = true;
-				addEventListener( "devicemotion", handle_acc, false);
-			} else {
-				//★ダイアログでプレイヤーの許可を得られなかった。
-				//★または https じゃなく http だと、ダイアログなしでここに来る。
-				isAcc = false;
-accX = 5.67;
-			}
-		}).catch();
+	isAcc = ( 0 <= ua.indexOf( "Android"));
+	if( isAcc){
+		//★Android なら、即。
+		addEventListener( "devicemotion", handle_acc, false);
 	} else{
-		//★iOS 13 以外。
-accX = 6.789;
-		isAcc = (
-			0 <= ua.indexOf( 'iPhone') ||
-			0 <= ua.indexOf( 'iPod') ||
-			0 <= ua.indexOf( 'iPad') ||
-			0 <= ua.indexOf( 'Android')
-		);
-		if( isAcc) addEventListener( "devicemotion", handle_acc, false);
+		if( typeof DeviceMotionEvent === "function"){
+			//★iOS 13 以上の場合。
+			DeviceMotionEvent.requestPermission().then( permissionState => {
+				if( permissionState === "granted"){
+					//★ダイアログで、プレイヤーの許可が得られた時。
+					isAcc = true;
+					addEventListener( "devicemotion", handle_acc, false);
+				} else {
+					//★ダイアログで、プレイヤーの許可が得られなかった時。
+					//★または https じゃなく http だと、ダイアログなしでここに来る。
+					isAcc = false;
+				}
+			}).catch();
+		} else{
+			//★iOS 13 未満の場合。デスクトップ機もここに来る。
+			isAcc = (
+				0 <= ua.indexOf( "iPhone") ||
+				0 <= ua.indexOf( "iPod") ||
+				0 <= ua.indexOf( "iPad")
+			);
+			if( isAcc) addEventListener( "devicemotion", handle_acc, false);
+		}
 	}
 }
 
@@ -278,20 +265,16 @@ function handle_acc( e){
 	var x, y;
 	var a;
 
-accX = 12 + Math.random();
-
 	if( window.orientation != undefined){//★0 の時、false 扱いになるので注意。
 		//★iOS、Android、Windows スマホは、これ。
 		n = window.orientation;
-
 	} else if(
 		screen.orientation &&
-		( 0 <= ua.indexOf( 'Chrome') && ua.indexOf( 'Edge') < 0)
+		( 0 <= ua.indexOf( "Chrome") && ua.indexOf( "Edge") < 0)
 		//★Chrome であって、ニセの Chrome (Edge のこと) ではない。
 		//★Windows タブレットの Chrome は、これ。
 	){
 		n = screen.orientation.angle;
-
 	} else return;//★端末の向きを特定できなかった (またはデスクトップ機である) ので、加速度を使用しない。
 
 	a = e.accelerationIncludingGravity;
@@ -307,10 +290,10 @@ accX = 12 + Math.random();
 	if(
 		//★Edge の ua には、何でもかんでも入ってるから注意。
 		//★↓Android であって、ニセの Android (Edge のこと) ではない。
-		( 0 <= ua.indexOf( 'Android') && ua.indexOf( 'Edge') < 0) ||
+		( 0 <= ua.indexOf( "Android") && ua.indexOf( "Edge") < 0) ||
 
 		//★↓Windows であって、Edge 以外である。
-		( 0 <= ua.indexOf( 'Windows') && ua.indexOf( 'Edge') < 0)
+		( 0 <= ua.indexOf( "Windows") && ua.indexOf( "Edge") < 0)
 	){
 		x *= -1.0;
 		y *= -1.0;

@@ -349,13 +349,14 @@ function main(){
 	if( stateCount < 1000 * 24 * 60 * 60 * FPS) stateCount++; //★1000日でカンスト。
 
 	function li( s){ return loadImage( "image/" + s + ".png");}
-
+/*
 	ctx.fillStyle = "rgba( 0, 1, 0.9, 0.3)";
 	ctx.fillRect( 0, REFH - 20, 100, 20);
 	ctx.fillStyle = "#ffffff";
 	ctx.font = "12pt 'Arial'";
 	ctx.textAlign = "left";
 	ctx.fillText( "b: " + accX, 5, REFH - 5);
+*/
 }
 
 //●==========●==========●==========●==========●==========●==========●
@@ -1494,13 +1495,6 @@ function drawMain(){
 	}
 
 	drawDust();
-/*
-	ctx.fillStyle = "#ffffff";
-	ctx.font = "12pt 'Arial'";
-	ctx.textAlign = "left";
-	//ctx.fillText( DeviceMotionEvent, 5, REFH - 5);
-	ctx.fillText( "abc", 5, REFH - 5);
-*/
 }
 
 function drawString( x, y, s, m){
