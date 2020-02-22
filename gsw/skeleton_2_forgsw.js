@@ -233,6 +233,15 @@ function init_acc(){
 	accX = accY = 0;
 accX = 1.23;
 
+//var BUILD_BROWSER = 0, BUILD_IOS = 1, BUILD_ANDROID = 2;
+//var build = BUILD_BROWSER;
+		isAcc = ( 0 <= ua.indexOf( 'Android'));
+		if( isAcc){
+accX = 1.11;
+			addEventListener( "devicemotion", handle_acc, false);
+			return; //★抜ける。
+		}
+
 	if( typeof DeviceMotionEvent === "function"){
 accX = 2.344;
 

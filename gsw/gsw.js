@@ -355,7 +355,7 @@ function main(){
 	ctx.fillStyle = "#ffffff";
 	ctx.font = "12pt 'Arial'";
 	ctx.textAlign = "left";
-	ctx.fillText( "a: " + accX, 5, REFH - 5);
+	ctx.fillText( "b: " + accX, 5, REFH - 5);
 }
 
 //●==========●==========●==========●==========●==========●==========●
