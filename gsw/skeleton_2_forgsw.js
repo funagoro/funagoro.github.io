@@ -33,7 +33,8 @@
 
 var isAcc;
 var accX, accY;
-var acc_test = 1;
+
+var ua = navigator.userAgent;
 
 var can;
 var ctx;
@@ -229,8 +230,6 @@ function myTouchOut( n){
 //●==========●==========●==========●==========●==========●==========●
 
 function init_acc(){
-	var ua;
-
 	accX = accY = 0;
 accX = 1.23;
 
@@ -238,34 +237,30 @@ accX = 1.23;
 accX = 2.344;
 
 		DeviceMotionEvent.requestPermission().then( permissionState => {
+			//★iOS 13。
 accX = 3.45;
 			if( permissionState === "granted"){
 accX = 4.56;
+				//★ダイアログでプレイヤーの許可が得られた。
+				isAcc = true;
 				addEventListener( "devicemotion", handle_acc, false);
 			} else {
-				//★許可を得られなかった。
-//httpsじゃなくhttpだと、ここに来るみたい。
+				//★ダイアログでプレイヤーの許可を得られなかった。
+				//★または https じゃなく http だと、ダイアログなしでここに来る。
+				isAcc = false;
 accX = 5.67;
 			}
 		}).catch();
-
-		//DeviceMotionEvent.requestPermission().then( function(){
-//accX = 2.345;
-		//});
 	} else{
+		//★iOS 13 以外。
 accX = 6.789;
-		ua = navigator.userAgent;
 		isAcc = (
 			0 <= ua.indexOf( 'iPhone') ||
 			0 <= ua.indexOf( 'iPod') ||
 			0 <= ua.indexOf( 'iPad') ||
 			0 <= ua.indexOf( 'Android')
 		);
-
-		if( isAcc){
-accX = 7.89;
-			addEventListener( "devicemotion", handle_acc, false);
-		}
+		if( isAcc) addEventListener( "devicemotion", handle_acc, false);
 	}
 }
 
@@ -273,7 +268,8 @@ function handle_acc( e){
 	var n;
 	var x, y;
 	var a;
-	var ua;
+
+accX = 12 + Math.random();
 
 	if( window.orientation != undefined){//★0 の時、false 扱いになるので注意。
 		//★iOS、Android、Windows スマホは、これ。
@@ -299,7 +295,6 @@ function handle_acc( e){
 		default: x = y = 0; break;
 	}
 
-	ua = navigator.userAgent;
 	if(
 		//★Edge の ua には、何でもかんでも入ってるから注意。
 		//★↓Android であって、ニセの Android (Edge のこと) ではない。
@@ -518,10 +513,7 @@ function skeleton( c){
     var i;
     var t;
 
-	if( typeof touchEventHook == "function"){
-		acc_test = 2;
-		touchEventHook();
-	}
+	if( typeof touchEventHook == "function") touchEventHook();
 
     //e.preventDefault();
     //e.stopPropagation();

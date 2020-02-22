@@ -52,8 +52,8 @@
 
 
 
-<script src="gsw.js?7"></script>
-<script src="skeleton_2_forgsw.js?10"></script>
+<script src="gsw.js?8"></script>
+<script src="skeleton_2_forgsw.js?11"></script>
 
 <canvas id="canvas1" width=640 height=920 style="
 	-webkit-user-select: none;
@@ -142,7 +142,40 @@ program &amp; graphics by:<br>
 
 傑作パズル。<br>
 
+スマホやタブレットでは、端末を傾けることで、操作できます。
+ダイアログで許可・拒否を選択できます。
+次回からは許可・拒否のダイアログが出ません。
+ブラウザのタブを一度閉じれば、許可・拒否のダイアログをもういちど出すことができます。
+
 <br><hr><br>
+
+ダイアログを出すのは、ブラウザの場合のみに。<br>
+
+<br>
+
+2020/02/18<br>
+Android で傾き動作せず。<br>
+
+<br>
+
+2020/02/16<br>
+http ではダイアログが出ずに、こっそり拒否されることを確認しました。<br>
+自分のサーバは https にできないので、github を使わせていただきます。<br>
+
+<br>
+
+2020/02/12<br>
+モーションセンサー使用許可のダイアログは、
+touchstart / mousedown / pointerdown では出せなくて、
+touchend / mouseup / pointerup なら出せることが分かりました。<br>
+
+<br>
+
+スマホのブラウザで、デバイスの傾きを検出できなくなっている。
+iOS 12.2 (March 25, 2019) から、ブラウザの設定が必要になった。
+iOS 13.0 (September 19, 2019) から、モーションセンサー使用許可のダイアログが必要になった。
+
+<br>
 
 2019/12/31<br>
 ・スマホで文字が大きくならないように。<br>
