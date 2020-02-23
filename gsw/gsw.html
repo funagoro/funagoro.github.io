@@ -52,8 +52,8 @@
 
 
 
-<script src="gsw.js?11"></script>
-<script src="skeleton_2_forgsw.js?14"></script>
+<script src="gsw.js?12"></script>
+<script src="skeleton_2_forgsw.js?15"></script>
 
 <canvas id="canvas1" width=640 height=920 style="
 	-webkit-user-select: none;
@@ -146,6 +146,19 @@ program &amp; graphics by:<br>
 
 <br><hr><br>
 
+Android では、モーションセンサー使用許可のダイアログを出すことができない。
+https ならダイアログなしでそのまま使用できて、
+http なら使用できない。みたい。<br>
+分からないタイミングでクリア記録がなくなる？<br>
+BGMが二重になる？起動時、タイトル画面だったら鳴り始めてはいけない。何秒かたってから鳴り始めるからそれが二重になる。<br>
+
+<br>
+
+2020/02/23<br>
+BGM のライフサイクルを修正しました。<br>
+
+<br>
+
 2020/02/22<br>
 Android でも傾きで操作できるようにしました。<br>
 
@@ -162,19 +175,19 @@ https ではなく http の場合、
 2020/02/12<br>
 モーションセンサー使用許可のダイアログは、
 touchstart / mousedown / pointerdown では出せなくて、
-touchend / mouseup / pointerup なら出せることが分かりました。<br>
-
-<br>
-
-スマホのブラウザで、デバイスの傾きを検出できなくなっている。<br>
-iOS 12.2 (March 25, 2019) で、ブラウザの設定が必要になった。<br>
-iOS 13.0 (September 19, 2019) からは、モーションセンサー使用許可のダイアログを出せるようになった。<br>
+touchend / mouseup / pointerup でなら出せることが分かりました。<br>
 
 <br>
 
 2019/12/31<br>
 ・スマホで文字が大きくならないように。<br>
 body{ -webkit-text-size-adjust: 100%;}<br>
+
+<br>
+
+いつの間にか、スマホのブラウザで、デバイスの傾きを検出できなくなっている。<br>
+iOS 12.2 (March 25, 2019) で、ブラウザの設定が必要になった。<br>
+iOS 13.0 (September 19, 2019) からは、モーションセンサー使用許可のダイアログを出せるようになった。<br>
 
 <br>
 

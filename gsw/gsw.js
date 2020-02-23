@@ -32,13 +32,13 @@ function touchEventHook(){
 
 	//init_acc();
 
-	if( initCount == 4){
-		initCount++;
+	if( init_count == 4){
+		init_count++;
 
 		init_acc();
 
 		if( isAudio){
-			if( currentState == MENU) v = 0.4; else v = 1;
+			if( current_state == MENU) v = 0.4; else v = 1;
 			setAudioVolume( kAudBGMGame, v);
 			gswPlayAudio( -1);
 		}
@@ -95,9 +95,9 @@ var WAITING = 0, MOVING = 1;
 
 //●==========●==========●==========●==========●==========●==========●
 
-var initCount;
+var init_count;
 
-var currentState, nextState, stateCount, stateEndCount;
+var current_state, next_state, stateCount, stateEndCount;
 var inGameState;
 var isAudio, isTilt;
 
@@ -147,7 +147,7 @@ function gswPlayAudio( n){
 	if( isAudio){
 		if( n < 2){
 			//★BGM を再生。
-			if( currentState == TITLE) playAudioLoop( kAudBGMTitle);
+			if( current_state == TITLE) playAudioLoop( kAudBGMTitle);
 			else playAudioLoop( kAudBGMGame);
 		} else{
 			//★効果音を再生。
@@ -165,7 +165,7 @@ function myonload(){
 	var i;
 
 	if( build == BUILD_BROWSER){
-		if( screen.orientation) screen.orientation.lock( 'portrait').catch( function(){});
+		if( screen.orientation) screen.orientation.lock( "portrait").catch( function(){});
 		//★Chrome で確認。
 	} else if( build == BUILD_IOS){
 		MAXWIDTH = -1;
@@ -175,9 +175,9 @@ function myonload(){
 		mypadding = 0;
 	}
 
-	skeleton( document.getElementById( 'canvas1'));
+	skeleton( document.getElementById( "canvas1"));
 
-	initCount = 0;
+	init_count = 0;
 
 	gameStageFocused = 0;
 
@@ -202,19 +202,51 @@ function main(){
 	var i, n;
 	var t;
 
-	if( initCount == 5){
+	if( init_count == 5){
+		loadStorage();
+
+		resume_audio();
+
+		function resume_audio(){
+			if( isAudio){
+				t = 0;
+				if( current_state == TITLE){
+					if( FIRST_SILENCE < stateCount) t = 1;
+				} else if( current_state == MENU) t = 0.4;
+				else t = 1;
+
+				if( 0 < t){
+					setAudioVolume( kAudBGMGame, t);
+					gswPlayAudio( -1);
+				}
+			}
+		}
+
+		document.addEventListener( "visibilitychange", function(){
+			if( document.visibilityState === "hidden"){
+				//try{ localStorage.setItem( "milk_test" + 1, localStorage.getItem( "milk_test1") + " h");} catch( e){};
+				if( isAudio){
+					//processor_node.disconnect( ska.ac.destination);
+					stopAudio( kAudBGMTitle);
+					stopAudio( kAudBGMGame);
+				}
+			} else if( document.visibilityState === "visible"){
+				resume_audio();
+			}
+		}, false);
+
 		resetTouches();
 
-		initCount = -1;
+		init_count = -1;
 	}
 
-	if( initCount < 0){
+	if( init_count < 0){
 		//★通常ループ。
-		if( currentState != nextState){
-			currentState = nextState;
+		if( current_state != next_state){
+			current_state = next_state;
 			stateCount = stateEndCount = 0;
 			resetTouches();
-			if( currentState == TITLE || currentState == MENU) saveStorage();
+			if( current_state == TITLE || current_state == MENU) saveStorage();
 		}
 
 		processStars();
@@ -223,19 +255,19 @@ function main(){
 
 		if( touch) processTouchBegan();
 
-		processMain();
+		process_main();
 
-		drawMain();
+		draw_main();
 
 	} else if( loadedCount < 1){
 		//★起動して最初、表示なし。
-		if( initCount == 0){
+		if( init_count == 0){
 			kImgLoading = li( "loading");
-			initCount++;
+			init_count++;
 		}
 	} else{
 		//★ロード中の画面。
-		if( initCount == 1){
+		if( init_count == 1){
 			kImgBG = li( "bg");
 			kImgTitle = li( "title");
 			kImgTilt = li( "tilt");
@@ -262,13 +294,13 @@ function main(){
 			kImgTailEnd = li( "tail_end");
 			kImgLetters = li( "letters");
 
-			initCount++;
+			init_count++;
 			stateCount = 0;
 		}
 
 		n = 0; for( i = 0; i < AUDIONUM; i++) if( audioBase64[ i]) n++;
 
-		if( initCount == 2 && n == AUDIONUM){
+		if( init_count == 2 && n == AUDIONUM){
 			kAudBGMTitle = loadAudioBase64( 0);
 			kAudBGMGame = loadAudioBase64( 1);
 			kAudClear = loadAudioBase64( 2);
@@ -297,7 +329,7 @@ function main(){
 			kAudRewind = loadAudioBase64( 21);
 			kAudStart = loadAudioBase64( 22);
 
-			initCount++;
+			init_count++;
 		}
 
 		gswDrawImage( kImgLoading, 0, 0);
@@ -315,32 +347,13 @@ function main(){
 			ctx.lineWidth = 2;
 			ctx.strokeRect( 0.15 * REFW, 0.8 * REFH, 0.7 * REFW, 0.02 * REFH);
 		} else{
-			if( initCount == 3){
-				initCount++;
-
-				loadStorage();
-
-				document.addEventListener( "visibilitychange", function(){
-					if( document.visibilityState === "hidden"){
-						//try{ localStorage.setItem( "milk_test" + 1, localStorage.getItem( "milk_test1") + " h");} catch( e){};
-						if( isAudio){
-							//processor_node.disconnect( ska.ac.destination);
-							stopAudio( kAudBGMTitle);
-							stopAudio( kAudBGMGame);
-						}
-					} else if( document.visibilityState === "visible"){
-						//try{ localStorage.setItem( "milk_test" + 1, localStorage.getItem( "milk_test1") + " v");} catch( e){};
-						if( isAudio){
-							//processor_node.connect( ska.ac.destination);
-							if( currentState == MENU) t = 0.4; else t = 1;
-							setAudioVolume( kAudBGMGame, t);
-							gswPlayAudio( -1);
-						}
-					}
-				}, false);
+			if( init_count == 3){
+				//★ロード完了した瞬間。
+				//★これから、タッチを待ち始める。
+				init_count++;
 			}
 
-			//★initCount が 4 の時ずっと、点滅。
+			//★init_count が 4 の時ずっと、点滅。
 			if( stateCount % 6 < 4) drawString( 0.5 * REFW - 30, 0.8 * REFH, "GO !!", 4);
 		}
 	}
@@ -366,13 +379,13 @@ function loadStorage(){
 
 	s = MYSTORAGE;
 
-	currentState = undefined;
+	current_state = undefined;
 	if( "localStorage" in window){
-		try{ currentState = localStorage.getItem( s + "currentState");} catch( e){}
-		if( currentState){
-			currentState = parseInt( currentState);
+		try{ current_state = localStorage.getItem( s + "current_state");} catch( e){}
+		if( current_state){
+			current_state = parseInt( current_state);
 
-			nextState = currentState;
+			next_state = current_state;
 			stateCount = stateEndCount = 0;
 
 			isAudio = localStorage.getItem( s + "isAudio") == "true";
@@ -381,14 +394,13 @@ function loadStorage(){
 			gameStage = parseInt( localStorage.getItem( s + "gameStage"));
 			gameStageSolved = parseInt( localStorage.getItem( s + "gameStageSolved"));
 
-			if( currentState == MENU){
+			if( current_state == MENU){
 				menuX = ( gameStage - 1) * MENUW;
 				menuVX = 0;
 				gameStageJustCleared = 0;
 			}
 		} else{
-			currentState = DEFAULT;
-			nextState = TITLE;
+			current_state = next_state = DEFAULT;
 			isAudio = true;
 			isTilt = true;
 			gameStageSolved = 0;
@@ -402,7 +414,7 @@ function saveStorage(){
 	s = MYSTORAGE;
 
 	if( "localStorage" in window) try{
-		localStorage.setItem( s + "currentState", currentState);
+		localStorage.setItem( s + "current_state", current_state);
 
 		localStorage.setItem( s + "isAudio", isAudio);
 		localStorage.setItem( s + "isTilt", isTilt);
@@ -424,7 +436,7 @@ function processTouchBegan(){
 	accXStd = accX;
 	accYStd = accY;
 
-	switch( currentState){
+	switch( current_state){
 	case TITLE:
 		if( 460 - 16 - 80 <= y){
 			if( 16 <= x && x < 16 + 80){
@@ -436,7 +448,7 @@ function processTouchBegan(){
 				gswPlayAudio( kAudComet);
 				menuX = 0;
 				menuVX = 0;
-				nextState = HOWTO;
+				next_state = HOWTO;
 			} else if( 320 - 16 - 80 <= x && x < 320 - 16){
 				//★音の ON / OFF ボタンがタッチされた。
 				isAudio = !isAudio;
@@ -451,7 +463,7 @@ function processTouchBegan(){
 			gswPlayAudio( kAudComet);
 			gameStage = 1;
 			//gameStage = gameStageSolved = MAXSTAGE; //★全ステージクリアのデバグ用。
-			nextState = GAME_START;
+			next_state = GAME_START;
 		}
 		break;
 
@@ -459,7 +471,7 @@ function processTouchBegan(){
 		if( 460 - 16 - 80 <= y && 320 - 16 - 80 <= x && x < 320 - 16){
 			//★OK ボタンがタッチされた。
 			gswPlayAudio( kAudComet);
-			nextState = TITLE;
+			next_state = TITLE;
 		}
 		break;
 
@@ -471,7 +483,7 @@ function processTouchBegan(){
 				if( gameStage <= MAXSTAGE){
 					setStage( gameStage);
 				} else{
-					nextState = TITLE;
+					next_state = TITLE;
 				}
 			} else */if( BY <= y && y < BY + 8 * GRIDW){
 				if( BX <= x && x < BX + 8 * GRIDW){
@@ -491,7 +503,7 @@ function processTouchBegan(){
 				if( x < 160){
 					//★rewind ボタンがタッチされた。
 					if( inGameState == WAITING && 0 < moves){
-						nextState = REWIND;
+						next_state = REWIND;
 					}
 				} else{
 					//★menu ボタンがタッチされた。
@@ -499,7 +511,7 @@ function processTouchBegan(){
 					menuX = ( gameStage - 1) * MENUW;
 					menuVX = 0;
 					gameStageJustCleared = 0;
-					nextState = MENU;
+					next_state = MENU;
 				}
 			}
 		}
@@ -542,7 +554,7 @@ function processTouchBegan(){
 					//★タイトル画面へ戻るボタンがタッチされた。
 					stopAudio( kAudBGMGame);
 					gswPlayAudio( kAudComet);
-					nextState = TITLE;
+					next_state = TITLE;
 				} else if( x < 210){
 					//★記録を消すボタンがタッチされた。
 					gswPlayAudio( kAudComet);
@@ -564,7 +576,7 @@ function processTouchBegan(){
 			//★全ステージクリア画面を6秒以上表示した後でタッチされた。
 			stopAudio( kAudBGMGame);
 			gswPlayAudio( kAudComet);
-			nextState = TITLE;
+			next_state = TITLE;
 		}
 		break;
 	}
@@ -572,13 +584,13 @@ function processTouchBegan(){
 
 //●==========●==========●==========●==========●==========●==========●
 
-function processMain(){
+function process_main(){
 	var a, b, i, j;
 	var x, y;
 
-	switch( currentState){
+	switch( current_state){
 	case DEFAULT:
-		nextState = TITLE;
+		next_state = TITLE;
 		break;
 
 	case TITLE:
@@ -634,7 +646,7 @@ function processMain(){
 
 			setStage( gameStage);
 		} else if( FPS <= stateCount){
-			nextState = GAME;
+			next_state = GAME;
 		}
 		break;
 
@@ -644,7 +656,7 @@ function processMain(){
 
 	case REWIND: case FAIL:
 		if( stateCount == 0){
-			if( currentState == REWIND) gswPlayAudio( kAudRewind);
+			if( current_state == REWIND) gswPlayAudio( kAudRewind);
 			else gswPlayAudio( kAudRewind);  //★FAIL の音をいただいていないので REWIND の音を流用。
 			movingP = -1;
 		}
@@ -664,7 +676,7 @@ function processMain(){
 				if( 0 < moves){
 					movingP = -1;
 				} else{
-					nextState = GAME;
+					next_state = GAME;
 				}
 			} else{
 				movingOff -= GRIDW / 2;
@@ -691,14 +703,14 @@ function processMain(){
 				menuX = ( gameStage - 1) * MENUW;
 				menuVX = 0;
 				gameStageJustCleared = gameStage;
-				nextState = MENU;
+				next_state = MENU;
 			} else{
-				nextState = CLEAR_ALL;
+				next_state = CLEAR_ALL;
 			}
 		}
 	}
-	if( ( currentState == CLEAR_ALL && 6 * FPS <= stateCount) ||
-		( currentState==TITLE && gameStageSolved == MAXSTAGE)
+	if( ( current_state == CLEAR_ALL && 6 * FPS <= stateCount) ||
+		( current_state==TITLE && gameStageSolved == MAXSTAGE)
 	){
 		a = stateCount % FPS;
 		if( a == 0 || a == 3 || a == 12){
@@ -903,16 +915,16 @@ function processGame(){
 						if( map[ p] == SPHERE){
 							if( isClear()){
 								//★クリア。
-								nextState = CLEAR;
+								next_state = CLEAR;
 							}
 						}
 					}
 					movingP = -1;
 				}
 			}
-			if( inGameState == WAITING && moves == movesLimit && nextState != CLEAR){
+			if( inGameState == WAITING && moves == movesLimit && next_state != CLEAR){
 				//★手数になったのにクリアできなかった。
-				nextState = FAIL;
+				next_state = FAIL;
 			}
 		}
 	}
@@ -932,7 +944,7 @@ function processMenu(){
 	} else if( 0 < stateEndCount){
 		if( 2 * GRIDW < ( menuX + GRIDW) % MENUW) stateEndCount++;
 		else if( stateEndCount == 1){
-			nextState = GAME;
+			next_state = GAME;
 		}
 	}
 
@@ -1260,7 +1272,7 @@ function getNextD( p, p2){
 
 //●==========●==========●==========●==========●==========●==========●
 
-function drawMain(){
+function draw_main(){
 	var a, d, d0, i, j, p;
 	var x, y, x0, y0;
 	var t, t2;
@@ -1269,7 +1281,7 @@ function drawMain(){
 	gswDrawImage( kImgBG, 0, 0);
 	drawStars();
 
-	switch( currentState){
+	switch( current_state){
 	case TITLE:
 		gswDrawImage( kImgTitle, 0, 0);
 
@@ -1305,7 +1317,7 @@ function drawMain(){
 		break;
 
 	case GAME_START: case GAME: case REWIND: case CLEAR: case FAIL: case CLEAR_ALL:
-		if( currentState == GAME_START){
+		if( current_state == GAME_START){
 			t = 1.0 * stateCount / FPS;
 			ctx.save();
 			ctx.translate( CENTERX, CENTERY);
@@ -1313,7 +1325,7 @@ function drawMain(){
 			ctx.rotate( ( 1 - t) * Math.PI);
 			ctx.translate( -CENTERX, -CENTERY);
 			ctx.globalAlpha = t;
-		} else if( currentState == CLEAR_ALL){
+		} else if( current_state == CLEAR_ALL){
 			ctx.save();
 			if( stateCount < FPS){
 				ctx.translate( CENTERX, CENTERY);
@@ -1362,8 +1374,8 @@ function drawMain(){
 		}
 		ctx.globalAlpha = 1.0;
 
-		if( currentState == GAME){//★流星を描画。
-			ctx.globalCompositeOperation = 'lighter';
+		if( current_state == GAME){//★流星を描画。
+			ctx.globalCompositeOperation = "lighter";
 			ctx.globalAlpha = 0.8;
 			if( meteorPTail != meteorP){
 				p = meteorPTail;
@@ -1415,7 +1427,7 @@ function drawMain(){
 				y = BY + ( Math.floor( meteorP / 8) + 0.5) * GRIDW;
 			}
 			drawImageCenteredScaledRotated( kImgMeteor, x, y, 0.5, -stateCount * 0.02 * 2 * Math.PI);
-			ctx.globalCompositeOperation = 'source-over';
+			ctx.globalCompositeOperation = "source-over";
 
 			if( isTilt){
 				gswDrawImage(
@@ -1426,14 +1438,14 @@ function drawMain(){
 			}
 		}
 
-		if( currentState == CLEAR) drawClear();
+		if( current_state == CLEAR) drawClear();
 
-		if( currentState == GAME_START || currentState == CLEAR_ALL){
+		if( current_state == GAME_START || current_state == CLEAR_ALL){
 			ctx.globalAlpha = 1;
 			ctx.restore();
 		}
 
-		if( currentState == CLEAR_ALL){
+		if( current_state == CLEAR_ALL){
 			if( stateCount < FPS) t = 1.0 - 1.0 * stateCount / FPS;
 			else{
 				ctx.save();
@@ -1457,9 +1469,9 @@ function drawMain(){
 		else drawDigits( gameStage, 2, 108 + 22, 24);
 		drawDigits( movesLimit - moves, 1, 258, 24);
 
-		if( currentState == CLEAR_ALL) ctx.globalAlpha = 1.0;
+		if( current_state == CLEAR_ALL) ctx.globalAlpha = 1.0;
 
-		if( currentState == FAIL) gswDrawImage( kImgFail, -32, -21);
+		if( current_state == FAIL) gswDrawImage( kImgFail, -32, -21);
 
 		break;
 
@@ -1474,9 +1486,9 @@ function drawMain(){
 
 		a = 1 + Math.floor( ( MENUW / 2 + menuX) / MENUW);
 		x = -menuX + ( a - 1) * MENUW;
-		if( 1 <= a - 1) drawMapCache( a - 1, Math.floor( x - MENUW));
-		drawMapCache( a, Math.floor( x));
-		if( a + 1 <= MAXSTAGE) drawMapCache( a + 1, Math.floor( x + MENUW));
+		if( 1 <= a - 1) draw_map_cache( a - 1, Math.floor( x - MENUW));
+		draw_map_cache( a, Math.floor( x));
+		if( a + 1 <= MAXSTAGE) draw_map_cache( a + 1, Math.floor( x + MENUW));
 
 		ctx.restore();
 
@@ -1521,7 +1533,7 @@ function drawButtonSound( x, y){
 	}
 }
 
-function drawMapCache( n, dx){
+function draw_map_cache( n, dx){
 	var i, j, x, y;
 
 	ctx.save();

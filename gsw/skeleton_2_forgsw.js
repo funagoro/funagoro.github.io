@@ -271,15 +271,15 @@ function handle_acc( e){
 	} else if(
 		screen.orientation &&
 		( 0 <= ua.indexOf( "Chrome") && ua.indexOf( "Edge") < 0)
+	){
 		//★Chrome であって、ニセの Chrome (Edge のこと) ではない。
 		//★Windows タブレットの Chrome は、これ。
-	){
 		n = screen.orientation.angle;
 	} else return;//★端末の向きを特定できなかった (またはデスクトップ機である) ので、加速度を使用しない。
 
 	a = e.accelerationIncludingGravity;
 
-	switch( ( n + 360 + myorientation) % 360){
+	switch( ( n + myorientation + 360) % 360){
 		case 0: x = a.x; y = -a.y; break;
 		case 90: x = -a.y; y = -a.x; break;
 		case 180: x = -a.x; y = a.y; break;
