@@ -24,8 +24,8 @@
 	a{ color: #666633; font-size: 22px; font-weight: 600;}
 	hr{ border: 0px; background-color: #773344; height: 3px;}
 
-	.paper1{ width: 600px; padding: 20px; background-color: #333333; color: #666666;}
-	.paper2{ width: 600px; padding: 20px; background-color: #222222; color: #555555; text-align: left;}
+	.paper1{ display: inline-block; width: 600px; padding: 20px; background-color: #333333; color: #666666;}
+	.paper2{ display: inline-block; width: 600px; padding: 20px; background-color: #222222; color: #555555; text-align: left;}
 	.iD { color: #666666; font-size: 9px; font-family: sans-serif;}
 	.iF { color: #eedddd; font-size: 10px; background: #666666;}
 	.free{ font-size: 12px; font-weight: 600; background: #666666; color: #ffffff;}
@@ -36,15 +36,14 @@
 
 <body style="
 	-webkit-text-size-adjust: 100%;
-	background-color: #666666;
+	background-color: #000000;
 	background-image: url( gsw_bg.png);
 
 	font-family: arial, sans-serif;
 	font-size: 18px;
 	line-height: 1.2;
+	text-align: center;
 ">
-
-<center>
 
 
 
@@ -52,8 +51,11 @@
 
 
 
-<script src="gsw.js?12"></script>
-<script src="skeleton_2_forgsw.js?15"></script>
+<script src="gsw.js?1"></script>
+<script src="../skeleton_3.js?1"></script>
+<script src="../skeleton_touch.js?1"></script>
+<script src="../skeleton_canvas.js?1"></script>
+<script src="../skeleton_audio.js?1"></script>
 
 <canvas id="canvas1" width=640 height=920 style="
 	-webkit-user-select: none;
@@ -61,7 +63,15 @@
 	touch-action: none;
 "></canvas><br>
 
-<script> myonload(); </script>
+<br>
+
+<span style="
+	font-size: 22px; font-weight: 600; color: #999999;
+	text-decoration: underline;"
+	onclick="on_myorientation();"
+>rotate screen</span><br>
+
+<script> gsw_start(); </script>
 
 <script src="audio/bgm_title.js"></script>
 <script src="audio/bgm_game.js"></script>
@@ -94,10 +104,6 @@
 
 <br>
 
-<input type="button" value="rotate / 画面回転" onclick="onMyorientation();"/><br>
-
-<br>
-
 <div class="paper1">
 <br>
 <span style="color: #445566; font-size: 60px; font-weight: 600;">"GRAVISPHERE"</span><br>
@@ -112,7 +118,7 @@ program &amp; graphics by:<br>
 "GRAVISPHERE" is a remade version of<br>
 "SPHERE" &copy;1986 TPM. CO SOFT WORKS<br>
 <br>
-</div>
+</div><br>
 
 <br>
 
@@ -146,26 +152,38 @@ program &amp; graphics by:<br>
 
 <br><hr><br>
 
-Android では、モーションセンサー使用許可のダイアログを出すことができない。
-https ならダイアログなしでそのまま使用できて、
-http なら使用できない。みたい。<br>
-分からないタイミングでクリア記録がなくなる？<br>
-BGMが二重になる？起動時、タイトル画面だったら鳴り始めてはいけない。何秒かたってから鳴り始めるからそれが二重になる。<br>
+2020/06/16<br>
+・FPS 30 → 40。<br>
+・起動時に2種の BGM がかぶるバグを修正。<br>
+・違うステージが表示されることがあるバグを修正。<br>
+・メニュー画面とゲーム画面の往来時にフラッシュを追加して、配置の変化に意味を持たせる。<br>
+・流星のしっぽの挙動を改善。<br>
+
+<br>
+
+2020/06/14<br>
+・skeleton_3.js / skeleton_touch.js /<br>
+<span style="margin-left: 30px;"></span>skeleton_canvas.js / skeleton_audio.js。<br>
+
+<br>
+
+2020/06/12<br>
+・ページの背景画像があまり主張しないようにしました。<br>
 
 <br>
 
 2020/02/23<br>
-BGM のライフサイクルを修正しました。<br>
+・BGM のライフサイクルを修正しました。<br>
 
 <br>
 
 2020/02/22<br>
-Android でも傾きで操作できるようにしました。<br>
+・Android でも傾きで操作できるようにしました。<br>
 
 <br>
 
 2020/02/16<br>
-https ではなく http の場合、
+・https ではなく http の場合、
 モーションセンサー使用許可のダイアログが出ずに、
 拒否されたことになるのを確認しました。<br>
 自分のサーバは https にできないので、github を使わせていただきます。<br>
@@ -173,7 +191,7 @@ https ではなく http の場合、
 <br>
 
 2020/02/12<br>
-モーションセンサー使用許可のダイアログは、
+・モーションセンサー使用許可のダイアログは、
 touchstart / mousedown / pointerdown では出せなくて、
 touchend / mouseup / pointerup でなら出せることが分かりました。<br>
 
@@ -181,39 +199,33 @@ touchend / mouseup / pointerup でなら出せることが分かりました。<
 
 2019/12/31<br>
 ・スマホで文字が大きくならないように。<br>
-body{ -webkit-text-size-adjust: 100%;}<br>
-
-<br>
-
-いつの間にか、スマホのブラウザで、デバイスの傾きを検出できなくなっている。<br>
-iOS 12.2 (March 25, 2019) で、ブラウザの設定が必要になった。<br>
-iOS 13.0 (September 19, 2019) からは、モーションセンサー使用許可のダイアログを出せるようになった。<br>
+<span style="margin-left: 30px;"></span>body{ -webkit-text-size-adjust: 100%;}<br>
 
 <br>
 
 2019/12/30<br>
-・Chrome やスマホでのページレイアウトを調整。<br>
-・visibilitychange で BGM を止める。<br>
+・Chrome やスマホでのページレイアウトを調整しました。<br>
+・visibilitychange で BGM が止まるようにしました。<br>
 
 <br>
 
 2018/11/04<br>
-・skeleton_2.js。ゲーム画面が大きくなりすぎないように。<br>
+・skeleton_2.js。ゲーム画面が大きくなりすぎないようにしました。<br>
 
 <br>
 
 2016/10/26<br>
-・WebAudio は XMLHttpRequest やめて Base64 に。<br>
+・WebAudio は XMLHttpRequest をやめて Base64 にしました。<br>
 ・skeleton.js<br>
 
 <br>
 
-2016/06/07 ・伸縮 canvas 方式。<br>
+2016/06/07 ・伸縮 canvas 方式にしました。<br>
 
 <br>
 
 2016/05/15<br>
-・screen.orientation.lock() をプロミスに。<br>
+・screen.orientation.lock() をプロミスにしました。<br>
 
 <br>
 
@@ -234,10 +246,22 @@ iOS 13.0 (September 19, 2019) からは、モーションセンサー使用許�
 <div class="t">
 
 com.mameson.gsa (Android)<br>
+
 <br>
+
 アイコン
 <a href="gsa/gsa_icon_72.png">★</a><br>
+
 <br>
+
+2020/06/16 3 (3) プライバシーポリシーを追加。等々。<br>
+
+<br>
+
+2020/06/12 2 (2) Kotlin。<br>
+
+<br>
+
 2016/07/09 1 (1) WebView。Firebase。<br>
 
 <br>
@@ -247,27 +271,43 @@ com.mameson.gsa (Android)<br>
 <br>
 
 com.mameson.gaf (Android)<br>
+
 <br>
+
 アイコン
 <a href="gsa/gaf_icon_0.png">★</a>
 <a href="gsa/gaf_icon.png">★</a>
-　　画面
+
+<span style="margin-left: 30px;"></span>
+
+画面
 <a href="gsa/gaf_1_game.png">★</a>
 <a href="gsa/gaf_2_title.png">★</a>
 <a href="gsa/gaf_3_menu.png">★</a>
 <a href="gsa/gaf_4_howto.png">★</a>
 <a href="gsa/gaf_5_default.png">★</a>
-　　広告
+
+<span style="margin-left: 30px;"></span>
+
+広告
 <a href="gsa/gsa_1280x720.png">★</a>
 <a href="gsa/gsa_1024x500.png">★</a>
 <a href="gsa/gsa_180x120.png">★</a><br>
+
 <br>
+
 2016/07/09 Google Play から削除。<br>
+
 <br>
+
 2014/04/12 1.2 傾きセンサー。<br>
+
 <br>
+
 2014/04/07 1.1 バグ訂正。<br>
+
 <br>
+
 2012/08/06 1.0<br>
 
 </div>
@@ -315,11 +355,11 @@ the iTunes Stoe から削除。<br>
 <br>
 
 ＜参考デザイン＞<br>
-<img src="as/1.jpg" style="width: 180px;">
-<img src="as/2.jpg" style="width: 180px;">
+<img src="as/1.jpg" style="width: 180px; margin-right: 10px;">
+<img src="as/2.jpg" style="width: 180px; margin-right: 10px;">
 <img src="as/3.jpg" style="width: 180px;"><br>
 
-</div>
+</div><br>
 
 
 
@@ -327,6 +367,6 @@ the iTunes Stoe から削除。<br>
 
 
 
-</center></body>
+</body>
 
 </html>

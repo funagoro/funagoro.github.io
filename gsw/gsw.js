@@ -1,5 +1,7 @@
-//ガワネイティブに組込む時は、requiresUserActionForMediaPlayback = false が効いているようなら、最初のタッチ画面をスキップ
-//mypadding 調整
+
+var skt;
+var skc;
+var ska;
 
 var BUILD_BROWSER = 0, BUILD_IOS = 1, BUILD_ANDROID = 2;
 var build = BUILD_BROWSER;
@@ -8,12 +10,12 @@ var build = BUILD_BROWSER;
 
 var MYSTORAGE = "gsw_";
 
-var FPS = 24;
+var FPS = 40;
 
-//●==========●==========●==========●==========●==========●==========●
-//★skeleton_2.js から参照されるもの。
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+//★skeleton_3.js から参照されるもの。
 
-var REFW = 320, REFH = 460;
+var REFW = 640, REFH = 920;
 var MAXWIDTH = 640;
 var mypadding = 30;
 var myorientation = 0;
@@ -21,40 +23,116 @@ var myorientation = 0;
 var MAXTOUCH = 1;
 var CAN_PINCH = false;
 
-var IMAGENUM = 26;
+var IMAGENUM = 27;
 var AUDIONUM = 23;
 
-//var dpr = window.devicePixelRatio; //★retina 対応。2017年時点のマシンには負担が大きすぎ。
-var dpr = 1;
+//var DPR = window.devicePixelRatio; //★retina 対応。2017年時点のマシンには負担が大きすぎ。
+var DPR = 1;
 
-function touchEventHook(){
-	var v;
-
-	//init_acc();
-
-	if( init_count == 4){
-		init_count++;
+function touch_event_hook(){
+	if( init_count == 3){
+		//if( !ska.did_ios_start) ska.start_ios();
+		ska.start_ios();
 
 		init_acc();
 
-		if( isAudio){
-			if( current_state == MENU) v = 0.4; else v = 1;
-			setAudioVolume( kAudBGMGame, v);
-			gswPlayAudio( -1);
+		init_count++;
+	}
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+var ua = navigator.userAgent;
+
+var is_acc = false;
+var acc_x = acc_y = 0;
+var ACCMAG = 0.3;
+var acc_x_std, acc_y_std;
+
+function init_acc(){
+	is_acc = ( 0 <= ua.indexOf( "Android"));
+	if( is_acc){
+		//★Android なら、パーミッションなしで、即、イベントリスナを登録できる。
+		addEventListener( "devicemotion", handle_acc, false);
+	} else{
+		if( window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function"){
+			//★iOS 13 以上の場合。
+			DeviceMotionEvent.requestPermission().then( permissionState => {
+				if( permissionState === "granted"){
+					//★ダイアログで、プレイヤーの許可が得られた時。
+					is_acc = true;
+					addEventListener( "devicemotion", handle_acc, false);
+				} else {
+					//★ダイアログで、プレイヤーの許可が得られなかった時。
+					//★または https じゃなく http だと、ダイアログなしでここに来る。
+					is_acc = false;
+				}
+			}).catch();
+		} else{
+			//★iOS 13 未満の場合。デスクトップ機もここに来る。
+			is_acc = (
+				0 <= ua.indexOf( "iPhone") ||
+				0 <= ua.indexOf( "iPod") ||
+				0 <= ua.indexOf( "iPad")
+			);
+			if( is_acc) addEventListener( "devicemotion", handle_acc, false);
 		}
 	}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+function handle_acc( e){
+	var n;
+	var x, y;
+	var a;
 
-var BX = 8;
-var BY = 78;
-var GRIDW = 38;
-var CENTERX = ( BX + 4 * GRIDW);
-var CENTERY = ( BY + 4 * GRIDW);
-var MENUW = 370;
+	if( window.orientation != undefined){//★値が 0 の場合、判定が false 扱いになるので注意。
+		//★iOS、Android、Windows スマホは、これ。
+		n = window.orientation;
+	} else if(
+		screen.orientation &&
+		( 0 <= ua.indexOf( "Chrome") && ua.indexOf( "Edge") < 0)
+	){
+		//★Chrome であって、ニセの Chrome (Edge のこと) ではない。
+		//★Windows タブレットの Chrome は、これ。
+		n = screen.orientation.angle;
+	} else return;//★端末の向きを特定できなかった (またはデスクトップ機である) ので、加速度を使用しない。
+
+	a = e.accelerationIncludingGravity;
+
+	switch( ( n + myorientation + 360) % 360){
+		case 0: x = a.x; y = -a.y; break;
+		case 90: x = -a.y; y = -a.x; break;
+		case 180: x = -a.x; y = a.y; break;
+		case 270: x = a.y; y = a.x; break;
+		default: x = y = 0; break;
+	}
+
+	if(
+		//★Edge の ua には、何でもかんでも入ってるから注意。
+		//★↓Android であって、ニセの Android (Edge のこと) ではない。
+		( 0 <= ua.indexOf( "Android") && ua.indexOf( "Edge") < 0) ||
+
+		//★↓Windows であって、Edge 以外である。
+		( 0 <= ua.indexOf( "Windows") && ua.indexOf( "Edge") < 0)
+	){
+		x *= -1.0;
+		y *= -1.0;
+	}
+
+	acc_x = 0.9 * acc_x + 0.1 * x;
+	acc_y = 0.9 * acc_y + 0.1 * y;
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+var BX = 16;
+var BY = 156;
+var GRIDW = 76; //★4の倍数で。
+var CENTER_X = ( BX + 4 * GRIDW);
+var CENTER_Y = ( BY + 4 * GRIDW);
+var MENUW = 740;
 var MAXSTAGE = 38;
-var MAXMOVES = 9; //★全ステージ中で最大の手数。
+var MAXMOVES = 6; //★全ステージ中で最大の手数。
 
 var VX = [ 0, 1, 1, 1, 0, -1, -1, -1];
 var VY = [ -1, -1, 0, 1, 1, 1, 0, -1];
@@ -62,319 +140,356 @@ var VP = [ -8, -7, 1, 9, 8, 7, -1, -9];
 
 var EMPTY = 0, BLOCK = 1, SPHERE = 2, SPHERE3 = 3;
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-var kImgLoading;
-var kImgBG
-var kImgTitle, kImgTilt, kImgSound, kImgStars;
-var kImgMenu, kImgReset, kImgHowTo, kImgOK;
-var kImgGame, kImgGrid, kImgNums, kImgFail;
-var kImgStageFocus, kImgLock, kImgClear, kImgClearAll;
-var kImgBlock, kImgSphere, kImgSphere3;
-var kImgMeteor, kImgCore, kImgTail, kImgTailEnd;
-var kImgLetters;
+var k_img_launch;
+var k_img_bg;
+var k_img_title, k_img_tilt, k_img_sound, k_img_stars;
+var k_img_menu, k_img_reset, k_img_how_to, k_img_ok;
+var k_img_game, k_img_grid, k_img_nums, k_img_fail;
+var k_img_stage_focus, k_img_lock, k_img_clear, k_img_conquer;
+var k_img_block, k_img_sphere, k_img_sphere_3;
+var k_img_meteor, k_img_core, k_img_tail, k_img_tail_end;
+var k_img_letters;
+var k_img_flash;
 
-var kAudBGMTitle, kAudBGMGame;
-var kAudClear, kAudClearAll;
-var kAudComet; //★1〜7
-var kAudHit;  //★1〜2
-var kAudMove;  //★1〜8
-var kAudRewind, kAudStart;
+var k_aud_bgm_title, k_aud_bgm_game;
+var k_aud_clear, k_aud_conquer;
+var k_aud_comet; //★7種ある。
+var k_aud_hit; //★2種ある。
+var k_aud_move; //★8種ある。
+var k_aud_rewind, k_aud_start;
 
 var audioBase64 = new Array( AUDIONUM);
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-var DEFAULT = 0, TITLE = 1, HOWTO = 2, MENU = 3;
-var GAME_START = 4, GAME = 5, REWIND = 6, FAIL = 7;
-var CLEAR = 8, CLEAR_ALL = 9;
+var STATE_DEFAULT = 0, STATE_LOADING = 1,
+	STATE_TITLE = 2, STATE_HOW_TO = 3, STATE_MENU = 4,
+	STATE_WARP = 5, STATE_GAME = 6, STATE_REWIND = 7,
+	STATE_FAIL = 8, STATE_CLEAR = 9, STATE_CONQUER = 10;
 
 var FIRST_SILENCE = 3 * FPS;
 
 var WAITING = 0, MOVING = 1;
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 var init_count;
 
-var current_state, next_state, stateCount, stateEndCount;
-var inGameState;
-var isAudio, isTilt;
+var current_state, next_state, state_count, state_end_count;
+var game_state;
+var is_audio, is_tilt;
 
-var map = new Int32Array( 2 * 64);
+var map = new Int32Array( 64);
+var heat_map = new Int32Array( 64);
 
-var gameStage, gameStageSolved, gameStageJustCleared;
-var moves, movesLimit, movesRecord = new Int32Array( MAXMOVES);
+var game_stage, solved_stage, just_cleared_stage;
+var moves, moves_limit, moves_record = new Int32Array( MAXMOVES);
 
-var meteorP, meteorPTail;
-var movingD, movingCount, movingP, movingOff, movingSpeed;
-var menuX, menuVX;
-var inDialogue;
+var in_grab = false;
+var meteor_x, meteor_y;
+var meteor_p, meteor_p_tail;
+var last_tail_count, last_tail_d;
+var moving_d, moving_count, moving_p, moving_off, moving_speed;
 
-//●==========●==========●==========●==========●==========●==========●
+var menu_x, menu_vx;
+var focused_stage;
+var in_dialogue;
 
-var ACCMAG = 0.3;
-var accXStd, accYStd;
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-var mapCache = new Int32Array( MAXSTAGE * 64);
-var movesLimitCache = new Int32Array( MAXSTAGE);
+var map_cache = new Int32Array( MAXSTAGE * 64);
+var moves_limit_cache = new Int32Array( MAXSTAGE);
 
-//●==========●==========●==========●==========●==========●==========●
-
-var inGrab = false;
-var gameStageFocused;
-
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 var MAXSTARNUM = 100;
-var starN = new Int32Array( MAXSTARNUM);
-var starD = new Int32Array( MAXSTARNUM);
-var starZ = new Int32Array( MAXSTARNUM), starVZ = new Int32Array( MAXSTARNUM);
-var starR = new Int32Array( MAXSTARNUM), starVR = new Int32Array( MAXSTARNUM);
+var star_n = new Int32Array( MAXSTARNUM);
+var star_d = new Int32Array( MAXSTARNUM);
+var star_z = new Int32Array( MAXSTARNUM);
+var star_vz = new Int32Array( MAXSTARNUM);
+var star_r = new Int32Array( MAXSTARNUM);
+var star_vr = new Int32Array( MAXSTARNUM);
 
 var MAXDUSTNUM = 100;
-var dustCount, dustCenterD;
-var dustN = new Int32Array( MAXDUSTNUM);
-var dustX = new Float32Array( MAXDUSTNUM), dustY = new Float32Array( MAXDUSTNUM);
-var dustD = new Float32Array( MAXDUSTNUM), dustV = new Float32Array( MAXDUSTNUM);
+var dust_count, dust_center_d;
+var dust_n = new Int32Array( MAXDUSTNUM);
+var dust_x = new Float32Array( MAXDUSTNUM);
+var dust_y = new Float32Array( MAXDUSTNUM);
+var dust_d = new Float32Array( MAXDUSTNUM);
+var dust_v = new Float32Array( MAXDUSTNUM);
 
-//●==========●==========●==========●==========●==========●==========●
+var MAXFLASHNUM = 2 * MAXMOVES;
+var flash_n = new Int32Array( MAXFLASHNUM);
+var flash_x = new Float32Array( MAXFLASHNUM);
+var flash_y = new Float32Array( MAXFLASHNUM);
 
-function onMyorientation(){ myorientation = ( myorientation + 90) % 360;}
-//function onMyorientation(){ init_acc();}
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function gswPlayAudio( n){
-	if( isAudio){
+function on_myorientation(){ myorientation = ( myorientation + 90) % 360;}
+
+function gsw_play_audio( n){
+	if( is_audio){
 		if( n < 2){
 			//★BGM を再生。
-			if( current_state == TITLE) playAudioLoop( kAudBGMTitle);
-			else playAudioLoop( kAudBGMGame);
+			if( current_state == STATE_TITLE) ska.play_loop( k_aud_bgm_title);
+			else ska.play_loop( k_aud_bgm_game);
 		} else{
 			//★効果音を再生。
-			if( n == kAudComet) playAudio( n + Math.floor( Math.random() * 7));
-			else if( n == kAudHit) playAudio( n + Math.floor( Math.random() * 2));
-			else if( n == kAudMove) playAudio( n + Math.floor( Math.random() * 8));
-			else playAudio( n);
+			if( n == k_aud_comet) ska.play( n + Math.floor( Math.random() * 7));
+			else if( n == k_aud_hit) ska.play( n + Math.floor( Math.random() * 2));
+			else if( n == k_aud_move) ska.play( n + Math.floor( Math.random() * 8));
+			else ska.play( n);
 		}
 	}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function myonload(){
+function gsw_start(){
 	var i;
+	var c;
 
 	if( build == BUILD_BROWSER){
 		if( screen.orientation) screen.orientation.lock( "portrait").catch( function(){});
-		//★Chrome で確認。
+		//★↑ Chrome で確認済み。
 	} else if( build == BUILD_IOS){
 		MAXWIDTH = -1;
-		if ( 0 < navigator.userAgent.indexOf( "iPhone")){ myorientation = 0; mypadding = 0;}
+		if ( 0 <= navigator.userAgent.indexOf( "iPhone")) mypadding = 0;
 	} else if( build == BUILD_ANDROID){
 		MAXWIDTH = -1;
 		mypadding = 0;
 	}
 
-	skeleton( document.getElementById( "canvas1"));
+	c = document.getElementById( "canvas1");
+	skeleton();
+	skt = new skeleton_touch( c);
+	skc = new skeleton_canvas( c);
+	ska = new skeleton_audio();
 
-	init_count = 0;
+	focused_stage = 0;
 
-	gameStageFocused = 0;
+	for( i = 0; i < MAXSTARNUM; i++) star_n[ i] = -1;
 
-	for( i = 0; i < MAXSTARNUM; i++) starN[ i] = -1;
+	for( i = 0; i < MAXDUSTNUM; i++) dust_n[ i] = -1;
+	dust_count = 0;
 
-	for( i = 0; i < MAXDUSTNUM; i++) dustN[ i] = -1;
-	dustCount = 0;
+	for( i = 0; i < MAXFLASHNUM; i++) flash_n[ i] = 0;
 
-	for( i = 0; i < MAXSTAGE; i++) mapCache[ i * 64] = -1;
+	for( i = 0; i < MAXSTAGE; i++) map_cache[ i * 64] = -1;
 
-	setFPS( FPS);
+	current_state = STATE_DEFAULT;
+	next_state = STATE_LOADING;
+
+	set_fps( FPS);
 }
 
-//onpagehide = function(){
-//	stopAudio( kAudBGMTitle);
-//	stopAudio( kAudBGMGame);
-//};
-
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 function main(){
+	var d;
+
+	if( current_state != next_state){
+		current_state = next_state;
+		state_count = state_end_count = 0;
+		skt.reset();
+	}
+
+	if( state_count == 0 || current_mag != latest_mag || myorientation != latest_myorientation){
+		skt.set_mag_and_orientation( current_mag, myorientation);
+		skc.set_mag_and_orientation( current_mag, myorientation);
+	}
+
+	skt.pre();
+	skc.pre();
+
+	if( current_state == STATE_LOADING){
+		process_loading();
+	} else{
+		process_stars();
+		process_dust();
+		process_flash();
+
+		if( skt.start) process_touch_began();
+
+		process_main();
+
+		draw_main();
+	}
+
+	skc.post();
+	skt.post();
+
+	if( current_state == STATE_GAME){
+		if( 0 < last_tail_count) last_tail_count--;
+
+		if( meteor_p_tail != meteor_p){
+			//★しっぽが縮んでゆく。
+			d = get_next_d( meteor_p_tail, meteor_p);
+			meteor_p_tail += VP[ d];
+			if( meteor_p_tail == meteor_p) last_tail_count = 19;
+		}
+	}
+
+	if( 0 < state_end_count) state_end_count--;
+	if( state_count < 1000 * 24 * 60 * 60 * FPS) state_count++; //★1000日でカンスト。
+/*
+	skc.ctx.fillStyle = "rgba( 0, 1, 0.9, 0.3)";
+	skc.ctx.fillRect( 0, REFH - 20, 100, 20);
+	skc.ctx.fillStyle = "#ffffff";
+	skc.ctx.font = "12pt 'Arial'";
+	skc.ctx.textAlign = "left";
+	skc.ctx.fillText( "b: " + acc_x, 5, REFH - 5);
+*/
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+function process_loading(){
 	var i, n;
 	var t;
 
-	if( init_count == 5){
-		loadStorage();
+	if( state_count == 0){
+		//★起動して最初。
+		k_img_launch = li( "launch");
+		init_count = 0;
+	} 
 
-		resume_audio();
+	switch( init_count){
+	case 0:
+		//★ロゴ画像のロード完了を待っている間。
+		if( 0 < skc.loaded_count){
+			//★ロゴ画像のロードが完了した瞬間。他の全ての画像のロード開始。
+			k_img_bg = li( "bg");
+			k_img_title = li( "title");
+			k_img_tilt = li( "tilt");
+			k_img_sound = li( "sound");
+			k_img_stars = li( "stars");
+			k_img_menu = li( "menu");
+			k_img_reset = li( "reset");
+			k_img_how_to = li( "howto");
+			k_img_ok = li( "ok");
+			k_img_game = li( "game");
+			k_img_grid = li( "grid");
+			k_img_nums = li( "nums");
+			k_img_fail = li( "fail");
+			k_img_stage_focus = li( "stage_focus");
+			k_img_lock = li( "lock");
+			k_img_clear = li( "clear");
+			k_img_conquer = li( "conquer");
+			k_img_block = li( "block");
+			k_img_sphere = li( "sphere");
+			k_img_sphere_3 = li( "sphere_3");
+			k_img_meteor = li( "meteor");
+			k_img_core = li( "core");
+			k_img_tail = li( "tail");
+			k_img_tail_end = li( "tail_end");
+			k_img_letters = li( "letters");
+			k_img_flash = li( "flash");
+
+			init_count++;
+		}
+		break;
+
+	case 1:
+		//★画像のロードが完了したかに関わらず、全ての音ファイルのロード完了を待っている間。
+		n = 0; for( i = 0; i < AUDIONUM; i++) if( audioBase64[ i]) n++;
+		if( n == AUDIONUM){
+			//★音ファイルのロードが完了した瞬間。音のデータ変換を開始。
+			k_aud_bgm_title = la( 0);
+			k_aud_bgm_game = la( 1);
+			k_aud_clear = la( 2);
+			k_aud_conquer = la( 3);
+
+			k_aud_comet = la( 4); for( i = 5; i <= 10; i++) la( i);
+
+			k_aud_hit = la( 11); la( 12);
+
+			k_aud_move = la( 13); for( i = 14; i <= 20; i++) la( i);
+
+			k_aud_rewind = la( 21);
+			k_aud_start = la( 22);
+
+			init_count++;
+		}
+		break;
+
+	case 2:
+		//★画像のロードが完了と、1秒たつのを待っている間。
+		n = AUDIONUM;
+		if( skc.loaded_count == IMAGENUM && FPS <= state_count) init_count++;
+		break;
+
+	case 3:
+		//★タッチ待ち中。
+		break;
+
+	case 4:
+		n = AUDIONUM;
+
+		load_storage();
+
+		if( current_state == STATE_DEFAULT) next_state = STATE_TITLE;
+		else resume_audio();
 
 		function resume_audio(){
-			if( isAudio){
-				t = 0;
-				if( current_state == TITLE){
-					if( FIRST_SILENCE < stateCount) t = 1;
-				} else if( current_state == MENU) t = 0.4;
-				else t = 1;
+			t = 1;
+			if( current_state < STATE_TITLE) t = 0
+			else if( current_state == STATE_TITLE){
+				if( state_count < FIRST_SILENCE) t = 0;
+			} else if( current_state == STATE_MENU) t = 0.4;
 
-				if( 0 < t){
-					setAudioVolume( kAudBGMGame, t);
-					gswPlayAudio( -1);
-				}
+			if( 0 < t){
+				ska.set_volume( k_aud_bgm_game, t);
+				gsw_play_audio( -1);
 			}
 		}
 
 		document.addEventListener( "visibilitychange", function(){
 			if( document.visibilityState === "hidden"){
-				//try{ localStorage.setItem( "milk_test" + 1, localStorage.getItem( "milk_test1") + " h");} catch( e){};
-				if( isAudio){
-					//processor_node.disconnect( ska.ac.destination);
-					stopAudio( kAudBGMTitle);
-					stopAudio( kAudBGMGame);
+				if( is_audio){
+					ska.stop( k_aud_bgm_title);
+					ska.stop( k_aud_bgm_game);
 				}
 			} else if( document.visibilityState === "visible"){
 				resume_audio();
 			}
 		}, false);
-
-		resetTouches();
-
-		init_count = -1;
 	}
 
-	if( init_count < 0){
-		//★通常ループ。
-		if( current_state != next_state){
-			current_state = next_state;
-			stateCount = stateEndCount = 0;
-			resetTouches();
-			if( current_state == TITLE || current_state == MENU) saveStorage();
-		}
-
-		processStars();
-
-		processDust();
-
-		if( touch) processTouchBegan();
-
-		process_main();
-
-		draw_main();
-
-	} else if( loadedCount < 1){
-		//★起動して最初、表示なし。
-		if( init_count == 0){
-			kImgLoading = li( "loading");
-			init_count++;
-		}
+	if( init_count == 0){
+		skc.fill_rect_color( 0, 0, REFW, REFH, 0x000000);
 	} else{
-		//★ロード中の画面。
-		if( init_count == 1){
-			kImgBG = li( "bg");
-			kImgTitle = li( "title");
-			kImgTilt = li( "tilt");
-			kImgSound = li( "sound");
-			kImgStars = li( "stars");
-			kImgMenu = li( "menu");
-			kImgReset = li( "reset");
-			kImgHowTo = li( "howto");
-			kImgOK = li( "ok");
-			kImgGame = li( "game");
-			kImgGrid = li( "grid");
-			kImgNums = li( "nums");
-			kImgFail = li( "fail");
-			kImgStageFocus = li( "stage_focus");
-			kImgLock = li( "lock");
-			kImgClear = li( "clear");
-			kImgClearAll = li( "clear_all");
-			kImgBlock = li( "block");
-			kImgSphere = li( "sphere");
-			kImgSphere3 = li( "sphere_3");
-			kImgMeteor = li( "meteor");
-			kImgCore = li( "core");
-			kImgTail = li( "tail");
-			kImgTailEnd = li( "tail_end");
-			kImgLetters = li( "letters");
+		skc.fill_rect_color( 0, 0, REFW, REFH, 0x65dbef);
+		skc.fill_rect_color( 0.05 * REFW, 0.05 * REFH, 0.9 * REFW, 0.9 * REFH, 0x5955e0);
+		skc.draw_centered( k_img_launch, REFW / 2, REFH / 2);
 
-			init_count++;
-			stateCount = 0;
-		}
-
-		n = 0; for( i = 0; i < AUDIONUM; i++) if( audioBase64[ i]) n++;
-
-		if( init_count == 2 && n == AUDIONUM){
-			kAudBGMTitle = loadAudioBase64( 0);
-			kAudBGMGame = loadAudioBase64( 1);
-			kAudClear = loadAudioBase64( 2);
-			kAudClearAll = loadAudioBase64( 3);
-
-			kAudComet = loadAudioBase64( 4);
-			loadAudioBase64( 5);
-			loadAudioBase64( 6);
-			loadAudioBase64( 7);
-			loadAudioBase64( 8);
-			loadAudioBase64( 9);
-			loadAudioBase64( 10);
-
-			kAudHit = loadAudioBase64( 11);
-			loadAudioBase64( 12);
-
-			kAudMove = loadAudioBase64( 13);
-			loadAudioBase64( 14);
-			loadAudioBase64( 15);
-			loadAudioBase64( 16);
-			loadAudioBase64( 17);
-			loadAudioBase64( 18);
-			loadAudioBase64( 19);
-			loadAudioBase64( 20);
-
-			kAudRewind = loadAudioBase64( 21);
-			kAudStart = loadAudioBase64( 22);
-
-			init_count++;
-		}
-
-		gswDrawImage( kImgLoading, 0, 0);
-
-		t = ( n + loadedCount) / ( IMAGENUM + 2 * AUDIONUM);
-		if( t < 1){
-			t *= stateCount / 2 / FPS;
+		if( init_count < 3){
+			t = state_count / FPS;
 			if( 1 < t) t = 1;
+			t *= ( skc.loaded_count + n + ska.loaded_count) / ( IMAGENUM + 2 * AUDIONUM);
 
-			ctx.fillStyle = "#ffffff";
-			ctx.fillRect( 0.15 * REFW, 0.8 * REFH, t * 0.7 * REFW, 0.02 * REFH);
+			skc.fill_rect_color( 0.15 * REFW, 0.8 * REFH, t * 0.7 * REFW, 0.02 * REFH, 0xffffff);
 
-			ctx.strokeStyle = "#ffffff";
-			ctx.globalAlpha = 1.0;
-			ctx.lineWidth = 2;
-			ctx.strokeRect( 0.15 * REFW, 0.8 * REFH, 0.7 * REFW, 0.02 * REFH);
+			skc.ctx.strokeStyle = "#ffffff";
+			skc.alpha( 1);
+			skc.ctx.lineWidth = 2;
+			skc.ctx.strokeRect( 0.15 * REFW, 0.8 * REFH, 0.7 * REFW, 0.02 * REFH);
 		} else{
-			if( init_count == 3){
-				//★ロード完了した瞬間。
-				//★これから、タッチを待ち始める。
-				init_count++;
-			}
-
-			//★init_count が 4 の時ずっと、点滅。
-			if( stateCount % 6 < 4) drawString( 0.5 * REFW - 30, 0.8 * REFH, "GO !!", 4);
+			//★タッチ待ち。点滅。
+			if( state_count % 12 < 6)
+				draw_string( 0.5 * REFW - 40, 0.8 * REFH, "GO !!", 3.0);
 		}
 	}
 
-	if( 0 < stateEndCount) stateEndCount--;
-	if( stateCount < 1000 * 24 * 60 * 60 * FPS) stateCount++; //★1000日でカンスト。
-
-	function li( s){ return loadImage( "image/" + s + ".png");}
-/*
-	ctx.fillStyle = "rgba( 0, 1, 0.9, 0.3)";
-	ctx.fillRect( 0, REFH - 20, 100, 20);
-	ctx.fillStyle = "#ffffff";
-	ctx.font = "12pt 'Arial'";
-	ctx.textAlign = "left";
-	ctx.fillText( "b: " + accX, 5, REFH - 5);
-*/
+	function li( s){ return skc.load( "image/" + s + ".png");}
+	function la( n){ return ska.load_base_64( audioBase64[ n]);}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function loadStorage(){
+function load_storage(){
 	var s;
 
 	s = MYSTORAGE;
@@ -385,30 +500,31 @@ function loadStorage(){
 		if( current_state){
 			current_state = parseInt( current_state);
 
-			next_state = current_state;
-			stateCount = stateEndCount = 0;
+			is_audio = localStorage.getItem( s + "is_audio") == "true";
+			is_tilt = localStorage.getItem( s + "is_tilt") == "true";
 
-			isAudio = localStorage.getItem( s + "isAudio") == "true";
-			isTilt = localStorage.getItem( s + "isTilt") == "true";
+			game_stage = parseInt( localStorage.getItem( s + "game_stage"));
+			solved_stage = parseInt( localStorage.getItem( s + "solved_stage"));
 
-			gameStage = parseInt( localStorage.getItem( s + "gameStage"));
-			gameStageSolved = parseInt( localStorage.getItem( s + "gameStageSolved"));
-
-			if( current_state == MENU){
-				menuX = ( gameStage - 1) * MENUW;
-				menuVX = 0;
-				gameStageJustCleared = 0;
+			if( current_state == STATE_MENU){
+				menu_x = ( game_stage - 1) * MENUW;
+				menu_vx = 0;
+				just_cleared_stage = 0;
 			}
 		} else{
-			current_state = next_state = DEFAULT;
-			isAudio = true;
-			isTilt = true;
-			gameStageSolved = 0;
+			current_state = STATE_DEFAULT;
+			is_audio = true;
+			is_tilt = true;
+			game_stage = 0;
+			solved_stage = 0;
 		}
+
+		next_state = current_state;
+		state_count = state_end_count = 0;
 	}
 }
 
-function saveStorage(){
+function save_storage(){
 	var s;
 
 	s = MYSTORAGE;
@@ -416,310 +532,332 @@ function saveStorage(){
 	if( "localStorage" in window) try{
 		localStorage.setItem( s + "current_state", current_state);
 
-		localStorage.setItem( s + "isAudio", isAudio);
-		localStorage.setItem( s + "isTilt", isTilt);
+		localStorage.setItem( s + "is_audio", is_audio);
+		localStorage.setItem( s + "is_tilt", is_tilt);
 
-		localStorage.setItem( s + "gameStage", gameStage);
-		localStorage.setItem( s + "gameStageSolved", gameStageSolved);
+		localStorage.setItem( s + "game_stage", game_stage);
+		localStorage.setItem( s + "solved_stage", solved_stage);
 	} catch( e){}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function processTouchBegan(){
+function process_touch_began(){
 	var a, b, i, p;
 	var x, y;
 
-	x = touch_x;
-	y = touch_y;
+	x = skt.x;
+	y = skt.y;
 
-	accXStd = accX;
-	accYStd = accY;
+	acc_x_std = acc_x;
+	acc_y_std = acc_y;
 
 	switch( current_state){
-	case TITLE:
-		if( 460 - 16 - 80 <= y){
-			if( 16 <= x && x < 16 + 80){
+	case STATE_TITLE:
+		if( REFH - 32 - 160 <= y){
+			if( 32 <= x && x < 32 + 160){
 				//★TILT ボタンがタッチされた。
-				gswPlayAudio( kAudComet);
-				isTilt = !isTilt;
-			} else if( 160 - 40 <= x && x < 160 + 40){
+				gsw_play_audio( k_aud_comet);
+				is_tilt = !is_tilt;
+				save_storage();
+			} else if( 320 - 80 <= x && x < 320 + 80){
 				//★HOW TO ボタンがタッチされた。
-				gswPlayAudio( kAudComet);
-				menuX = 0;
-				menuVX = 0;
-				next_state = HOWTO;
-			} else if( 320 - 16 - 80 <= x && x < 320 - 16){
+				gsw_play_audio( k_aud_comet);
+				menu_x = 0;
+				menu_vx = 0;
+				next_state = STATE_HOW_TO;
+			} else if( REFW - 32 - 160 <= x && x < REFW - 32){
 				//★音の ON / OFF ボタンがタッチされた。
-				isAudio = !isAudio;
-				if( isAudio){
-					gswPlayAudio( -1);
-					gswPlayAudio( kAudComet);
-				} else stopAudio( kAudBGMTitle);
+				is_audio = !is_audio;
+				save_storage();
+				if( is_audio){
+					gsw_play_audio( -1);
+					gsw_play_audio( k_aud_comet);
+				} else ska.stop( k_aud_bgm_title);
 			}
-		} else if( y < 300){
+		} else if( y < 600){
 			//★START ボタンがタッチされた。
-			stopAudio( kAudBGMTitle);
-			gswPlayAudio( kAudComet);
-			gameStage = 1;
-			//gameStage = gameStageSolved = MAXSTAGE; //★全ステージクリアのデバグ用。
-			next_state = GAME_START;
+			ska.stop( k_aud_bgm_title);
+			gsw_play_audio( k_aud_comet);
+			game_stage = 1;
+			//game_stage = solved_stage = MAXSTAGE; //★全ステージクリアのデバグ用。
+			next_state = STATE_WARP;
 		}
 		break;
 
-	case HOWTO:
-		if( 460 - 16 - 80 <= y && 320 - 16 - 80 <= x && x < 320 - 16){
+	case STATE_HOW_TO:
+		if( REFH - 32 - 160 <= y && REFW - 32 - 160 <= x && x < REFW - 32){
 			//★OK ボタンがタッチされた。
-			gswPlayAudio( kAudComet);
-			next_state = TITLE;
+			gsw_play_audio( k_aud_comet);
+			next_state = STATE_TITLE;
 		}
 		break;
 
-	case GAME:
-		if( inGameState == WAITING){
-			/*if( y < BY - 15){//★デバグ用（画面上部をタッチすると、ステージクリア。）
-				gswPlayAudio( kAudComet);
-				gameStage++;
-				if( gameStage <= MAXSTAGE){
-					setStage( gameStage);
-				} else{
-					next_state = TITLE;
-				}
-			} else */if( BY <= y && y < BY + 8 * GRIDW){
-				if( BX <= x && x < BX + 8 * GRIDW){
-					p = Math.floor( ( y - BY) / GRIDW) * 8 + Math.floor( ( x - BX) / GRIDW);
-					if( map[ p] == EMPTY){// && p != meteorP){
-						setTrack( p);
-						if( 0 < map[ 64 + meteorP]){
-							//★彗星が何も押さずに移動を開始。
-							gswPlayAudio( kAudComet);
-							meteorPTail = meteorP;
-							meteorP = p;
-							inGrab = true;
-						}
+	case STATE_GAME:
+		if( game_state != WAITING) break;
+
+		/*if( y < BY - 30){//★デバグ用（画面上部をタッチすると、ステージクリア。）
+			gsw_play_audio( k_aud_comet);
+			game_stage++;
+			if( game_stage <= MAXSTAGE){
+				set_stage( game_stage);
+			} else{
+				next_state = STATE_TITLE;
+			}
+			break;
+		}*/
+
+		if( BY <= y && y < BY + 8 * GRIDW){
+			if( BX <= x && x < BX + 8 * GRIDW){
+				p = Math.floor( ( y - BY) / GRIDW) * 8 + Math.floor( ( x - BX) / GRIDW);
+				if( map[ p] == EMPTY){
+					set_heat_map( p);
+					if( 0 < heat_map[ meteor_p]){
+						//★流星が何も押さずに移動を開始。
+						gsw_play_audio( k_aud_comet);
+						meteor_p_tail = meteor_p;
+						meteor_p = p;
+						meteor_x = x;
+						meteor_y = y;
+						in_grab = true;
 					}
-				}
-			} else if( BY + 8 * GRIDW + 15 < y){
-				if( x < 160){
-					//★rewind ボタンがタッチされた。
-					if( inGameState == WAITING && 0 < moves){
-						next_state = REWIND;
-					}
-				} else{
-					//★menu ボタンがタッチされた。
-					gswPlayAudio( kAudComet);
-					menuX = ( gameStage - 1) * MENUW;
-					menuVX = 0;
-					gameStageJustCleared = 0;
-					next_state = MENU;
 				}
 			}
+			break;
 		}
+
+		if( BY + 8 * GRIDW + 30 < y){
+			if( x < 320){
+				//★rewind ボタンがタッチされた。
+				if( game_state == WAITING && 0 < moves){
+					next_state = STATE_REWIND;
+				}
+			} else{
+				//★menu ボタンがタッチされた。
+				gsw_play_audio( k_aud_comet);
+				menu_x = ( game_stage - 1) * MENUW;
+				menu_vx = 0;
+				just_cleared_stage = 0;
+
+				next_state = STATE_MENU;
+			}
+			break;
+		}
+
 		break;
 
-	case MENU:
-		if( inDialogue){
+	case STATE_MENU:
+		if( in_dialogue){
 			//★クリアした記録を消去？ YES / NO
-			if( 240 <= y && y < 300){
-				gswPlayAudio( kAudComet);
-				if( x < 160){
-					gameStageJustCleared = 0;
-					gameStageSolved = 0;
-					menuX = 0;
-					menuVX = 0;
+			if( 480 <= y && y < 600){
+				gsw_play_audio( k_aud_comet);
+				if( x < 320){
+					just_cleared_stage = 0;
+					solved_stage = 0;
+					menu_x = 0;
+					menu_vx = 0;
 
-					for( i = 0; i < MAXSTAGE; i++) mapCache[ i * 64] = -1;
+					for( i = 0; i < MAXSTAGE; i++) map_cache[ i * 64] = -1;
 
-					setStage( 1);
-					for( i = 0; i < 64; i++) mapCache[ i] = map[ i];
-					movesLimitCache[ 0] = movesLimit;
+					set_stage( 1);
+					for( i = 0; i < 64; i++) map_cache[ i] = map[ i];
+					moves_limit_cache[ 0] = moves_limit;
 
-					saveStorage();
+					save_storage();
 				}
-				inDialogue = false;
+				in_dialogue = false;
 			}
-		} else{
-			if( CENTERY - 306 / 4 <= y && y < CENTERY + 306 / 4){
-				a = Math.floor( 2 * ( x - CENTERX + 306 / 4) + menuX);
-				if( 0 <= a && a % MENUW < 306){
-					a = 1 + Math.floor( a / MENUW);
-					b = gameStageSolved + 1;
-					if( MAXSTAGE < b) b--;
-					if( 1 <= a && a <= b){
-						gameStageFocused = a;
-					}
-				}
-			} else if( 460 - 16 - 80 <= y){
-				if( x < 110){
-					//★タイトル画面へ戻るボタンがタッチされた。
-					stopAudio( kAudBGMGame);
-					gswPlayAudio( kAudComet);
-					next_state = TITLE;
-				} else if( x < 210){
-					//★記録を消すボタンがタッチされた。
-					gswPlayAudio( kAudComet);
-					inDialogue = true;
-				} else{
-					//★音の ON / OFF ボタンがタッチされた。
-					isAudio = !isAudio;
-					if( isAudio){
-						gswPlayAudio( -1);
-						gswPlayAudio( kAudComet);
-					} else stopAudio( kAudBGMGame);
-				}
-			}
+			break;
 		}
+
+		if( CENTER_Y - 612 / 4 <= y && y < CENTER_Y + 612 / 4){
+			a = Math.floor( 2 * ( x - CENTER_X + 612 / 4) + menu_x);
+			if( 0 <= a && a % MENUW < 612){
+				a = 1 + Math.floor( a / MENUW);
+				b = solved_stage + 1;
+				if( MAXSTAGE < b) b--;
+				if( 1 <= a && a <= b){
+					focused_stage = a;
+				}
+			}
+			break;
+		}
+
+		if( REFH - 32 - 160 <= y){
+			if( x < 220){
+				//★タイトル画面へ戻るボタンがタッチされた。
+				ska.stop( k_aud_bgm_game);
+				gsw_play_audio( k_aud_comet);
+				next_state = STATE_TITLE;
+			} else if( x < 420){
+				//★記録を消すボタンがタッチされた。
+				gsw_play_audio( k_aud_comet);
+				in_dialogue = true;
+			} else{
+				//★音の ON / OFF ボタンがタッチされた。
+				is_audio = !is_audio;
+				save_storage();
+				if( is_audio){
+					gsw_play_audio( -1);
+					gsw_play_audio( k_aud_comet);
+				} else ska.stop( k_aud_bgm_game);
+			}
+			break;
+		}
+
 		break;
 
-	case CLEAR_ALL:
-		if( 6 * FPS <= stateCount){
+	case STATE_CONQUER:
+		if( 6 * FPS <= state_count){
 			//★全ステージクリア画面を6秒以上表示した後でタッチされた。
-			stopAudio( kAudBGMGame);
-			gswPlayAudio( kAudComet);
-			next_state = TITLE;
+			ska.stop( k_aud_bgm_game);
+			gsw_play_audio( k_aud_comet);
+			next_state = STATE_TITLE;
 		}
 		break;
 	}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 function process_main(){
 	var a, b, i, j;
 	var x, y;
 
 	switch( current_state){
-	case DEFAULT:
-		next_state = TITLE;
+	case STATE_DEFAULT:
+		next_state = STATE_TITLE;
 		break;
 
-	case TITLE:
-		if( stateCount == 0){
-			//a
-		} else if( stateCount == FIRST_SILENCE){
-			setAudioVolume( kAudBGMTitle, 1.0);
-			gswPlayAudio( -1);
+	case STATE_TITLE:
+		if( state_count == 0){
+			save_storage();
+		} else if( state_count == FIRST_SILENCE){
+			ska.set_volume( k_aud_bgm_title, 1);
+			gsw_play_audio( -1);
 		}
 		break;
 
-	case HOWTO:
-		if( stateCount == 0){
-			menuX = menuVX = 0;
+	case STATE_HOW_TO:
+		if( state_count == 0){
+			menu_x = menu_vx = 0;
 		}
 
-		a = 850 - 460; b = 100;
-		if( touching){
-			if( touch_vy != 0){
+		a = 1700 - REFH; b = 200;
+		if( skt.on){
+			if( skt.vy != 0){
 				//★ドラッグ。
-				menuVX = Math.floor( -touch_vy);
-				menuX += menuVX;
-				if( menuX < -b) menuX = -b;
-				else if( a + b <= menuX) menuX = a + b - 1;
+				menu_vx = Math.floor( -skt.vy);
+				menu_x += menu_vx;
+				if( menu_x < -b) menu_x = -b;
+				else if( a + b <= menu_x) menu_x = a + b - 1;
 			}
 		} else{
-			if( menuVX != 0){
+			if( menu_vx != 0){
 				//★慣性。
-				menuVX *= 0.9;
-				if( -3 < menuVX && menuVX < 3) menuVX = 0;
+				menu_vx *= 0.9;
+				if( -3 < menu_vx && menu_vx < 3) menu_vx = 0;
 				else{
-					menuX += menuVX;
-					if( menuX < -b){
-						menuX = -b;
-						menuVX = 0;
-					} else if( a + b <= menuX){
-						menuX = a + b - 1;
-						menuVX = 0;
+					menu_x += menu_vx;
+					if( menu_x < -b){
+						menu_x = -b;
+						menu_vx = 0;
+					} else if( a + b <= menu_x){
+						menu_x = a + b - 1;
+						menu_vx = 0;
 					}
 				}
 			} else{
-				//★ぴったりの位置まで。
-				if( menuX < 0) menuX /= 2;
-				else if( a < menuX) menuX += ( a - menuX) / 2;
+				//★ぴったりの位置まで引き戻す。
+				if( menu_x < 0) menu_x -= menu_x / 7;
+				else if( a < menu_x) menu_x += ( a - menu_x) / 7;
 			}
 		}
 		break;
 
-	case GAME_START:
-		if( stateCount == 0){
-			gswPlayAudio( -1);
-			gswPlayAudio( kAudStart);
+	case STATE_WARP:
+		if( state_count == 0){
+			gsw_play_audio( -1);
+			gsw_play_audio( k_aud_start);
 
-			setStage( gameStage);
-		} else if( FPS <= stateCount){
-			next_state = GAME;
+			set_stage( game_stage);
+		} else if( FPS <= state_count){
+			next_state = STATE_GAME;
 		}
 		break;
 
-	case GAME:
-		processGame();
+	case STATE_GAME:
+		process_game();
 		break;
 
-	case REWIND: case FAIL:
-		if( stateCount == 0){
-			if( current_state == REWIND) gswPlayAudio( kAudRewind);
-			else gswPlayAudio( kAudRewind);  //★FAIL の音をいただいていないので REWIND の音を流用。
-			movingP = -1;
+	case STATE_REWIND: case STATE_FAIL:
+		if( state_count == 0){
+			if( current_state == STATE_REWIND) gsw_play_audio( k_aud_rewind);
+			else gsw_play_audio( k_aud_rewind); //★FAIL の音をいただいていないので REWIND の音を流用。
+			moving_p = -1;
 		}
 
-		if( movingP < 0){
-			a = movesRecord[ --moves];
-			movingP = a & 63;
-			movingD = Math.floor( a / 64) & 7;
-			map[ movingP] = Math.floor( a / 512) & 3;
-			movingOff = Math.floor( a / 4096);
+		if( current_state == STATE_FAIL && state_count < 0.5 * FPS) break;
+
+		if( moving_p < 0){
+			a = moves_record[ --moves];
+			moving_p = a & 63;
+			moving_d = Math.floor( a / 64) & 7;
+			map[ moving_p] = Math.floor( a / 512) & 3;
+			moving_off = Math.floor( a / 4096);
 			if( 0 < ( a & 2048)){
-				map[ movingP + VP[ movingD] * movingOff] = 0;
+				map[ moving_p + VP[ moving_d] * moving_off] = 0;
 			}
-			movingOff *= GRIDW;
+			moving_off *= GRIDW;
 		} else{
-			if( movingOff == 0){
+			if( moving_off == 0){
 				if( 0 < moves){
-					movingP = -1;
+					moving_p = -1;
 				} else{
-					next_state = GAME;
+					next_state = STATE_GAME;
 				}
 			} else{
-				movingOff -= GRIDW / 2;
+				moving_off -= GRIDW / 4;
 			}
 		}
 		break;
 
-	case MENU:
-		processMenu();
+	case STATE_MENU:
+		process_menu();
 		break;
 
-	case CLEAR:
-		if( stateCount == 0){
-			if( gameStage < MAXSTAGE) gswPlayAudio( kAudClear);
-			else gswPlayAudio( kAudClearAll);
+	case STATE_CLEAR:
+		if( state_count == 0){
+			if( game_stage < MAXSTAGE) gsw_play_audio( k_aud_clear);
+			else gsw_play_audio( k_aud_conquer);
 
-			for( i = 0; i < 64; i++) mapCache[ ( gameStage - 1) * 64 + i] = map[ i];
-			movesLimitCache[ gameStage - 1] = movesLimit;
+			for( i = 0; i < 64; i++) map_cache[ ( game_stage - 1) * 64 + i] = map[ i];
+			moves_limit_cache[ game_stage - 1] = moves_limit;
 		}
 
-		if( FPS <= stateCount){
-			if( gameStageSolved < gameStage) gameStageSolved = gameStage;
-			if( gameStage < MAXSTAGE){
-				menuX = ( gameStage - 1) * MENUW;
-				menuVX = 0;
-				gameStageJustCleared = gameStage;
-				next_state = MENU;
+		if( FPS <= state_count){
+			if( solved_stage < game_stage) solved_stage = game_stage;
+			if( game_stage < MAXSTAGE){
+				menu_x = ( game_stage - 1) * MENUW;
+				menu_vx = 0;
+				just_cleared_stage = game_stage;
+				next_state = STATE_MENU;
 			} else{
-				next_state = CLEAR_ALL;
+				next_state = STATE_CONQUER;
 			}
 		}
 	}
-	if( ( current_state == CLEAR_ALL && 6 * FPS <= stateCount) ||
-		( current_state==TITLE && gameStageSolved == MAXSTAGE)
+	if( ( current_state == STATE_CONQUER && 6 * FPS <= state_count) ||
+		( current_state==STATE_TITLE && solved_stage == MAXSTAGE)
 	){
-		a = stateCount % FPS;
+		a = state_count % FPS;
 		if( a == 0 || a == 3 || a == 12){
 			a = Math.floor( 6 + Math.random() * 20);
 			x = 20 + Math.random() * 300;
 			y = 20 + Math.random() * 440;
 			for( i = 0; i < 2; i++){
 				for( j = 0; j < a; j++){
-				addDust( x, y, i * Math.PI + 2 * Math.PI * j / a, a / 4);
+					add_dust( x, y, i * Math.PI + 2 * Math.PI * j / a, a / 4);
 				}
 				a = ( a + 1) / 2;
 			}
@@ -727,7 +865,7 @@ function process_main(){
 	}
 }
 
-function stepGrab( x0, y0, vx, vy){
+function step_grab( x0, y0, vx, vy){
 	var d, p, x, y;
 
 	x = Math.floor( x0); if( vx < 0) x--; else if( 0 < vx) x++;
@@ -735,9 +873,9 @@ function stepGrab( x0, y0, vx, vy){
 	p = x + y * 8;
 
 	if( x < 0 || 7 < x || y < 0 || 7 < y){
-		inGrab = false;
+		in_grab = false;
 	} else if( map[ p] == EMPTY){
-		meteorP = meteorPTail = p;
+		meteor_p = meteor_p_tail = p; //★この時、軌跡も消える。
 	} else{
 		if( vy < 0) d = 0;
 		else if( 0 < vx) d = 2;
@@ -745,51 +883,61 @@ function stepGrab( x0, y0, vx, vy){
 		else d = 6;
 
 		//★押す。
-		gswPlayAudio( kAudMove);
-		movingD = d;
-		movingCount = 0;
-		movingP = p;
-		movingOff = 0;
-		movingSpeed = 7;
-		dustCount = Math.floor( FPS / 4);
-		dustCenterD = d;
-		inGameState = MOVING;
-		inGrab = false;
+		gsw_play_audio( k_aud_move);
+		moving_d = d;
+		moving_count = 0;
+		moving_p = p;
+		moving_off = 0;
+		moving_speed = 7;
+		dust_count = Math.floor( FPS / 4);
+		dust_center_d = d;
+		game_state = MOVING;
+		in_grab = false;
 	}
 }
 
-function processGame(){
+function process_game(){
 	var a, i, p, x, y;
 	var t, dt, cx, cy, dx, dy, px, py, vx, vy;
 
-	if( stateCount == 0){
-		setAudioVolume( kAudBGMGame, 1.0);
-		inGameState = WAITING;
-		meteorP = meteorPTail = 0;
-		movingP = -1;
-		dustCount = 0;
-		inGrab = false;
+	if( state_count == 0){
+		//メニューから遷移してくる最後の1フレームで、
+		//隣のステージをセットしてしまっている可能性があるので、
+		//↓これが必要。
+		set_stage( game_stage);
+
+		ska.set_volume( k_aud_bgm_game, 1);
+		game_state = WAITING;
+		meteor_x = BX + 0.5 * GRIDW;
+		meteor_y = BY + 0.5 * GRIDW;
+		meteor_p = meteor_p_tail = 0;
+		last_tail_count = 0;
+		moving_p = -1;
+		dust_count = 0;
+		in_grab = false;
 	}
 
-	if( 0 < dustCount){
-		for( i = 0; i < 5; i++) addMeteorDust( ( dustCenterD * 0.25 - 0.12 + 0.24 * Math.random()) * Math.PI);
-		dustCount--;
+	if( 0 < dust_count){
+		for( i = 0; i < 5; i++) add_meteor_dust( ( dust_center_d * 0.25 - 0.12 + 0.24 * Math.random()) * Math.PI);
+		dust_count--;
 	}
 
-	switch( inGameState){
+	switch( game_state){
 	case WAITING:
-		if( touching){
-			dx = ( touch_x - BX) / GRIDW;
-			dy = ( touch_y - BY) / GRIDW;
-			vx = touch_vx / GRIDW;
-			vy = touch_vy / GRIDW;
+		if( skt.on){
+			dx = ( skt.x - BX) / GRIDW;
+			dy = ( skt.y - BY) / GRIDW;
+			vx = skt.vx / GRIDW;
+			vy = skt.vy / GRIDW;
 
-			if( inGrab){
+			if( in_grab){
 				if( vx != 0 || vy != 0){
+					last_tail_count = 0;
+
 					cx = dx - vx;
 					cy = dy - vy;
 					t = 0;
-					while( t < 1 && inGrab){
+					while( t < 1 && in_grab){
 						if( vx == 0) px = 1000000;
 						else if( 0 < vx){ px = ( Math.ceil( cx) - cx) / vx; if( px == 0) px = 1 / vx;}
 						else{ px = ( Math.floor( cx) - cx) / vx; if( px == 0) px = -1 / vx;}
@@ -802,34 +950,35 @@ function processGame(){
 						t += dt;
 
 						if( t <= 1){
-							if( px < py){ stepGrab( cx, cy, vx, 0); dt = px;}
-							else{ stepGrab( cx, cy, 0, vy); dt = py;}
+							if( px < py){ step_grab( cx, cy, vx, 0); dt = px;}
+							else{ step_grab( cx, cy, 0, vy); dt = py;}
 
 							cx += dt * vx;
 							cy += dt * vy;
 						}
 					}
 				}
+/*何だこれ
 			} else{
 				if( vx != 0 && vy != 0 && 0 <= dx && dx < 8 && 0 <= dy && dy < 8){
 					p = Math.floor( dx) + Math.floor( dy) * 8;
 					if( map[ p] == EMPTY){
-						setTrack( p);
-						if( 0 < map[ 64 + meteorP]){
-							gswPlayAudio( kAudComet);
-							meteorPTail = meteorP;
-							meteorP = p;
-							inGrab = true;
+						set_heat_map( p);
+						if( 0 < heat_map[ meteor_p]){
+							gsw_play_audio( k_aud_comet);
+							meteor_p_tail = meteor_p;
+							meteor_p = p;
+							in_grab = true;
 						}
 					}
-				}
+				}*/
 			}
 		} else{
-			if( inGrab) inGrab = false;
+			if( in_grab) in_grab = false;
 
-			if( isTilt){
-				vx = ACCMAG * ( accX - accXStd);
-				vy = ACCMAG * ( accY - accYStd);
+			if( is_tilt){
+				vx = ACCMAG * ( acc_x - acc_x_std);
+				vy = ACCMAG * ( acc_y - acc_y_std);
 				a = Math.floor( 100 * Math.sqrt( vx * vx + vy * vy));
 
 				if( vy == 0){
@@ -843,29 +992,29 @@ function processGame(){
 					//a = 0;
 				} else if( a < 5 + 20){
 					if( 5 + 20 * Math.random() < a){
-						addMeteorDust( t + ( -0.05 + 0.1 * Math.random()) * Math.PI);
+						add_meteor_dust( t + ( -0.05 + 0.1 * Math.random()) * Math.PI);
 					}
 				} else{
-					movingD = Math.floor( t / Math.PI * 2.0 + 4.5) % 4 * 2;
-					x = meteorP % 8 + VX[ movingD];
-					y = Math.floor( meteorP / 8) + VY[ movingD];
-					p = meteorP + VP[ movingD];
+					moving_d = Math.floor( t / Math.PI * 2.0 + 4.5) % 4 * 2;
+					x = meteor_p % 8 + VX[ moving_d];
+					y = Math.floor( meteor_p / 8) + VY[ moving_d];
+					p = meteor_p + VP[ moving_d];
 					if( x < 0 || 7 < x || y < 0 || 7 < y){
-						//inGrab = false;
+						//in_grab = false;
 					} else if( map[ p] == EMPTY){
 						for( i = 0; i < 5; i++){
-							addMeteorDust( ( movingD / 4 - 0.12 + 0.24 * Math.random()) * Math.PI);
+							add_meteor_dust( ( moving_d / 4 - 0.12 + 0.24 * Math.random()) * Math.PI);
 						}
 					} else{
 						//★押す。
-						gswPlayAudio( kAudMove);
-						movingCount = 0;
-						movingP = p;
-						movingOff = 0;
-						movingSpeed = 7;
-						dustCount = Math.floor( FPS / 4);
-						dustCenterD = movingD;
-						inGameState = MOVING;
+						gsw_play_audio( k_aud_move);
+						moving_count = 0;
+						moving_p = p;
+						moving_off = 0;
+						moving_speed = 7;
+						dust_count = Math.floor( FPS / 4);
+						dust_center_d = moving_d;
+						game_state = MOVING;
 					}
 				}
 			}
@@ -873,271 +1022,306 @@ function processGame(){
 		break;
 
 	case MOVING:
-		if( movingP < 0){
-			if( !touching) inGameState = WAITING;
+		if( moving_p < 0){
+			if( !skt.on) game_state = WAITING;
 		} else{
-			movingOff += movingSpeed;
-			movingSpeed += 1;
-			x = movingP % 8 * GRIDW + movingOff * VX[ movingD];
-			y = Math.floor( movingP / 8) * GRIDW + movingOff * VY[ movingD];
+			moving_off += moving_speed;
+			moving_speed += 1;
+			x = moving_p % 8 * GRIDW + moving_off * VX[ moving_d];
+			y = Math.floor( moving_p / 8) * GRIDW + moving_off * VY[ moving_d];
 			if( x < 0 || 7 * GRIDW < x || y < 0 || 7 * GRIDW < y){
 				//★領域外にいる。
 				if( x < -2 * GRIDW || 9 * GRIDW < x || y < -2 * GRIDW || 9 * GRIDW <= y){
 					//★領域外に消える。
-					movesRecord[ moves++] =
-						movingP + movingD * 64 + map[ movingP] * 512 +
-						Math.floor( movingOff / GRIDW) * 4096
+					moves_record[ moves++] =
+						moving_p + moving_d * 64 + map[ moving_p] * 512 +
+						Math.floor( moving_off / GRIDW) * 4096
 					;
-					map[ movingP] = EMPTY;
-					inGameState = WAITING;
+					map[ moving_p] = EMPTY;
+					game_state = WAITING;
 				}
 			} else{
 				p = Math.floor( y / GRIDW) * 8 + Math.floor( x / GRIDW);
-				if( movingD == 2) x += GRIDW - 1;
-				else if( movingD == 4) y += GRIDW - 1;
+				if( moving_d == 2) x += GRIDW - 1;
+				else if( moving_d == 4) y += GRIDW - 1;
 				if( map[ Math.floor( y / GRIDW) * 8 + Math.floor( x / GRIDW)] != EMPTY){
 					//★衝突した。
-					gswPlayAudio( kAudHit);
-					if( movingD == 0) p += 8;
-					else if( movingD == 6) p++;
-					if( p == movingP){
+					gsw_play_audio( k_aud_hit);
+					if( moving_d == 0) p += 8;
+					else if( moving_d == 6) p++;
+					if( p == moving_p){
 						//★動かずに衝突した。
 					} else{
 						//★動いた後、衝突した。
-						movesRecord[ moves++] =
-							movingP + movingD * 64 + map[ movingP] * 512 + 2048 +
-							Math.floor( ( p - movingP) / VP[ movingD]) * 4096
+						moves_record[ moves++] =
+							moving_p + moving_d * 64 + map[ moving_p] * 512 + 2048 +
+							Math.floor( ( p - moving_p) / VP[ moving_d]) * 4096
 						;
-						map[ p] = map[ movingP];
-						map[ movingP] = EMPTY;
-						inGameState = WAITING;
+						map[ p] = map[ moving_p];
+						map[ moving_p] = EMPTY;
+						game_state = WAITING;
 
 						if( map[ p] == SPHERE){
-							if( isClear()){
+							if( is_clear()){
 								//★クリア。
-								next_state = CLEAR;
+								next_state = STATE_CLEAR;
 							}
 						}
 					}
-					movingP = -1;
+					moving_p = -1;
 				}
 			}
-			if( inGameState == WAITING && moves == movesLimit && next_state != CLEAR){
+			if( game_state == WAITING && moves == moves_limit && next_state != STATE_CLEAR){
 				//★手数になったのにクリアできなかった。
-				next_state = FAIL;
+				next_state = STATE_FAIL;
 			}
 		}
 	}
-
-	if( meteorPTail != meteorP){
-		meteorPTail += VP[ getNextD( meteorPTail, meteorP)];
-	}
 }
 
-function processMenu(){
-	var a, b, i, x;
+function process_menu(){
+	var a, b, i, j;
+	var x;
 
-	if( stateCount == 0){
-		setAudioVolume( kAudBGMGame, 0.4);
-		gameStageFocused = 0;
-		inDialogue = false;
-	} else if( 0 < stateEndCount){
-		if( 2 * GRIDW < ( menuX + GRIDW) % MENUW) stateEndCount++;
-		else if( stateEndCount == 1){
-			next_state = GAME;
+	if( state_count == 0){
+		save_storage();
+		ska.set_volume( k_aud_bgm_game, 0.4);
+		focused_stage = 0;
+		in_dialogue = false;
+
+		if( 0 < moves) add_flash( 516 + 48 / 2, 48 + 64 / 2);
+		arrange_flash();
+	} else if( 0 < state_end_count){
+		if( 2 * GRIDW < ( menu_x + GRIDW) % MENUW){
+			//★横スライドしている間は、減らさないために足している？
+			state_end_count++;
+		} else if( state_end_count == 1){
+			next_state = STATE_GAME;
 		}
 	}
 
 	a = MENUW / 2;
-	b = gameStageSolved;
+	b = solved_stage;
 	if( b == MAXSTAGE) b--;
 	b *= MENUW;
 
-	if( touching && !inDialogue && stateEndCount == 0){
-		if( touch_vx != 0){
+	if( skt.on && !in_dialogue && state_end_count == 0){
+		if( skt.vx != 0){
 			//★ドラッグ。
-			menuVX = Math.floor( -2 * touch_vx);
-			menuX += menuVX;
-			if( menuX < -a) menuX = -a;
-			else if( b + a <= menuX) menuX = b + a - 1;
+			menu_vx = Math.floor( -2 * skt.vx);
+			menu_x += menu_vx;
+			if( menu_x < -a) menu_x = -a;
+			else if( b + a <= menu_x) menu_x = b + a - 1;
 
-			if( 10 < Math.abs( touch_x - touch_by)) gameStageFocused = 0;
+			if( 10 < Math.abs( skt.x - skt.by)) focused_stage = 0;
 		}
 	} else{
-		if( menuVX != 0){
+		if( menu_vx != 0){
 			//★慣性。
-			menuVX *= 0.9;
-			if( -3 < menuVX && menuVX < 3) menuVX = 0;
+			menu_vx *= 0.9;
+			if( -3 < menu_vx && menu_vx < 3) menu_vx = 0;
 			else{
-				menuX += menuVX;
-				if( menuX < -a){
-					menuX = -a;
-					menuVX = 0;
-				} else if( b + a <= menuX){
-					menuX = b + a - 1;
-					menuVX = 0;
+				menu_x += menu_vx;
+				if( menu_x < -a){
+					menu_x = -a;
+					menu_vx = 0;
+				} else if( b + a <= menu_x){
+					menu_x = b + a - 1;
+					menu_vx = 0;
 				}
 			}
 		} else{
 			//★ぴったりの位置まで。
-			gameStage = 1 + Math.floor( ( a + menuX) / MENUW);
-			x = ( gameStage - 1) * MENUW - menuX;
-			if( x == -1) menuX--;
-			else if( x == 1) menuX++;
+			game_stage = 1 + Math.floor( ( a + menu_x) / MENUW);
+			x = ( game_stage - 1) * MENUW - menu_x;
+			if( x == -1) menu_x--;
+			else if( x == 1) menu_x++;
 			else{
 				x = Math.floor( x / 2);
 				if( x < -GRIDW) x = -GRIDW;
 				else if( GRIDW < x) x = GRIDW;
-				menuX += x;
+				menu_x += x;
 			}
 		}
 	}
 
-	if( touch_end){
-		if( 0 < gameStageFocused){
-			gswPlayAudio( kAudComet);
-			stateEndCount = Math.floor( 0.3 * FPS - 1);
-			gameStage = gameStageFocused;
-			menuVX = 0;
-			if( menuX < ( gameStage - 1.5) * MENUW) menuX = Math.floor( ( gameStage - 1.5) * MENUW);
-			else if( ( gameStage - 0.5) * MENUW <= menuX) menuX = Math.floor( ( gameStage - 0.5) * MENUW - 1);
-			gameStageFocused = 0;
+	if( skt.end){
+		if( 0 < focused_stage){
+			//★そのステージで、ゲームスタート。
+			gsw_play_audio( k_aud_comet);
+			state_end_count = Math.floor( 0.3 * FPS - 1);
 
-			setStage( gameStage);
-			for( i = 0; i < 64; i++) mapCache[ ( gameStage - 1) * 64 + i] = map[ i];
-			movesLimitCache[ gameStage - 1] = movesLimit;
-			gameStageJustCleared = 0;
+			game_stage = focused_stage;
+			menu_vx = 0;
+			if( menu_x < ( game_stage - 1 - 0.5) * MENUW) menu_x = Math.floor( ( game_stage - 1 - 0.5) * MENUW);
+			else if( ( game_stage - 1 + 0.5) * MENUW <= menu_x) menu_x = Math.floor( ( game_stage - 1 + 0.5) * MENUW - 1);
+			focused_stage = 0;
+
+			set_stage( game_stage);
+			arrange_flash();
+			for( i = 0; i < 64; i++) map_cache[ ( game_stage - 1) * 64 + i] = map[ i];
+
+			just_cleared_stage = 0;
 		}
 	}
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function processStars(){
+function process_stars(){
 	var i;
 
 	if( Math.random() * FPS < 5){
-		for( i = 0; i < MAXSTARNUM; i++){
-			if( starN[ i] < 0){
-				starN[ i] = Math.floor( Math.random() * 16);
-				starD[ i] = Math.floor( Math.random() * 1000);
-				starZ[ i] = 0;
-				starVZ[ i] = 5 + Math.floor( Math.random() * 20);
-				starR[ i] = 0;
-				starVR[ i] = Math.floor( Math.random() * 100);
-				if( starVR[ i] < 50) starVR[ i] -= 60; else starVR[ i] -= 40;
-				break;
-			}
+		for( i = 0; i < MAXSTARNUM; i++) if( star_n[ i] < 0){
+			star_n[ i] = Math.floor( Math.random() * 16);
+			star_d[ i] = Math.floor( Math.random() * 1000);
+			star_z[ i] = 0;
+			star_vz[ i] = 5 + Math.floor( Math.random() * 20);
+			star_r[ i] = 0;
+			star_vr[ i] = Math.floor( Math.random() * 100) - 50;
+			if( star_vr[ i] < 0) star_vr[ i] -= 10; else star_vr[ i] += 10;
+			break;
 		}
 	}
 
-	for( i = 0; i < MAXSTARNUM; i++){
-		if( 0 <= starN[ i]){
-			starZ[ i] += starVZ[ i];
-			if( starZ[ i] < 1000){
-				starR[ i] = ( starR[ i] + 1000 + starVR[ i]) % 1000;
-			} else{
-				starN[ i] = -1;
-			}
+	for( i = 0; i < MAXSTARNUM; i++) if( 0 <= star_n[ i]){
+		star_z[ i] += star_vz[ i];
+		if( star_z[ i] < 1000){
+			star_r[ i] = ( star_r[ i] + 1000 + star_vr[ i]) % 1000;
+		} else{
+			star_n[ i] = -1;
 		}
 	}
 }
 
-function drawStars(){
-	var i;
+function draw_stars(){
+	var i, n;
 	var a, x, y;
 
 	for( i = 0; i < MAXSTARNUM; i++){
-		if( 0 <= starN[ i]){
-			a = starZ[ i] * starZ[ i] / 1000000;
-			x = 160 + 70 * ACCMAG * accX + 300 * Math.sin( starD[ i] * 2 * Math.PI / 1000) * a;
-			y = 240 + 70 * ACCMAG * accY - 300 * Math.cos( starD[ i] * 2 * Math.PI / 1000) * a;
+		n = star_n[ i];
+		if( 0 <= n){
+			a = star_z[ i] * star_z[ i] / 1000000;
+			x = 320 + 140 * ACCMAG * acc_x + 600 * Math.sin( star_d[ i] * 2 * Math.PI / 1000) * a;
+			y = 480 + 140 * ACCMAG * acc_y - 600 * Math.cos( star_d[ i] * 2 * Math.PI / 1000) * a;
 
-			ctx.save();
-			ctx.translate( x, y);
-			ctx.scale( 2 * a, 2 * a);
-			ctx.rotate( starR[ i] * 2 * Math.PI / 1000);
-			ctx.globalAlpha = 0.7 * a;
-			gswDrawImagePartially(
-				kImgStars,
-				-16, -16,
-				( starN[ i] % 4) * 32, Math.floor( starN[ i] / 4) * 32,
-				32, 32
+			skc.alpha( 0.7 * a);
+			skc.draw_partially_centered_scaled_rotated(
+				k_img_stars, x, y,
+				n % 4 * 64, Math.floor( n / 4) * 64,
+				64, 64, 2 * a, star_r[ i] * 2 * Math.PI / 1000
 			);
-			ctx.restore();
 		}
 	}
-	ctx.globalAlpha = 1;
+
+	skc.alpha( 1);
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function addDust( x, y, d, v){
+function add_dust( x, y, d, v){
 	var i;
 
 	for( i = 0; i < MAXDUSTNUM; i++){
-		if( dustN[ i] < 0){
-			dustN[ i] = 0;
-			dustX[ i] = x;
-			dustY[ i] = y;
-			dustD[ i] = d;
-			dustV[ i] = v;
+		if( dust_n[ i] < 0){
+			dust_n[ i] = 0;
+			dust_x[ i] = x;
+			dust_y[ i] = y;
+			dust_d[ i] = d;
+			dust_v[ i] = v;
 			break;
 		}
 	}
 }
 
-function addMeteorDust( t){
-	addDust(
-		BX + ( meteorP % 8 + 0.5) * GRIDW + 10 * Math.sin( t),
-		BY + ( Math.floor( meteorP / 8) + 0.5) * GRIDW - 10 * Math.cos( t),
+function add_meteor_dust( t){
+	add_dust(
+		BX + ( meteor_p % 8 + 0.5) * GRIDW + 10 * Math.sin( t),
+		BY + ( Math.floor( meteor_p / 8) + 0.5) * GRIDW - 10 * Math.cos( t),
 		t, 5 + Math.random() * 5
 	);
 }
 
-function processDust(){
+function process_dust(){
 	var i;
 
 	for( i = 0; i < MAXDUSTNUM; i++){
-		if( 0 <= dustN[ i]){
-			if( ++dustN[ i] < 20){
-				dustX[ i] += dustV[ i] * Math.sin( dustD[ i]);
-				dustY[ i] -= dustV[ i] * Math.cos( dustD[ i]);
+		if( 0 <= dust_n[ i]){
+			if( ++dust_n[ i] < 20){
+				dust_x[ i] += dust_v[ i] * Math.sin( dust_d[ i]);
+				dust_y[ i] -= dust_v[ i] * Math.cos( dust_d[ i]);
 			} else{
-				dustN[ i] = -1;
+				dust_n[ i] = -1;
 			}
 		}
 	}
 }
 
-function drawDust(){
+function draw_dust(){
 	var a, i;
 	var t;
 
 	for( i = 0; i < MAXDUSTNUM; i++){
-		if( 0 <= dustN[ i]){
-			ctx.save();
-
-			ctx.translate( dustX[ i], dustY[ i]);
-			ctx.scale( 0.25, 0.25);
-			t = ( 20 - dustN[ i]) / 20.0;
-			ctx.globalAlpha = t;
-			a = 11 + dustN[ i] % 3;
+		if( 0 <= dust_n[ i]){
+			t = ( 20 - dust_n[ i]) / 20.0;
+			skc.alpha( t);
+			a = 11 + dust_n[ i] % 3;
 			if( 11 < a) a += 2;
 
-			gswDrawImagePartially( kImgStars, -16, -16, a % 4 * 32, Math.floor( a / 4) * 32, 32, 32);
-
-			ctx.restore();
+			skc.draw_partially_scaled(
+				k_img_stars, dust_x[ i] - 16, dust_y[ i] - 16,
+				a % 4 * 64, Math.floor( a / 4) * 64, 64, 64, 0.5
+			);
 		}
 	}
-	ctx.globalAlpha = 1.0;
+	skc.alpha( 1);
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-function setStage( n){
-	var i, x, y;
-	var a;
+function add_flash( x, y){
+	var i;
+
+	for( i = 0; i < MAXFLASHNUM; i++){
+		if( flash_n[ i] == 0){
+			flash_n[ i] = 20;
+			flash_x[ i] = x;
+			flash_y[ i] = y;
+			break;
+		}
+	}
+}
+
+function arrange_flash(){
+	var i, j, p, q;
+
+	p = 0; q = ( game_stage - 1) * 64;
+	for( i = 0; i < 8; i++) for( j = 0; j < 8; j++){
+		if( map[ p] != map_cache[ q]){
+			add_flash( BX + ( j + 0.5) * GRIDW, BY + ( i + 0.5) * GRIDW);
+		}
+		p++; q++;
+	}
+}
+
+function process_flash(){
+	var i;
+
+	for( i = 0; i < MAXFLASHNUM; i++) if( 0 < flash_n[ i]) flash_n[ i]--;
+}
+
+function draw_flash(){
+	var i;
+
+	for( i = 0; i < MAXFLASHNUM; i++) if( 0 < flash_n[ i]){
+		skc.draw_centered_scaled( k_img_flash, flash_x[ i], flash_y[ i], 0.08 * flash_n[ i]);
+	}
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+function set_stage( n){
+	var a, b, i, x, y;
 
 	var s = [
 		"1780 DATA 00,00,00,00,08,00,00,08,00,14,00,00, 1",//1
@@ -1184,7 +1368,8 @@ function setStage( n){
 
 	for( i = 0; i < 2; i++){
 		for( y = 0; y < 6; y++){
-			a = parseInt( "0x" + s[ n - 1].substring( 10 + ( i * 6 + y) * 3, 10 + ( i * 6 + y) * 3 + 2));
+			b = 10 + ( i * 6 + y) * 3;
+			a = parseInt( "0x" + s[ n - 1].substring( b, b + 2));
 			for( x = 0; x < 8; x++){
 				if( 0 < ( a & 1)){
 					map[ ( 1 + y) * 8 + x] = 1 + i;
@@ -1194,11 +1379,11 @@ function setStage( n){
 		}
 	}
 
-	movesLimit = parseInt( s[ n - 1].substring( 47, 48));
+	moves_limit = parseInt( s[ n - 1].substring( 47, 48));
 	moves = 0;
 }
 
-function isClear(){
+function is_clear(){
 	var x, y, z;
 
 	z = 0;
@@ -1224,35 +1409,37 @@ function isClear(){
 	return false;
 }
 
-function setTrack( p){
-	var i, j, k, n, q;
+function set_heat_map( p){
+	var i, j, k, q;
+	var f;
 
-	for( i = 0; i < 64; i++) if( map[ i] == EMPTY) map[ 64 + i] = 0; else map[ 64 + i] = -1;
+	for( i = 0; i < 64; i++) if( map[ i] == EMPTY) heat_map[ i] = 0; else heat_map[ i] = -1;
 
-	map[ 64 + p] = 1;
+	heat_map[ p] = 1;
 
 	for( i = 1; ; i++){
-		n = 0;
+		f = true;
 		for( j = 0; j < 64; j++){
-			if( map[ 64 + j] == i){
+			if( heat_map[ j] == i){
 				for( k = 0; k < 8; k += 2){
 					q = j + VP[ k];
-					if( 0 <= q && q < 64 && !( j % 8 == 0 && 4 < k) && !( j % 8 == 7 && ( 0 < k && k < 4))){
-						if( map[ 64 + q] == 0){
-							map[ 64 + q] = i + 1;
-							n++;
+					if( 0 <= q && q < 64 && !( j % 8 == 0 && k == 6) && !( j % 8 == 7 && k == 2)){
+						if( heat_map[ q] == 0){
+							heat_map[ q] = i + 1;
+							f = false;
 						}
 					}
 				}
 			}
 		}
-		if( n == 0) break;
+		if( f) break;
 	}
 }
 
-function getNextD( p, p2){
+function get_next_d( p, p2){
 	var d, i, q, vx, vy;
 
+	//★まず、方向性を決定する。
 	vx = p2 % 8 - p % 8;
 	vy = Math.floor( p2 / 8) - Math.floor( p / 8);
 	if( vx * vx < vy * vy){
@@ -1260,350 +1447,377 @@ function getNextD( p, p2){
 	} else{
 		if( 0 < vx) d = 2; else d = 6;
 	}
+
 	for( i = 0; i < 4; i++){
 		q = p + VP[ d];
-		if( 0 <= q && q < 64 && !( p % 8 == 0 && 4 < i) && !( p % 8 == 7 && ( 0 < d && d < 4))){
-			if( map[ 64 + q] == map[ 64 + p] - 1) return d;
+		if( 0 <= q && q < 64 && !( p % 8 == 0 && d == 6) && !( p % 8 == 7 && d == 2)){
+			if( heat_map[ q] == heat_map[ p] - 1) return d;
 		}
 		d = ( d + 2) % 8;
 	}
-	return -1;  //★進むことができる方向がなかった。 (ゴールから検索を始めた場合など。)
+	return -1; //★進むことができる方向がなかった。 (ゴールから検索を始めた場合など。)
 }
 
-//●==========●==========●==========●==========●==========●==========●
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 function draw_main(){
-	var a, d, d0, i, j, p;
-	var x, y, x0, y0;
-	var t, t2;
+	var a, d, d0, i, j, n, p;
+	var t, u, x, y, x0, y0;
+	var f;
+	var c;
 
-	ctx.globalAlpha = 1.0;
-	gswDrawImage( kImgBG, 0, 0);
-	drawStars();
+	c = skc.ctx;
+	skc.alpha( 1);
+	skc.draw( k_img_bg, 0, 0);
+	draw_stars();
 
 	switch( current_state){
-	case TITLE:
-		gswDrawImage( kImgTitle, 0, 0);
+	case STATE_TITLE:
+		skc.draw( k_img_title, 0, 0);
 
-		//ctx.globalAlpha = 0.5;
-		//drawString( 150, 165, "web", 2);
+		//skc.alpha( 0.5);
+		//draw_string( 150, 165, "web", 2);
 
-		//ctx.globalAlpha = 0.3;
-		//drawString( 230, 165, "ver. 1.0", 1.5);
+		//skc.alpha( 0.3);
+		//draw_string( 230, 165, "ver. 1.0", 1.5);
 
-		ctx.globalAlpha = 1.0;
-		x = 16; y = 460 - 16 - 80;
-		gswDrawImagePartially( kImgTilt, x - 10, y - 10, 0, 0, 100, 100);
-		if( isTilt){
-			a = Math.floor( stateCount / ( FPS / 5));
+		skc.alpha( 1);
+		x = 32; y = REFH - 32 - 160;
+		skc.draw_partially( k_img_tilt, x - 20, y - 20, 0, 0, 200, 200);
+		if( is_tilt){
+			a = Math.floor( state_count / ( FPS / 5));
 			if( 0 < ( a & 1)) a = 1 + Math.floor( a / 2) % 4; else a = 0;
 		} else a = 0;
-		gswDrawImagePartially( kImgTilt, x + 40 - 20, y, 110 + a * 40, 10, 40, 70);
+		skc.draw_partially( k_img_tilt, x + 80 - 40, y, 220 + a * 80, 20, 80, 140);
 
-		x = 320 - 16 - 80;
-		drawButtonSound( x, y);
+		x = REFW - 32 - 160;
+		draw_button_sound( x, y);
 		break;
 
-	case HOWTO:
-		ctx.fillStyle = "#000000";
-		ctx.globalAlpha = 0.5;
-		ctx.fillRect( -32, -21, 320 + 64, 460 + 42);
-		ctx.globalAlpha = 1.0;
+	case STATE_HOW_TO:
+		skc.alpha( 0.6);
+		skc.fill_rect_color( 0, 0, REFW, REFH, 0x000000);
+		skc.alpha( 1);
 
-		gswDrawImage( kImgHowTo, 0, -menuX);
-		gswDrawImage( kImgHowTo, 0, -menuX);
+		skc.draw( k_img_how_to, 0, -menu_x);
+		skc.draw( k_img_how_to, 0, -menu_x);
 
-		gswDrawImage( kImgOK, 320 - 16 - 80 - 10, 460 - 16 - 80 - 10);
+		skc.draw( k_img_ok, REFW - 32 - 160 - 20, REFH - 32 - 160 - 20);
 		break;
 
-	case GAME_START: case GAME: case REWIND: case CLEAR: case FAIL: case CLEAR_ALL:
-		if( current_state == GAME_START){
-			t = 1.0 * stateCount / FPS;
-			ctx.save();
-			ctx.translate( CENTERX, CENTERY);
-			ctx.scale( t, t);
-			ctx.rotate( ( 1 - t) * Math.PI);
-			ctx.translate( -CENTERX, -CENTERY);
-			ctx.globalAlpha = t;
-		} else if( current_state == CLEAR_ALL){
-			ctx.save();
-			if( stateCount < FPS){
-				ctx.translate( CENTERX, CENTERY);
-				t = stateCount / FPS;
+	case STATE_WARP: case STATE_GAME: case STATE_REWIND:
+	case STATE_CLEAR: case STATE_FAIL: case STATE_CONQUER:
+		if( current_state == STATE_WARP){
+			t = 1.0 * state_count / FPS;
+			c.save();
+			c.translate( CENTER_X, CENTER_Y);
+			c.scale( t, t);
+			c.rotate( ( 1 - t) * Math.PI);
+			c.translate( -CENTER_X, -CENTER_Y);
+			skc.alpha( t);
+		} else if( current_state == STATE_CONQUER){
+			c.save();
+			if( state_count < FPS){
+				c.translate( CENTER_X, CENTER_Y);
+				t = state_count / FPS;
 				t = 1 + 15 * t * t;
-				ctx.scale( t, t);
-				ctx.rotate( stateCount * -0.5 * Math.PI / FPS);
-				ctx.translate( -CENTERX, -CENTERY);
-				t = 1.0 - 1.0 * stateCount / FPS;
+				c.scale( t, t);
+				c.rotate( state_count * -0.5 * Math.PI / FPS);
+				c.translate( -CENTER_X, -CENTER_Y);
+				t = 1.0 - 1.0 * state_count / FPS;
 			} else t = 0;
-			ctx.globalAlpha = t;
+			skc.alpha( t);
 		} else t = 1;
 
-		gswDrawImage( kImgGrid, BX - 4, BY - 4);
+		skc.draw( k_img_grid, BX - 8, BY - 8);
 
 		p = 0;
 		for( i = 0; i < 8; i++){
 			for( j = 0; j < 8; j++){
-				x = j * GRIDW;
-				y = i * GRIDW;
-				t2 = 1.0;
-				if( p == movingP){
-					x += movingOff * VX[ movingD];
-					y += movingOff * VY[ movingD];
-					if( x < 0) t2 = 1 + x / 2.0 / GRIDW;
-					else if( 7 * GRIDW < x) t2 = 1 - ( x - 7 * GRIDW) / 2.0 / GRIDW;
-					else if( y < 0) t2 = 1 + y / 2.0 / GRIDW;
-					else if( 7 * GRIDW < y) t2 = 1 - ( y - 7 * GRIDW) / 2.0 / GRIDW;
-				}
-				ctx.globalAlpha = t * t2;
-				x += BX;
-				y += BY;
-				switch( map[ i * 8 + j]){
-				case BLOCK:
-					gswDrawImage( kImgBlock, x + 1, y + 1);
-					break;
-				case SPHERE:
-					gswDrawImage( kImgSphere, x - 10, y - 10);
-					break;
-				case SPHERE3:
-					gswDrawImage( kImgSphere3, x - 10, y - 10);
-					break;
+				n = map[ p];
+				if( EMPTY < n){
+					x = j * GRIDW;
+					y = i * GRIDW;
+					u = 1.0;
+					if( p == moving_p){
+						x += moving_off * VX[ moving_d];
+						y += moving_off * VY[ moving_d];
+						if( x < 0) u = 1 + x / 2.0 / GRIDW;
+						else if( 7 * GRIDW < x) u = 1 - ( x - 7 * GRIDW) / 2.0 / GRIDW;
+						else if( y < 0) u = 1 + y / 2.0 / GRIDW;
+						else if( 7 * GRIDW < y) u = 1 - ( y - 7 * GRIDW) / 2.0 / GRIDW;
+					}
+					skc.alpha( t * u);
+					draw_piece( n, BX + x, BY + y);
 				}
 				p++;
 			}
 		}
-		ctx.globalAlpha = 1.0;
+		skc.alpha( 1);
 
-		if( current_state == GAME){//★流星を描画。
-			ctx.globalCompositeOperation = "lighter";
-			ctx.globalAlpha = 0.8;
-			if( meteorPTail != meteorP){
-				p = meteorPTail;
-				x0 = p % 8 * GRIDW;
-				y0 = Math.floor( p / 8) * GRIDW;
-				d0 = getNextD( p, meteorP);
-				while( p != meteorP){
+		if( current_state == STATE_GAME){
+			//★流星のしっぽを描画。
+			c.globalCompositeOperation = "lighter";
+
+			skc.alpha( 0.8);
+			p = meteor_p_tail;
+			f = ( p == meteor_p);
+			if( !f){
+				x0 = BX + ( p % 8 + 0.5) * GRIDW;
+				y0 = BY + ( Math.floor( p / 8) + 0.5) * GRIDW;
+				d0 = get_next_d( p, meteor_p);
+				while( !f){
+					c.save();
+
 					p += VP[ d0];
-					x = p % 8 * GRIDW;
-					y = Math.floor( p / 8) * GRIDW;
-					d = getNextD( p, meteorP);
-					if( d != d0 && p != meteorP){
+					x = BX + ( p % 8 + 0.5) * GRIDW;
+					y = BY + ( Math.floor( p / 8) + 0.5) * GRIDW;
+					d = get_next_d( p, meteor_p);
+
+					f = ( p == meteor_p);
+					if( d != d0 && !f){
 						//★曲がり角はインコースに寄る。
-						if( d == ( d0 + 2) % 8) a = d + 1;
-						else a = ( d + 7) % 8;
-						x += 10 * VX[ a];
-						y += 10 * VY[ a];
+						if( d == ( d0 + 2) % 8) a = d + 1; else a = ( d + 7) % 8;
+						t = 20 * VX[ a];
+						u = 20 * VY[ a];
+
+						x += t;
+						y += u;
+
+						if( p == meteor_p_tail + VP[ d0]){
+							//★しっぽの先はアウトコースに振られる。
+							x0 -= t;
+							y0 -= u;
+						}
 					}
-					ctx.save();
-					ctx.translate( BX + 19 + x, BY + 19 + y);
+
+					if( f){
+						x = meteor_x;
+						y = meteor_y;
+					}
+					c.translate( x, y);
+
 					if( y == y0){
-						if( x0 < x) t = 0.5 * Math.PI;
-						else t = 1.5 * Math.PI;
+						if( x0 < x) t = 0.5 * Math.PI; else t = -0.5 * Math.PI;
 					} else{
-						t = Math.atan( 1.0 * ( x - x0) / ( y0 - y));
+						t = Math.atan( ( x - x0) / ( y0 - y));
 						if( y0 < y) t += Math.PI;
 					}
-					ctx.rotate( t);
-					t = Math.sqrt( ( y - y0) * ( y - y0) + ( x - x0) * ( x - x0)) / 38;
-					ctx.scale( t, t);
-					t = 1.0 + ( map[ 64 + meteorPTail] - map[ 64 + p]) / 9.0;
-					ctx.scale( t, 1);
-					if( p == meteorPTail + VP[ d0]) gswDrawImage( kImgTailEnd, -16, -6);
-					else gswDrawImage( kImgTail, -16, -6);
-					ctx.restore();
+					if( f) last_tail_d = t;
+					c.rotate( t);
+
+					c.scale(
+						//★しっぽの先から遠いほど太くする。
+						0.5 + ( heat_map[ meteor_p_tail] - heat_map[ p]) / 5.0,
+						//★長さ方向の伸縮。
+						Math.sqrt( ( y - y0) * ( y - y0) + ( x - x0) * ( x - x0)) / GRIDW
+					);
+
+					if( p == meteor_p_tail + VP[ d0]){
+						skc.draw( k_img_tail_end, -32, -12);
+					} else{
+						skc.draw( k_img_tail, -32, -12);
+					}
+
+					c.restore();
 
 					x0 = x;
 					y0 = y;
 					d0 = d;
 				}
 			}
-			ctx.globalAlpha = 1.0;
 
-			if( inGrab){
-				x = touch_x;
-				y = touch_y;
+			//★流星自体を描画。
+			if( in_grab){
+				meteor_x = skt.x;
+				meteor_y = skt.y;
 			} else{
-				x = BX + ( meteorP % 8 + 0.5) * GRIDW;
-				y = BY + ( Math.floor( meteorP / 8) + 0.5) * GRIDW;
+				meteor_x = BX + ( meteor_p % 8 + 0.5) * GRIDW;
+				meteor_y = BY + ( Math.floor( meteor_p / 8) + 0.5) * GRIDW;
 			}
-			drawImageCenteredScaledRotated( kImgMeteor, x, y, 0.5, -stateCount * 0.02 * 2 * Math.PI);
-			ctx.globalCompositeOperation = "source-over";
+			skc.alpha( 1);
+			skc.draw_centered_scaled_rotated(
+				k_img_meteor,
+				meteor_x, meteor_y, 1, -state_count * 0.02 * 2 * Math.PI
+			);
 
-			if( isTilt){
-				gswDrawImage(
-					kImgCore,
-					x + 15 * ACCMAG * ( accX - accXStd) - 7,
-					y + 15 * ACCMAG * ( accY - accYStd) - 7
-				);
+			if( 0 < last_tail_count){
+				//★しっぽが縮みきるのを描画。
+				c.save();
+				c.translate( meteor_x, meteor_y);
+				c.rotate( last_tail_d);
+				c.scale( 1, last_tail_count / 20);
+				skc.draw( k_img_tail_end, -32, -12);
+				c.restore();
 			}
+
+			c.globalCompositeOperation = "source-over";
+
+			if( is_tilt) skc.draw(
+				//★流星の目 (デバイスの傾きを表す) を描画。
+				k_img_core,
+				meteor_x + 30 * ACCMAG * ( acc_x - acc_x_std) - 14,
+				meteor_y + 30 * ACCMAG * ( acc_y - acc_y_std) - 14
+			);
 		}
 
-		if( current_state == CLEAR) drawClear();
+		if( current_state == STATE_CLEAR) draw_clear();
 
-		if( current_state == GAME_START || current_state == CLEAR_ALL){
-			ctx.globalAlpha = 1;
-			ctx.restore();
+		if( current_state == STATE_WARP || current_state == STATE_CONQUER){
+			skc.alpha( 1);
+			c.restore();
 		}
 
-		if( current_state == CLEAR_ALL){
-			if( stateCount < FPS) t = 1.0 - 1.0 * stateCount / FPS;
+		if( current_state == STATE_CONQUER){
+			//★全ステージクリアの表示を描画。
+			if( state_count < FPS) t = 1.0 - 1.0 * state_count / FPS;
 			else{
-				ctx.save();
-				ctx.translate( CENTERX, CENTERY);
-				if( stateCount < 6 * FPS){
-					t = 1.0 * ( stateCount - FPS) / FPS / 5.0;
+				c.save();
+				c.translate( CENTER_X, CENTER_Y);
+				if( state_count < 6 * FPS){
+					t = 1.0 * ( state_count - FPS) / FPS / 5.0;
 					t *= t;
 				} else t = 1.0;
-				ctx.scale( t, t);
-				ctx.globalAlpha = t;
-				gswDrawImage( kImgClearAll, -150, -150);
-				ctx.restore();
+				c.scale( t, t);
+				skc.alpha( t);
+				skc.draw( k_img_conquer, -300, -300);
+				c.restore();
 				t = 0;
 			}
-			ctx.globalAlpha = t;
+			skc.alpha( t);
 		}
 
-		gswDrawImage( kImgGame, 0, 0);
+		skc.draw( k_img_game, 0, 0);
 
-		if( gameStage < 10) drawDigits( gameStage, 1, 108, 24);
-		else drawDigits( gameStage, 2, 108 + 22, 24);
-		drawDigits( movesLimit - moves, 1, 258, 24);
+		if( game_stage < 10) draw_digits( game_stage, 1, 216, 48);
+		else draw_digits( game_stage, 2, 216 + 44, 48);
 
-		if( current_state == CLEAR_ALL) ctx.globalAlpha = 1.0;
+		draw_digits( moves_limit - moves, 1, 516, 48);
 
-		if( current_state == FAIL) gswDrawImage( kImgFail, -32, -21);
+		draw_flash();
+
+		if( current_state == STATE_CONQUER) skc.alpha( 1);
+
+		if( current_state == STATE_FAIL) skc.draw( k_img_fail, -64, -42);
 
 		break;
 
-	case MENU:
-		if( 0 < stateEndCount) t = 1.0 - 0.5 * stateEndCount / ( 0.3 * FPS);
-		else if( stateCount < 0.3 * FPS) t = 1.0 - 0.5 * stateCount / ( 0.3 * FPS);
+	case STATE_MENU:
+		if( 0 < state_end_count) t = 1.0 - 0.5 * state_end_count / ( 0.3 * FPS);
+		else if( state_count < 0.3 * FPS) t = 1.0 - 0.5 * state_count / ( 0.3 * FPS);
 		else t = 0.5;
-		ctx.save();
-		ctx.translate( CENTERX, CENTERY);
-		ctx.scale( t, t);
-		ctx.translate( -CENTERX, -CENTERY);
+		c.save();
+		c.translate( CENTER_X, CENTER_Y);
+		c.scale( t, t);
+		c.translate( -CENTER_X, -CENTER_Y);
 
-		a = 1 + Math.floor( ( MENUW / 2 + menuX) / MENUW);
-		x = -menuX + ( a - 1) * MENUW;
-		if( 1 <= a - 1) draw_map_cache( a - 1, Math.floor( x - MENUW));
-		draw_map_cache( a, Math.floor( x));
-		if( a + 1 <= MAXSTAGE) draw_map_cache( a + 1, Math.floor( x + MENUW));
+		a = 1 + Math.floor( ( MENUW / 2 + menu_x) / MENUW);
+		x = -menu_x + ( a - 1) * MENUW;
+		if( 1 <= a - 1) draw_cached_map( a - 1, Math.floor( x - MENUW));
+		draw_cached_map( a, Math.floor( x));
+		if( a + 1 <= MAXSTAGE) draw_cached_map( a + 1, Math.floor( x + MENUW));
 
-		ctx.restore();
+		c.restore();
 
-		if( 0 < stateEndCount) t = 1.0 * stateEndCount / ( 0.3 * FPS);
-		else if( stateCount < 0.3 * FPS) t = 1.0 * stateCount / ( 0.3 * FPS);
+		if( 0 < state_end_count) t = 1.0 * state_end_count / ( 0.3 * FPS);
+		else if( state_count < 0.3 * FPS) t = 1.0 * state_count / ( 0.3 * FPS);
 		else t = 1.0;
-		ctx.globalAlpha = t;
-		gswDrawImage( kImgMenu, 0, 0);
-		drawButtonSound( 320 - 16 - 80, 460 - 16 - 80);
-		ctx.globalAlpha = 1.0;
+		skc.alpha( t);
+		skc.draw( k_img_menu, 0, 0);
+		draw_button_sound( REFW - 32 - 160, REFH - 32 - 160);
+		skc.alpha( 1);
 
-		if( inDialogue){
-			gswDrawImage( kImgReset, 5, 160);
-		}
+		if( in_dialogue) skc.draw( k_img_reset, 10, 320);
+
 		break;
 	}
 
-	drawDust();
+	draw_dust();
 }
 
-function drawString( x, y, s, m){
+function draw_piece( n, x, y){
+	if( n == BLOCK) skc.draw( k_img_block, x + 2, y + 2);
+	else if( n == SPHERE) skc.draw( k_img_sphere, x - 20, y - 20);
+	else skc.draw( k_img_sphere_3, x - 20, y - 20);
+}
+
+function draw_string( x, y, s, m){
 	var a, d, i;
 
 	d = 0;
 	for( i = 0; i < s.length; i++){
-		ctx.save();
-		ctx.translate( x + d * m, y - 8 * m);
-		ctx.scale( m / 8, m / 8);
 		a = s.charCodeAt( i) - 32;
-		gswDrawImagePartially( kImgLetters, 0, 0, a % 16 * 32, Math.floor( a / 16) * 50, 32, 48);
-		if( " i".indexOf( s.charAt( i)) < 0) d += 4; else d += 2;
-		ctx.restore();
+		skc.draw_partially_scaled( k_img_letters, x + m * d, y - m * 16, a % 16 * 64, Math.floor( a / 16) * 100, 64, 96, m / 8);
+		if( " i".indexOf( s.charAt( i)) < 0) d += 8; else d += 4;
 	}
 }
 
-function drawButtonSound( x, y){
-	gswDrawImagePartially( kImgSound, x - 10, y - 10, 0, 0, 100, 100);
-	if( isAudio){
-		gswDrawImagePartially( kImgSound, x, y - 5 * Math.sin( Math.PI * ( stateCount % 8) / 8), 210, 10, 80, 80);
+function draw_button_sound( x, y){
+	skc.draw_partially( k_img_sound, x - 20, y - 20, 0, 0, 200, 200);
+	if( is_audio){
+		skc.draw_partially( k_img_sound, x, y - 10 * Math.sin( Math.PI * ( state_count % 12) / 12), 420, 20, 160, 160);
 	} else{
-		gswDrawImagePartially( kImgSound, x, y, 110, 10, 80, 80);
+		skc.draw_partially( k_img_sound, x, y, 220, 20, 160, 160);
 	}
 }
 
-function draw_map_cache( n, dx){
-	var i, j, x, y;
+function draw_cached_map( n, dx){
+	var i, j, m;
+	var c;
 
-	ctx.save();
-	ctx.translate( dx, 0);
+	c = skc.ctx;
+	c.save();
+	c.translate( dx, 0);
 
-	gswDrawImage( kImgGrid, BX - 4, BY - 4);
+	skc.draw( k_img_grid, BX - 8, BY - 8);
 
-	if( n <= gameStageSolved + 1){
-		if( mapCache[ ( n - 1) * 64] < 0){
-			setStage( n);
-			for( i = 0; i < 64; i++) mapCache[ ( n - 1) * 64 + i] = map[ i];
-			movesLimitCache[ n - 1] = movesLimit;
+	if( n <= solved_stage + 1){
+		if( map_cache[ ( n - 1) * 64] < 0){
+			set_stage( n);
+			for( i = 0; i < 64; i++) map_cache[ ( n - 1) * 64 + i] = map[ i];
+			moves_limit_cache[ n - 1] = moves_limit;
 		}
 
 		for( i = 0; i < 8; i++){
 			for( j = 0; j < 8; j++){
-				x = BX + 1 + j * GRIDW;
-				y = BY + 1 + i * GRIDW;
-				switch( mapCache[ ( n - 1) * 64 + i * 8 + j]){
-				case BLOCK:
-					gswDrawImage( kImgBlock, x + 1, y + 1);
-					break;
-				case SPHERE:
-					gswDrawImage( kImgSphere, x - 10, y - 10);
-					break;
-				case SPHERE3:
-					gswDrawImage( kImgSphere3, x - 10, y - 10);
-					break;
-				}
+				m = map_cache[ ( n - 1) * 64 + i * 8 + j];
+				if( EMPTY < m) draw_piece( m, BX + j * GRIDW, BY + i * GRIDW);
 			}
 		}
 
-		if( n == gameStageFocused) gswDrawImage( kImgStageFocus, BX - 15, BY - 15);
+		if( n == focused_stage) skc.draw( k_img_stage_focus, BX - 30, BY - 30);
 
-		gswDrawImagePartially( kImgGame, 0, 0, 0, 0, 320, BY);
-		drawDigits( movesLimitCache[ n - 1], 1, 258, 24);
+		skc.draw_partially( k_img_game, 0, 0, 0, 0, REFW, BY);
+		draw_digits( moves_limit_cache[ n - 1], 1, 516, 48);
 	} else{
-		gswDrawImagePartially( kImgGame, 0, 0, 0, 0, 160, BY);
-		gswDrawImage( kImgLock, 49, BY + 4 * GRIDW - 143);
+		skc.draw_partially( k_img_game, 0, 0, 0, 0, 320, BY);
+		skc.draw( k_img_lock, 98, CENTER_Y - 286);
 	}
 
-	if( n < 10) drawDigits( n, 1, 108, 24);
-	else drawDigits( n, 2, 108 + 22, 24);
+	if( n < 10) draw_digits( n, 1, 216, 48);
+	else draw_digits( n, 2, 216 + 44, 48);
 
-	if( n == gameStageJustCleared) drawClear();
+	if( n == game_stage) draw_flash();
 
-	ctx.restore();
+	if( n == just_cleared_stage) draw_clear();
+
+	c.restore();
 }
 
-function drawClear(){
-	if( stateCount % 8 < 4) gswDrawImage( kImgClear, 160 - 171, BY + 4 * GRIDW - 61);
+function draw_clear(){
+	if( state_count % 12 < 6) skc.draw( k_img_clear, 320 - 342, CENTER_Y - 122);
 }
 
-function drawDigits( n, m, x, y){
+function draw_digits( n, m, x, y){
 	var a, b, i;
 
-	gswDrawImagePartially( kImgNums, x, y, 4 + n % 10 * 32, 4, 24, 32);
+	skc.draw_partially( k_img_nums, x, y, 8 + n % 10 * 64, 8, 48, 64);
 	a = 10;
 	for( i = 1; i < m; i++){
 		b = Math.floor( n / a);
 		if( 0 < b){
-			gswDrawImagePartially( kImgNums, x - i * 22, y, 4 + b % 10 * 32, 4, 24, 32);
+			skc.draw_partially( k_img_nums, x - i * 44, y, 8 + b % 10 * 64, 8, 48, 64);
 			a *= 10;
 		} else break;
 	}
-}
-
-//●==========●==========●==========●==========●==========●==========●
-
-function gswDrawImage( n, x, y){ drawImageScaled( n, x, y, 0.5);}
-function gswDrawImagePartially( n, x, y, sx, sy, w, h){
-	drawImagePartiallyScaled( n, x, y, 2 * sx, 2 * sy, 2 * w, 2 * h, 0.5);
 }
