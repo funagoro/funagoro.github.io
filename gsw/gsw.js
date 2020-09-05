@@ -57,6 +57,8 @@ var ACCMAG = 0.3;
 var acc_x_std, acc_y_std;
 
 function init_acc(){
+
+document.getElementById( "c").innerHTML = "a";
 	if( build = BUILD_IOS){
 		//★ iOS ネイティブでは、Swift からどんどん window.acc_from_swift を
 		//★ 呼んでもらうので、リスナはいらない。
@@ -64,6 +66,7 @@ function init_acc(){
 		return;
 	}
 
+document.getElementById( "c").innerHTML = "b";
 	if( 0 <= ua.indexOf( "Android")){
 		//★ Android は、ブラウザでもネイティブでも、
 		//★ パーミッションなしでイベントリスナを登録できる。
@@ -72,9 +75,11 @@ function init_acc(){
 		return;
 	}
 
+document.getElementById( "c").innerHTML = "c";
 	//★ パソコンのブラウザか、iOS のブラウザの場合。
 	if( window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function"){
 		//★ iOS 13 以上のブラウザの場合。
+document.getElementById( "c").innerHTML = "d";
 		DeviceMotionEvent.requestPermission().then( permissionState => {
 			if( permissionState === "granted"){
 				//★ ダイアログで、プレイヤーの許可が得られた時。
@@ -87,6 +92,7 @@ function init_acc(){
 			}
 		}).catch();
 	} else{
+document.getElementById( "c").innerHTML = "e";
 		//★ パソコンのブラウザか、iOS 13 未満のブラウザの場合。
 		is_acc = (
 			0 <= ua.indexOf( "iPhone") ||
