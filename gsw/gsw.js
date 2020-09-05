@@ -59,7 +59,7 @@ var acc_x_std, acc_y_std;
 function init_acc(){
 
 document.getElementById( "c").innerHTML = "a";
-	if( build = BUILD_IOS){
+	if( build == BUILD_IOS){
 		//★ iOS ネイティブでは、Swift からどんどん window.acc_from_swift を
 		//★ 呼んでもらうので、リスナはいらない。
 		is_acc = true;
