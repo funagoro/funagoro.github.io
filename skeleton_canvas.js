@@ -190,14 +190,12 @@ draw_partially_scaled( n, x, y, sx, sy, sw, sh, s){
 
 	this.ctx.drawImage( i, sx, sy, sw, sh, x, y, s * sw, s * sh);
 }
-/*
-drawImagePartiallyCentered( n, x, y, sx, sy, sw, sh){
-  drawImagePartiallyCenteredScaledRotated( n, x, y, sx, sy, sw, sh, 1, 0);
+draw_partially_centered( n, x, y, sx, sy, sw, sh){
+	this.draw_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, 1, 0);
 }
-drawImagePartiallyCenteredScaled( n, x, y, sx, sy, sw, sh, s){
-  drawImagePartiallyCenteredScaledRotated( n, x, y, sx, sy, sw, sh, s, 0);
+draw_partially_centered_scaled( n, x, y, sx, sy, sw, sh, s){
+	this.draw_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, s, 0);
 }
-*/
 draw_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, s, r){
 	var i = this.img[ n];
 	var c;
@@ -238,39 +236,39 @@ draw_tinted_partially_scaled( n, x, y, sx, sy, sw, sh, m, c){
 	ctx2.globalCompositeOperation = "destination-atop";
 	ctx2.drawImage( this.img[ n], sx, sy, sw, sh, 0, 0, w, h);
 	this.ctx.drawImage( can2, 0, 0, w, h, x, y, w, h);
-}/*
-drawTintedImagePartiallyCenteredScaled( n, x, y, sx, sy, sw, sh, s, c){
-  drawTintedImagePartiallyCenteredScaledRotated( n, x, y, sx, sy, sw, sh, s, 0, c);
 }
-drawTintedImagePartiallyCenteredScaledRotated( n, x, y, sx, sy, sw, sh, s, r, c){
-  var w, h;
-  var can2;
-  var ctx2;
-
-  if( !img[ n].complete) return;
-
-  w = s * sw;
-  h = s * sh;
-
-  can2 = document.createElement( "canvas");
-  can2.width = Math.ceil( w);
-  can2.height = Math.ceil( h);
-  ctx2 = can2.getContext( "2d");
-
-  ctx2.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
-  ctx2.globalCompositeOperation = "source-over";
-  ctx2.fillRect( 0, 0, w, h);
-
-  ctx2.globalCompositeOperation = "destination-atop";
-  ctx2.drawImage( img[ n], sx, sy, sw, sh, 0, 0, w, h);
-
-  ctx.save();
-  ctx.translate( x, y);
-  ctx.rotate( r);
-  ctx.drawImage( can2, -0.5 * w, -0.5 * h);
-  ctx.restore();
+draw_tinted_partially_centered_scaled( n, x, y, sx, sy, sw, sh, s, c){
+	this.draw_tinted_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, s, 0, c);
 }
+draw_tinted_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, s, r, c){
+	var w, h;
+	var can2;
+	var ctx2;
 
+	if( !this.img[ n].complete) return;
+
+	w = s * sw;
+	h = s * sh;
+
+	can2 = document.createElement( "canvas");
+	can2.width = Math.ceil( w);
+	can2.height = Math.ceil( h);
+	ctx2 = can2.getContext( "2d");
+
+	ctx2.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
+	ctx2.globalCompositeOperation = "source-over";
+	ctx2.fillRect( 0, 0, w, h);
+
+	ctx2.globalCompositeOperation = "destination-atop";
+	ctx2.drawImage( this.img[ n], sx, sy, sw, sh, 0, 0, w, h);
+
+	this.ctx.save();
+	this.ctx.translate( x, y);
+	this.ctx.rotate( r);
+	this.ctx.drawImage( can2, -0.5 * w, -0.5 * h);
+	this.ctx.restore();
+}
+/*
 drawTintedImageCenteredScaled( n, x, y, s, c){
   drawTintedImageCenteredScaledRotated( n, x, y, s, 0, c);
 }
@@ -298,6 +296,11 @@ set_draw_color( c){
 fill_rect_color( x, y, w, h, c){
 	this.set_fill_color( c);
 	this.ctx.fillRect( x, y, w, h);
+}
+
+draw_rect_color( x, y, w, h, c){
+	this.set_draw_color( c);
+	this.ctx.strokeRect( x, y, w, h);
 }
 
 draw_round_rect( x, y, w, h, r){ this.prr( x, y, w, h, r); this.ctx.closePath(); this.ctx.stroke();}
