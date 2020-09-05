@@ -1,4 +1,8 @@
 
+window.acc_from_swift = function( x, y){
+	handle_acc_proc( parseFloat( x), parseFloat( y));
+}
+
 var skt;
 var skc;
 var ska;
@@ -31,12 +35,15 @@ var DPR = 1;
 
 function touch_event_hook(){
 	if( init_count == 3){
-		//if( !ska.did_ios_start) ska.start_ios();
-		ska.start_ios();
+		//★シングルタッチでかつ、動いていないタッチで、オーディオの使用開始ができる。
+		if( skt.num == 1 && skt.x == skt.bx && skt.y == skt.by){
+			//if( !ska.did_ios_start) ska.start_ios();
+			ska.start_ios();
 
-		init_acc();
+			init_acc();
 
-		init_count++;
+			init_count++;
+		}
 	}
 }
 
@@ -50,9 +57,15 @@ var ACCMAG = 0.3;
 var acc_x_std, acc_y_std;
 
 function init_acc(){
+	if( build = BUILD_IOS){
+		//★iOS ネイティブでは、swift からどんどん送信してもらうので、リスナなしで、受け身。
+		is_acc = true;
+		return;
+	}
+
 	is_acc = ( 0 <= ua.indexOf( "Android"));
 	if( is_acc){
-		//★Android なら、パーミッションなしで、即、イベントリスナを登録できる。
+		//★Android は、ブラウザでもネイティブでも、パーミッションなしでイベントリスナを登録できる。
 		addEventListener( "devicemotion", handle_acc, false);
 	} else{
 		if( window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function"){
@@ -81,9 +94,15 @@ function init_acc(){
 }
 
 function handle_acc( e){
+	handle_acc_proc(
+		e.accelerationIncludingGravity.x,
+		e.accelerationIncludingGravity.y
+	);
+}
+
+function handle_acc_proc( v, w){
 	var n;
 	var x, y;
-	var a;
 
 	if( window.orientation != undefined){//★値が 0 の場合、判定が false 扱いになるので注意。
 		//★iOS、Android、Windows スマホは、これ。
@@ -97,13 +116,11 @@ function handle_acc( e){
 		n = screen.orientation.angle;
 	} else return;//★端末の向きを特定できなかった (またはデスクトップ機である) ので、加速度を使用しない。
 
-	a = e.accelerationIncludingGravity;
-
 	switch( ( n + myorientation + 360) % 360){
-		case 0: x = a.x; y = -a.y; break;
-		case 90: x = -a.y; y = -a.x; break;
-		case 180: x = -a.x; y = a.y; break;
-		case 270: x = a.y; y = a.x; break;
+		case 0: x = v; y = -w; break;
+		case 90: x = -w; y = -v; break;
+		case 180: x = -v; y = w; break;
+		case 270: x = w; y = v; break;
 		default: x = y = 0; break;
 	}
 
@@ -256,10 +273,10 @@ function gsw_start(){
 		//★↑ Chrome で確認済み。
 	} else if( build == BUILD_IOS){
 		MAXWIDTH = -1;
-		if ( 0 <= navigator.userAgent.indexOf( "iPhone")) mypadding = 0;
+		if ( 0 <= navigator.userAgent.indexOf( "iPhone")) mypadding = 10;
 	} else if( build == BUILD_ANDROID){
 		MAXWIDTH = -1;
-		mypadding = 0;
+		mypadding = 10;
 	}
 
 	c = document.getElementById( "canvas1");
@@ -317,7 +334,14 @@ function main(){
 
 		draw_main();
 	}
-
+/*
+	skc.ctx.fillStyle = "rgba( 0, 1, 0.9, 0.3)";
+	skc.ctx.fillRect( 0, REFH - 20, 100, 20);
+	skc.ctx.fillStyle = "#ffffff";
+	skc.ctx.font = "12pt 'Arial'";
+	skc.ctx.textAlign = "left";
+	skc.ctx.fillText( "b: " + acc_x, 5, REFH - 5);
+*/
 	skc.post();
 	skt.post();
 
@@ -575,6 +599,10 @@ function process_touch_began(){
 					gsw_play_audio( k_aud_comet);
 				} else ska.stop( k_aud_bgm_title);
 			}
+		} else if( y < 100){
+			//★テスト用
+			//webkit.messageHandlers.appstore.postMessage( 0);
+			//myAndroid.myGooglePlay();
 		} else if( y < 600){
 			//★START ボタンがタッチされた。
 			ska.stop( k_aud_bgm_title);
