@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<link rel="shortcut icon" href="../img/favicon.ico"/>
+
+<title>GRAVISPHERE</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<!-- iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=700, user-scalable=no">
+
+<!-- Windows 用 -->
+<style>
+	@-ms-viewport{ width: 700px;}
+	body{ -ms-content-zooming: none;}
+</style>
+
+<style type="text/css">
+	a{ color: #666633; font-size: 22px; font-weight: 600;}
+	hr{ border: 0px; background-color: #773344; height: 3px;}
+
+	.paper1{ display: inline-block; width: 600px; padding: 20px; background-color: #333333; color: #666666;}
+	.paper2{ display: inline-block; width: 600px; padding: 20px; background-color: #222222; color: #555555; text-align: left;}
+	.iD { color: #666666; font-size: 9px; font-family: sans-serif;}
+	.iF { color: #eedddd; font-size: 10px; background: #666666;}
+	.free{ font-size: 12px; font-weight: 600; background: #666666; color: #ffffff;}
+	.t{ border: 3px #446633 solid; padding: 10px;}
+	.m{ margin-left: 30px;}
+</style>
+
+</head>
+
+<body style="
+	-webkit-text-size-adjust: 100%;
+	background-color: #000000;
+	background-image: url( gsw_bg.png);
+
+	font-family: arial, sans-serif;
+	font-size: 18px;
+	line-height: 1.2;
+	text-align: center;
+">
+
+
+
+<div style="height: 50px;"></div>
+
+
+
+<script src="gsw.js?4"></script>
+<script src="../skeleton_3.js?1"></script>
+<script src="../skeleton_touch.js?1"></script>
+<script src="../skeleton_canvas.js?1"></script>
+<script src="../skeleton_audio.js?1"></script>
+
+<canvas id="canvas1" width=640 height=920 style="
+	-webkit-user-select: none;
+	-webkit-tap-highlight-color: rgba( 0, 0, 0, 0);
+	touch-action: none;
+"></canvas><br>
+
+<br>
+
+<span style="
+	font-size: 22px; font-weight: 600; color: #999999;
+	text-decoration: underline;"
+	onclick="on_myorientation();"
+>rotate screen</span><br>
+
+<script> gsw_start(); </script>
+
+<script src="audio/bgm_title.js"></script>
+<script src="audio/bgm_game.js"></script>
+
+<script src="audio/clear.js"></script>
+<script src="audio/clear_all.js"></script>
+
+<script src="audio/comet_1.js"></script>
+<script src="audio/comet_2.js"></script>
+<script src="audio/comet_3.js"></script>
+<script src="audio/comet_4.js"></script>
+<script src="audio/comet_5.js"></script>
+<script src="audio/comet_6.js"></script>
+<script src="audio/comet_7.js"></script>
+
+<script src="audio/hit_1.js"></script>
+<script src="audio/hit_2.js"></script>
+
+<script src="audio/move_1.js"></script>
+<script src="audio/move_2.js"></script>
+<script src="audio/move_3.js"></script>
+<script src="audio/move_4.js"></script>
+<script src="audio/move_5.js"></script>
+<script src="audio/move_6.js"></script>
+<script src="audio/move_7.js"></script>
+<script src="audio/move_8.js"></script>
+
+<script src="audio/rewind.js"></script>
+<script src="audio/start.js"></script>
+
+
+
+<div style="height: 50px;"></div>
+
+
+
+</body>
+
+</html>
