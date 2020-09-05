@@ -58,38 +58,42 @@ var acc_x_std, acc_y_std;
 
 function init_acc(){
 	if( build = BUILD_IOS){
-		//★iOS ネイティブでは、swift からどんどん送信してもらうので、リスナなしで、受け身。
+		//★ iOS ネイティブでは、Swift からどんどん window.acc_from_swift を
+		//★ 呼んでもらうので、リスナはいらない。
 		is_acc = true;
 		return;
 	}
 
-	is_acc = ( 0 <= ua.indexOf( "Android"));
-	if( is_acc){
-		//★Android は、ブラウザでもネイティブでも、パーミッションなしでイベントリスナを登録できる。
+	if( 0 <= ua.indexOf( "Android")){
+		//★ Android は、ブラウザでもネイティブでも、
+		//★ パーミッションなしでイベントリスナを登録できる。
 		addEventListener( "devicemotion", handle_acc, false);
+		is_acc = true;
+		return;
+	}
+
+	//★ パソコンのブラウザか、iOS のブラウザの場合。
+	if( window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function"){
+		//★ iOS 13 以上のブラウザの場合。
+		DeviceMotionEvent.requestPermission().then( permissionState => {
+			if( permissionState === "granted"){
+				//★ ダイアログで、プレイヤーの許可が得られた時。
+				addEventListener( "devicemotion", handle_acc, false);
+				is_acc = true;
+			} else {
+				//★ ダイアログで、プレイヤーから拒否された場合。
+				//★ または https じゃなく http で配信している場合、ダイアログなしでここに来る。
+				is_acc = false;
+			}
+		}).catch();
 	} else{
-		if( window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function"){
-			//★iOS 13 以上の場合。
-			DeviceMotionEvent.requestPermission().then( permissionState => {
-				if( permissionState === "granted"){
-					//★ダイアログで、プレイヤーの許可が得られた時。
-					is_acc = true;
-					addEventListener( "devicemotion", handle_acc, false);
-				} else {
-					//★ダイアログで、プレイヤーの許可が得られなかった時。
-					//★または https じゃなく http だと、ダイアログなしでここに来る。
-					is_acc = false;
-				}
-			}).catch();
-		} else{
-			//★iOS 13 未満の場合。デスクトップ機もここに来る。
-			is_acc = (
-				0 <= ua.indexOf( "iPhone") ||
-				0 <= ua.indexOf( "iPod") ||
-				0 <= ua.indexOf( "iPad")
-			);
-			if( is_acc) addEventListener( "devicemotion", handle_acc, false);
-		}
+		//★ パソコンのブラウザか、iOS 13 未満のブラウザの場合。
+		is_acc = (
+			0 <= ua.indexOf( "iPhone") ||
+			0 <= ua.indexOf( "iPod") ||
+			0 <= ua.indexOf( "iPad")
+		);
+		if( is_acc) addEventListener( "devicemotion", handle_acc, false);
 	}
 }
 
