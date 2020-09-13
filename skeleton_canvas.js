@@ -268,23 +268,23 @@ draw_tinted_partially_centered_scaled_rotated( n, x, y, sx, sy, sw, sh, s, r, c)
 	this.ctx.drawImage( can2, -0.5 * w, -0.5 * h);
 	this.ctx.restore();
 }
-/*
-drawTintedImageCenteredScaled( n, x, y, s, c){
-  drawTintedImageCenteredScaledRotated( n, x, y, s, 0, c);
+
+draw_tinted_centered_scaled( n, x, y, s, c){
+	this.draw_tinted_centered_scaled_rotated( n, x, y, s, 0, c);
 }
-drawTintedImageCenteredScaledRotated( n, x, y, s, r, c){
-  var sw, sh;
+draw_tinted_centered_scaled_rotated( n, x, y, s, r, c){
+	var sw, sh;
 
-  sw = img[ n].naturalWidth;
-  sh = img[ n].naturalHeight;
+	if( !this.img[ n].complete) return;
 
-  if( !img[ n].complete) return;
+	sw = this.img[ n].naturalWidth;
+	sh = this.img[ n].naturalHeight;
 
-  drawTintedImagePartiallyCenteredScaledRotated( n, x, y, 0, 0, sw, sh, s, r, c);
+	this.draw_tinted_partially_centered_scaled_rotated( n, x, y, 0, 0, sw, sh, s, r, c);
 }
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
-*/
+
 set_fill_color( c){
 	this.ctx.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
 }
@@ -353,12 +353,12 @@ drawLineColorWidth( x0, y0, x, y, c, w){
   ctx.lineTo( x, y);
   ctx.stroke();
 }
-
-drawStringSizeColor( x, y, s, p, c){
-  ctx.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
-  ctx.font = "" + p + "pt 'Arial'";
-  ctx.textAlign = "left";
-  ctx.fillText( s, x, y);
-}
 */
+draw_string_size_color( x, y, s, p, c){
+	this.ctx.fillStyle = "#" + ( "00000" + c.toString( 16)).substr( -6);
+	this.ctx.font = "" + p + "pt 'Arial'";
+	this.ctx.textAlign = "left";
+	this.ctx.fillText( s, x, y);
+}
+
 }
