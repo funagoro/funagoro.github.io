@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<link rel="shortcut icon" href="../img/favicon.ico"/>
+
+<title>Money Explosion - MONKEY CIRCUS おさるサーカス</title>
+
+<meta http-equiv="X-UA-Compatible" content="IE=9">
+<meta charset="UTF-8">
+
+<!-- iOS や Android 用 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=660, user-scalable=no">
+
+<!-- Windows 用 -->
+<style>
+	@-ms-viewport{ width: 660px;}
+	body{ -ms-content-zooming: none;}
+</style>
+
+<style type="text/css">
+	a{ color: #220055;}
+	hr{ border: 0px; background-color: #ccffee; height: 3px;}
+
+	.paper{ width: 600px; padding: 10px; background-color: rgba( 170, 221, 221, 0.7);}
+	.free{ font-size: 12px; font-weight: 600; background: #666666; color: #ffffff;}
+	.t{ border: 3px #66ccaa solid;}
+	.m{ margin-left: 30px;}
+</style>
+
+</head>
+
+<body style='
+	background-color: #cccccc;
+	background-image: url( "mxw_bg.png");
+
+	font-family: Futura, "Century Gothic";
+	font-size: 18px;
+	color: #445566;
+	line-height: 1.2;
+'>
+
+<center>
+
+
+
+<div style="height: 50px;"></div>
+
+
+
+<script src="three_local_min.js"></script>
+<script src="mxw.js?2"></script>
+<script src="../skeleton_3.js"></script>
+<script src="../skeleton_touch.js"></script>
+<script src="../skeleton_canvas.js"></script>
+<script src="../skeleton_audio.js"></script>
+
+<div id="div1" style="position: relative;">
+
+<canvas id="canvas1" width=600 height=800 style="
+	position: absolute;
+	left: 0px;
+	top: 0px;
+
+	-webkit-user-select:none;
+	-webkit-tap-highlight-color:rgba( 0, 0, 0, 0);
+	touch-action:none;
+"></canvas>
+
+</div>
+
+<script> my_start(); </script>
+
+<script src="audio/decide.js"></script>
+
+<script src="audio/1.js"></script>
+<script src="audio/5.js"></script>
+<script src="audio/10.js"></script>
+<script src="audio/50.js"></script>
+<script src="audio/100.js"></script>
+<script src="audio/500.js"></script>
+<script src="audio/1000.js"></script>
+<script src="audio/5000.js"></script>
+<script src="audio/1m.js"></script>
+<script src="audio/10m.js"></script>
+<script src="audio/100m.js"></script>
+
+<script src="model/money_1.js"></script>
+<script src="model/money_5.js"></script>
+<script src="model/money_10.js"></script>
+<script src="model/money_50.js"></script>
+<script src="model/money_100.js"></script>
+<script src="model/money_500.js"></script>
+<script src="model/money_1000_f.js"></script>
+<script src="model/money_1000_b.js"></script>
+<script src="model/money_5000_f.js"></script>
+<script src="model/money_5000_b.js"></script>
+<script src="model/money_1m_f.js"></script>
+<script src="model/money_1m_b.js"></script>
+<script src="model/money_10m.js"></script>
+<script src="model/money_100m.js"></script>
+<script src="model/money_mm.js"></script>
+
+<script src="model/board.js"></script>
+
+<br>
+
+<input type="button" value="rotate / 画面回転" onclick="onMyorientation();"/><br>
+
+<br>
+
+パソコンでは、カーソルキーでの操作がオススメ。<br>
+
+<br>
+
+<div class="paper">
+
+<span style="color:#ffffff; font-size:48px; font-weight:600;">Money Explosion</span><br>
+&copy;2016, 2020 Maeda Mameo<br>
+
+<br><hr><br>
+
+<a target="itunes_store" href="https://itunes.apple.com/jp/app/money-explosion/id1175876165?l=ja&ls=1&mt=8">
+<img src="mxw_256.png" style="width: 100px; height: 100px; border-radius: 22%;"></a>
+<div style="display: inline-block;">
+	<img src="../img/for_ios.png" width=80><br>
+	<span class="free">　無料　</span>
+</div>
+
+<span style="margin-left: 50px;"></span>
+
+<a target="mxw" href="https://play.google.com/store/apps/details?id=com.mameson.mxa">
+<img src="mxw_256.png" style="width: 100px; height: 100px; border-radius: 22%;"></a>
+<div style="display: inline-block;">
+	<img src="../img/for_android.png" width=80><br>
+	<span class="free">　無料　</span>
+</div><br>
+
+<br><hr><br>
+
+<a target="mxw" href="http://www.mameson.com/" style="font-size: 22px; font-weight: 600;">Monkey Circus</a>
+ ← author's web site 作者のホームページへ<br>
+
+<br><hr><br>
+
+<div style="text-align: left;">
+
+お金を稼ごう！<br>
+あなたはいくら稼げますか？<br>
+
+<br>
+
+1円玉 → 5円玉 → 10円玉 → 50円玉 → 100円玉 →<br>
+500円玉 → 千円札 → 五千円札 → 一万円札。<br>
+その次は十万円金貨です。十万円金貨を出せた人は、すごいです。<br>
+<br>
+さて、その次は何でしょう？<br>
+
+<br>
+
+</div>
+
+</div>
+
+
+
+<div style="height: 70px;"></div>
+
+
+
+<div class="paper">
+
+<br>
+
+<img src="render.jpg" style="width: 580px;"><br>
+
+<div style="text-align: left;">
+
+↑このように 3Dでモデリングしました。<br>
+上から……、最初、Illustrator で描き → 次に、blender で頂点減らし厚み付け → ベベル → ふくらませ、見えない頂点削除 → 頂点減らして完成。<br>
+最終的な stl データ公開しておきます。ダウンロード→<a target="mxw" href="money.stl">★</a><br>
+
+<br><hr><br>
+
+2020/09/12<br>
+・iOS での オーディオの開始を厳格化。<br>
+・ライトの角度を調整。<br>
+
+<br>
+
+2020/09/08<br>
+・skeleton_3.js (touch / canvas / audio も。)<br>
+・ゲームオーバー画面でも、端末の傾きでライトを動かす。<br>
+・タイトル画面のケムリが画面からはみ出さないように。<br>
+・場面転換時にタッチを初期化。<br>
+
+<br>
+
+2018/10/31<br>
+・skeleton_2.js。ゲーム画面が大きくなりすぎないように。<br>
+
+<br>
+
+2018/10/18<br>
+・Android 用に、プライバシーポリシー表示追加。<br>
+
+<br>
+
+2016/11/12<br>
+・音づくり。Base64。完成。<br>
+
+<br>
+
+2016/8月〜10月<br>
+・音づくりがおっくうで放置。<br>
+
+<br>
+
+〜2016/08/07<br>
+・Blender で、お金をモデリング。<br>
+
+<br>
+
+2016/06/17〜07/18<br>
+・three.js 研究。(fpw 制作。)<br>
+
+<br>
+
+2016/06/27〜30<br>
+・プロトタイプ作成。skeleton.js。<br>
+
+<br><hr><br>
+
+<table cellspacing=0 cellpadding=5 class="t"><tr><td>
+
+com.mameson.mxt (iOS)<br>
+
+<br>
+
+アイコン
+<a target="mxw" href="mxt/mxt_icon_1024.png">★</a>
+
+<span class="m" />
+
+画像
+<a target="mxw" href="mxt/mxt_game_1_1242x2208.png">★</a>
+<a target="mxw" href="mxt/mxt_game_2_1242x2208.png">★</a>
+<a target="mxw" href="mxt/mxt_gameover_1242x2208.png">★</a><br>
+
+<br>
+
+2020/09/12 …… 4 (4)<br>
+・SwiftUI。<br>
+・長押しでメニューが出ないように。<br>
+
+<br>
+
+2016/12/06 …… 3 (3)<br>
+・touches.length が 0 になった時、全タッチのトラッキングをクリア。<br>
+
+<br>
+
+2016/11/13 …… 2 (2) ・WKWebView。AdMob。Firebase。<br>
+
+<br>
+
+</td></tr></table>
+
+<br>
+
+<table cellspacing=0 cellpadding=5 class="t"><tr><td>
+
+com.mameson.mxa (Android)<br>
+
+<br>
+
+アイコン
+<a target="mxw" href="mxa/mxa_icon_512.png">★</a>
+
+<span class="m" />
+
+画像
+<a target="mxw" href="mxa/mxa_pr_180x120.png">★</a>
+<a target="mxw" href="mxa/mxa_pr_1024x500.png">★</a>
+<a target="mxw" href="mxa/mxa_pr_1280x720.png">★</a><br>
+
+<br>
+
+2020/09/10 …… 3 (3) ・Kotlin。<br>
+
+<br>
+
+2018/11/03 …… 2 (2) ・プライバシーポリシー表示追加。<br>
+
+<br>
+
+2016/11/15 …… 1 (1) ・WebView。AdMob。Firebase。<br>
+
+<br>
+
+</td></tr></table>
+
+<br><hr><br>
+
+紙幣は、旅館のキーに付いている色透明の棒のイメージ。<br>
+
+<br>
+
+</div>
+
+</div>
+
+
+
+<div style="height: 500px;"></div>
+
+
+
+</center>
+
+</body>
+
+</html>
