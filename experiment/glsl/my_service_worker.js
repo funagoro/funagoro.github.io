@@ -1,5 +1,4 @@
 
-const MANIFEST_URL = "nez_3.appcache";
 const STATIC_CACHE_KEY = 'cache-key';
 
 var ORIGIN = location.protocol + '//' + 
