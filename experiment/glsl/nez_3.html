@@ -19,6 +19,11 @@
 <meta name="viewport" content="width=700">
 <style> @-ms-viewport { width : 700px;} </style>
 
+<script>
+const w = navigator.serviceWorker;
+if( w) w.register( "nez_3_service_worker.js", { scope : "./"});
+</script>
+
 </head>
 
 <body>
