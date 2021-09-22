@@ -1,10 +1,10 @@
 
 const KEY = "nez_3";
 
-self.addEventListener( "install", (event) => {
-	event.waitUntil(
-		caches.open( KEY).then( (cache) => {
-			return cache.addAll( [
+self.addEventListener( "install", e => {
+	e.waitUntil(
+		caches.open( KEY).then( c => {
+			return c.addAll( [
 				"./favicon.ico",
 				"./glsl.css",
 				"./bg.png",
@@ -24,15 +24,15 @@ self.addEventListener( "install", (event) => {
 	);
 });
 
-self.addEventListener( "activate", (event) => {});
+self.addEventListener( "activate", e => {});
 
-self.addEventListener( "fetch", (event) => {
-	event.respondWith(
-		caches.match( event.request).then( function( cache_res){
-			return cache_res || fetch( event.request).then( function( response){
-				return caches.open( KEY).then( function( cache){
-					cache.put( event.request, response.clone());
-					return response;
+self.addEventListener( "fetch", e => {
+	e.respondWith(
+		caches.match( e.request).then( function( c_res){
+			return c_res || fetch( e.request).then( function( f_res){
+				return caches.open( KEY).then( function( c){
+					c.put( e.request, f_res.clone());
+					return f_res;
 				});
 			});
 		})
