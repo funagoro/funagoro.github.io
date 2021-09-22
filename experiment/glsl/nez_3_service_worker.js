@@ -3,7 +3,7 @@ const KEY = "nez_3";
 
 self.addEventListener( "install", (event) => {
 	event.waitUntil(
-		caches.open( KEY).then( cache => {
+		caches.open( KEY).then( (cache) => {
 			return cache.addAll( [
 				"./nez_3.html",
 
