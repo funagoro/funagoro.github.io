@@ -5,8 +5,6 @@ self.addEventListener( "install", (event) => {
 	event.waitUntil(
 		caches.open( KEY).then( (cache) => {
 			return cache.addAll( [
-				"./nez_3.html",
-
 				"./favicon.ico",
 				"./glsl.css",
 				"./bg.png",
