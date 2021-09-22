@@ -59,7 +59,7 @@ touch and turn<br>
 
 const MANIFEST_URL = "nez_3.appcache";
 if( navigator.serviceWorker){
-	navigator.serviceWorker.register( "./my_service_worker.js", { scope : "."});
+	navigator.serviceWorker.register( "./my_service_worker.js", { scope : "./"});
 	if( navigator.onLine) fetch( "./" + MANIFEST_URL);
 }
 
