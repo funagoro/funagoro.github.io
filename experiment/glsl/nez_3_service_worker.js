@@ -1,8 +1,7 @@
 
-const MANIFEST_URL = "nez_3.appcache";
 const KEY = "nez_3";
 
-self.addEventListener( "install", event => {
+self.addEventListener( "install", (event) => {
 	event.waitUntil(
 		caches.open( KEY).then( cache => {
 			return cache.addAll( [
@@ -27,9 +26,9 @@ self.addEventListener( "install", event => {
 	);
 });
 
-self.addEventListener( "activate", event => {});
+self.addEventListener( "activate", (event) => {});
 
-self.addEventListener( "fetch", event => {
+self.addEventListener( "fetch", (event) => {
 	event.respondWith(
 		caches.match( event.request).then( function( cache_res){
 			return cache_res || fetch( event.request).then( function( response){
