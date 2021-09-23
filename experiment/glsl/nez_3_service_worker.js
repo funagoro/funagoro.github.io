@@ -3,20 +3,20 @@ const KEY = "nez_3";
 
 self.addEventListener( "install", e => e.waitUntil(
 	caches.open( KEY).then( c => c.addAll( [
-		"./favicon.ico",
-		"./glsl.css",
-		"./bg.png",
+		"favicon.ico",
+		"glsl.css",
+		"bg.png",
 
-		"./nez_3.html",
-		"./bon_12.png",
+		"nez_3.html",
+		"bon_12.png",
 
-		"./nez_3_1_glb_b64.js",
-		"./nez_3_2_glb_b64.js",
+		"nez_3_1_glb_b64.js",
+		"nez_3_2_glb_b64.js",
 
-		"./skeleton_touch.js",
+		"skeleton_touch.js",
 
-		"./three_130_min.js",
-		"./three_gltf_loader.js"
+		"three_130_min.js",
+		"three_gltf_loader.js"
 	]))
 ));
 

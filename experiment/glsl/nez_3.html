@@ -23,8 +23,8 @@
 <style> @-ms-viewport { width : 700px;} </style>
 
 <script>
-const w = navigator.serviceWorker;
-if( w) w.register( "nez_3_service_worker.js", { scope : "./"});
+const sw = navigator.serviceWorker;
+if( sw) sw.register( "nez_3_service_worker.js", { scope : "./"});
 </script>
 
 </head>
@@ -64,11 +64,6 @@ touch and turn<br>
 <script src="three_gltf_loader.js"></script>
 
 <script>
-
-const sw = navigator.serviceWorker;
-if( sw) sw.register( "./nez_3_service_worker.js", { scope : "./"});
-
-//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 const W = 512; //★ 画面サイズ。
 
