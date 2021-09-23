@@ -62,20 +62,24 @@ touch and turn<br>
 
 <script>
 
-const MANIFEST_URL = "nez_3.appcache";
-if( navigator.serviceWorker){
-	navigator.serviceWorker.register( "./my_service_worker.js", { scope : "./"});
-	if( navigator.onLine) fetch( "./" + MANIFEST_URL);
-}
+const sw = navigator.serviceWorker;
+if( sw) sw.register( "./nez_3_service_worker.js", { scope : "./"});
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 const W = 512; //★ 画面サイズ。
 
 const N = 100; //★ 核の数。最大 256。
-const D = 32; //★ 核の座標・速度を格納するテクスチャのサイズ。
+
+const D = 32; //★ 核の座標・速度・角度を格納するテクスチャのサイズ。
+//★32 x 32 ピクセル x 4 バイト。
+//★1 ピクセル (4 バイト) 当たり、r・g に x 座標、b・a に y 座標。
+//★1 ピクセル (4 バイト) 当たり、r・g に vx、b・a に vy。
+//★1 ピクセル (4 バイト) 当たり、r・g に角度 (0〜1)、b・a は使用しない。
+//★テクスチャの残りの 4 分の 1 は使用しない。
 
 const M = 64; //★ InstancedMesh の Matrix4 を格納するテクスチャのサイズ。
+//★核 256 個 x 16 x 4 バイトは、64 x 64 ピクセル x 4 バイトと、ちょうど同じ。
 
 const can = document.getElementById( "canvas_1");
 can.width = can.height = W;
