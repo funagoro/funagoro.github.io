@@ -7,16 +7,18 @@ self.addEventListener( "install", e => e.waitUntil(
 		"glsl.css",
 		"bg.png",
 
-		"nez_3.html",
+		"nez_4.html",
 		"nez_3.png",
 
-		"nez_3_1_glb_b64.js",
-		"nez_3_2_glb_b64.js",
+		"nez_4_1_glb_b64.js",
+		"nez_4_2_glb_b64.js",
 
 		"skeleton_touch.js",
 
 		"three_130_min.js",
-		"three_gltf_loader.js"
+		"three_gltf_loader.js",
+
+		"liquidfun_min.js"
 	]))
 ));
 
