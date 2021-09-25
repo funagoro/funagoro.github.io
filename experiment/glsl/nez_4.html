@@ -23,8 +23,10 @@
 <style> @-ms-viewport { width : 700px;} </style>
 
 <script>
-const sw = navigator.serviceWorker;
-if( sw) sw.register( "nez_4_service_worker.js", { scope : "./"});
+if( location.protocol == "https:"){
+	const sw = navigator.serviceWorker;
+	if( sw) sw.register( "nez_4_service_worker.js", { scope : "./"});
+}
 </script>
 
 </head>
