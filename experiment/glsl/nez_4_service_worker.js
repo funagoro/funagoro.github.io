@@ -1,5 +1,5 @@
 
-const KEY = "nez_3";
+const KEY = "nez_4";
 
 self.addEventListener( "install", e => e.waitUntil(
 	caches.open( KEY).then( c => c.addAll( [
