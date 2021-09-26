@@ -23,10 +23,8 @@
 <style> @-ms-viewport { width : 700px;} </style>
 
 <script>
-if( location.protocol == "https:"){
-	const sw = navigator.serviceWorker;
-	if( sw) sw.register( "nez_4_service_worker.js", { scope : "./"});
-}
+const sw = navigator.serviceWorker;
+if( sw) sw.register( "nez_4_service_worker.js", { scope : "./"});
 </script>
 
 </head>
@@ -95,8 +93,9 @@ skt.set_mag_and_orientation( 1, 0);
 
 const WW = 10;
 
-let world;
-let ps;
+let world, mill_b, ps;
+
+let mill;
 
 const MAX_PARTICLE_NUM = 256;
 let particle_num;
@@ -364,6 +363,19 @@ o.rotation.y = -1.57079;
 o.receiveShadow = true;
 scene.add( o);
 
+//★ 風車。
+mill = new THREE.Group();
+o = new THREE.Mesh(
+	new THREE.BoxGeometry( 0.05, 0.6, 0.02),
+	new THREE.MeshPhongMaterial( { color : 0xbbccdd})
+);
+o.castShadow = true;
+o.material.shadowSide = THREE.FrontSide;
+mill.add( o.clone());
+o.rotation.x = 1.57079;
+mill.add( o);
+scene.add( mill);
+
 //★ 柱。
 pill( 0.5, 0.5, 0.4, 0.05, 0);
 pill( -0.5, -0.5, 0.2, 0.2, 1);
@@ -371,7 +383,7 @@ pill( -0.5, -0.5, 0.2, 0.2, 1);
 function pill( x, y, z, r, n){
 	o = new THREE.Mesh(
 		new THREE.CircleGeometry( r, 8),
-		new THREE.MeshPhongMaterial( { color : 0xdddddd})
+		new THREE.MeshPhongMaterial( { color : 0xbbccdd})
 	);
 	o.position.set( -z, y, x);
 	o.rotation.y = -1.57079;
@@ -560,6 +572,7 @@ ld.load( "data:;base64," + MODEL_DATA_1, function( s){
 
 function tic(){
 	//★ i はグローバル。
+	let t;
 
 	requestAnimationFrame( tic);
 
@@ -609,6 +622,10 @@ function tic(){
 	ren.setRenderTarget( null);
 	ren.render( scene, cam);
 
+	t = mill_b.GetTransform();
+	mill.position.set( -0.05, 2 / WW * t.p.y - 1, 2 / WW * t.p.x - 1);
+	mill.rotation.x = -mill_b.GetAngle();
+
 	skt.post();
 
 	count++;
@@ -616,23 +633,33 @@ function tic(){
 
 function init_world(){
 	var r, v, w;
-	var b;
-	var psd;
+	var v2, bd, gb, jd, psd;
 
 	world = new b2World( new b2Vec2( 0, 0));
 
 	w = WW;
 	v = w / 2;
-	r = 0.02 * WW;
+	r = 0.02 * w;
 
-	b = world.CreateBody( new b2BodyDef());
-	box( v, -r, v + r, r);
-	box( v, w + r, v + r, r);
-	box( -r, v - r, r, v + r);
-	box( w + r, v - r, r, v + r);
+	bd = new b2BodyDef;
+	gb = world.CreateBody( bd);
 
-	circle( 0.75 * w, 0.75 * w, 0.05 * w / 2);
-	circle( 0.25 * w, 0.25 * w, 0.2 * w / 2);
+	box( gb, v, -r, v + r, r, 0);
+	box( gb, v, w + r, v + r, r, 0);
+	box( gb, -r, v - r, r, v + r, 0);
+	box( gb, w + r, v - r, r, v + r, 0);
+
+	circle( gb, 0.75 * w, 0.75 * w, 0.05 * w / 2);
+	circle( gb, 0.25 * w, 0.25 * w, 0.2 * w / 2);
+
+	bd.type = b2_dynamicBody;
+	jd = new b2RevoluteJointDef;
+	v2 = new b2Vec2( 0.7 * w, 0.3 * w);
+	mill_b = world.CreateBody( bd);
+	box( mill_b, 0, 0, 0.01 * w, 0.3 * w, 1);
+	box( mill_b, 0, 0, 0.3 * w, 0.01 * w, 1);
+	mill_b.SetTransform( v2, 0);
+	jd.InitializeAndCreate( gb, mill_b, v2);
 
 	psd = new b2ParticleSystemDef();
 	psd.radius = 0.02 * WW;
@@ -641,15 +668,15 @@ function init_world(){
 	psd.density = 0.1;
 	ps = world.CreateParticleSystem( psd);
 
-	function box( x, y, w, h){
+	function box( b, x, y, w, h, d){
 		var s;
 
 		s = new b2PolygonShape();
 		s.SetAsBoxXYCenterAngle( w, h, new b2Vec2( x, y), 0);
-		b.CreateFixtureFromShape( s, 0);
+		b.CreateFixtureFromShape( s, d);
 	}
 
-	function circle( x, y, r){
+	function circle( b, x, y, r){
 		var s;
 
 		s = new b2CircleShape;
