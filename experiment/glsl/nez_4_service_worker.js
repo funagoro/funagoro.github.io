@@ -1,8 +1,8 @@
 
-const KEY = "nez_4";
+const SW_KEY = "nez_4";
 
 self.addEventListener( "install", e => e.waitUntil(
-	caches.open( KEY).then( c => c.addAll( [
+	caches.open( SW_KEY).then( c => c.addAll( [
 		"favicon.ico",
 		"glsl.css",
 		"bg.png",
