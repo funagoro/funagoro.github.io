@@ -28,7 +28,7 @@ self.addEventListener( "fetch", e => e.respondWith(
 		if( c_res) return c_res;
 
 		return fetch( e.request.clone()).then( f_res => {
-			if( !f_res || f_res.statun != 200 || f_res.tyle != "basic") return f_res;
+			if( !f_res || f_res.status != 200 || f_res.type != "basic") return f_res;
 
 			caches.open( SW_KEY).then( c => c.put( e.request, f_res.clone()));
 			return f_res;
