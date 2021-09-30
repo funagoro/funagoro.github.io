@@ -7,6 +7,7 @@ self.addEventListener( "install", e => e.waitUntil(
 		"glsl.css",
 		"bg.png",
 
+		"nez_3_t.jpg",
 		"nez_3.html",
 		"nez_3.png",
 
@@ -25,9 +26,12 @@ self.addEventListener( "activate", e => {});
 self.addEventListener( "fetch", e => e.respondWith(
 	caches.match( e.request).then( c_res => {
 		if( c_res) return c_res;
-		fetch( e.request).then( f_res => caches.open( KEY).then( c => {
-			c.put( e.request, f_res.clone());
+
+		return fetch( e.request.clone()).then( f_res => {
+			if( !f_res || f_res.statun != 200 || f_res.tyle != "basic") return f_res;
+
+			caches.open( SW_KEY).then( c => c.put( e.request, f_res.clone()));
 			return f_res;
-		}));
+		});
 	})
 ));
