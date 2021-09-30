@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>glsl - MONKEY CIRCUS おさるサーカス</title>
+
+<link rel="shortcut icon" href="../../img/favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="glsl.css" />
+
+<meta name="viewport" content="width=700">
+<style> @-ms-viewport { width: 700px;} </style>
+
+<style>
+	.wo{ display: inline-block; vertical-align: top; font-size: 30px; text-align: center; width: 200px;}
+	.as{ display: inline-block; margin-left: 20px; width: 370px;}
+</style>
+
+</head>
+
+<body>
+
+
+
+<div class="t"></div>
+
+
+
+<a href="../../">go back to Monkey Circus</a><br>
+<br>
+<div class="paper">
+
+<br>
+
+GLSL を勉強するページです。<br>
+
+
+
+<br><hr><br>
+
+
+
+<div class="wo">
+<a target="glsl" href="aka_3.html"><img src="aka_3_t.jpg"></a><br>
+"aka 3"<br>
+</div>
+<div class="as">
+2021/09/30<br>
+・三層に分かれる液体。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="nez_4.html"><img src="nez_4_t.jpg"></a><br>
+"nez 4"<br>
+</div>
+<div class="as">
+2021/09/26<br>
+・風車を追加した。<br>
+<br>
+2021/09/25<br>
+・Boids にコリジョンも入れたくなり<br>
+<span class="m" /> 2D物理のパーティクルにした。<br>
+<br>
+・ペンギンをモデリング。200 羽。<br>
+<span class="m" />「どきどきペンギンランド」に<br>
+<span class="m" />あやかり、アデリーペンギン。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="nez_3.html"><img src="nez_3_t.jpg"></a><br>
+"nez 3"<br>
+</div>
+<div class="as">
+sequel - 2021/09/23<br>
+・PWA 研究。iPhone で「ホーム画<br>
+<span class="m" />面に追加」できるように、Service<br>
+<span class="m" />Worker を入れた。github は https<br>
+<span class="m" /> なのでキャッシュ可能。<br>
+<span class="m" />自分のドメインは http で無理。<br>
+<br>
+2021/09/19<br>
+・イルカのようなピッチ方向の動き。<br>
+<br>
+2021/09/18<br>
+・ベクトルの内積と外積を勉強した。<br>
+<span class="m" />動きが滑らかになった。<br>
+<br>
+2021/09/17<br>
+・<a target="glsl" href="http://www.red3d.com/cwr/">Craig W. Reynolds 先生</a> の "Boids"<br>
+<span class="m" />に敬意を込めて。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="vinyl_3.html"><img src="vinyl_3_t.jpg"></a><br>
+"vinyl 3"<br>
+</div>
+<div class="as">
+2021/09/13<br>
+・ボロノイ図を丸く描画する方法、<br>
+<span class="m" />アプレット時代からベジェ曲線を<br>
+<span class="m" />使って何度も挑戦してきたけど、<br>
+<span class="m" />辺の数が変化した瞬間にチラつい<br>
+<span class="m" />たり、短い辺があると鋭角になっ<br>
+<span class="m" />てしまったり…。<br>
+<br>
+・今回の方法は、GPU の「力技」で<br>
+<span class="m" />多角形を「ぼかし」で丸めるだけ！<br>
+<span class="m" />数学的なことは一切考えずに、<br>
+<span class="m" />超簡単に丸くできる。<br>
+<br>
+・Boids 的なステアリングも入れた。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="fro_4.html"><img src="fro_4_t.jpg"></a><br>
+"fro 4"<br>
+</div>
+<div class="as">
+2021/09/11<br>
+・ピクトグラムをけむにまく。<br>
+<br>
+・ラテアートもできそう。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="fro_3.html"><img src="fro_3_t.jpg"></a><br>
+"fro 3"<br>
+</div>
+<div class="as">
+2021/09/01<br>
+・イキケイにしてみた。<br>
+<br>
+・地下アイドルのミュージックビデオ<br>
+<span class="m" />のエヘクトみたい。村上隆さんの<br>
+<span class="m" />液体表現みたい(？)<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="fro_2.html"><img src="fro_2_t.jpg"></a><br>
+"fro 2"<br>
+</div>
+<div class="as">
+2021/08/29<br>
+・川瀬式ぽいブルームと、天使のは<br>
+<span class="m" />しごを追加した。一匹の魚が不<br>
+<span class="m" />思議な世界に迷い込んだみたい。<br>
+<br>
+・毎日、金魚とミナミヌマエビの<br>
+<span class="m" />水槽を掃除しつつ homogeneous<br>
+<span class="m" />な流体に想いを馳せている。<br>
+<br>
+2021/08/28<br>
+・浮動小数点テクスチャを勉強した。<br>
+<span class="m" />iOS では、OES_texture_float は<br>
+<span class="m" />あるので texture2D 等できるけど、<br>
+<span class="m" />WEBGL_color_buffer_float がない<br>
+<span class="m" />ので書込みは無理かと思ったけど、<br>
+<span class="m" />できた。ケチって half float にして<br>
+<span class="m" />いたから動いただけなのかも。<br>
+<br>
+・洗剤やシャンプーのパッケージが<br>
+<span class="m" />美しくて見とれてしまう。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="cou_2.html"><img src="cou_2_t.jpg"></a><br>
+"cou 2"<br>
+</div>
+<div class="as">
+2021/08/26<br>
+・紙に弾力を持たせた。<br>
+<br>
+2021/08/22<br>
+・InstancedMesh なので、花びらを<br>
+<span class="m" />一枚だけ操作すれば全部が動く。<br>
+<br>
+2021/08/20<br>
+・紙で実際にいろいろ折ってみた。<br>
+<span class="m" /><img src="cou_2.jpg" style="width: 250px;"><br>
+<br>
+・道端の花を、つい観察してしまう。<br>
+<br>
+・ずっと気になっていた、SK-II の<br>
+<span class="m" />2015年春のスペシャルパッケージ<br>
+<span class="m" />を真似させていただきました。<br>
+<span class="m" /><img src="cou_2_2.jpg" style="width: 120px;">
+<img src="cou_2_3.jpg" style="width: 120px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="nez_2.html"><img src="nez_2_t.jpg"></a><br>
+"nez 2"<br>
+</div>
+<div class="as">
+2021/08/18<br>
+・フォースフィールド。<br>
+<span class="m" />遠心力。表面張力。ドットモアレ。<br>
+<span class="m" />ウイルスの顕微鏡写真ぽく。<br>
+<span class="m" />2200 パーティクル程度。<br>
+<br>
+・一匹だけスイミー。<br>
+<br>
+・当初は<a target="glsl" href="http://kikyouya.co.jp">桔梗信玄餅</a>のパッケージぽく<br>
+<span class="m" />するつもりだった。<br>
+<span class="m" /><img src="nez_2.jpg" style="width: 120px;"><br>
+<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mb_5.html"><img src="mb_5_t.jpg"></a><br>
+"mb 5"<br>
+</div>
+<div class="as">
+2021/08/16<br>
+・スクリーントーン。<br>
+<br>
+・一色だけ黒い部分は、金ラメ入り<br>
+<span class="m" />ラバライトのイメージ。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mb_4.html"><img src="mb_4_t.jpg"></a><br>
+"mb 4"<br>
+</div>
+<div class="as">
+2021/08/14<br>
+・色分け。<br>
+<br>
+・五味太郎さん風の色づかい。<br>
+<span class="m" />sRGB の色空間に収まらない。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mb_3.html"><img src="mb_3_t.jpg"></a><br>
+"mb 3"<br>
+</div>
+<div class="as">
+2021/08/13<br>
+・モコモコ。<br>
+<br>
+・乱数を加えた重力井戸テクスチャ<br>
+<span class="m" />を、texture2D でリニア補間して、<br>
+<span class="m" />アクセントフィールドも加味した。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="cou.html"><img src="cou_t.jpg"></a><br>
+"cou"<br>
+</div>
+<div class="as">
+2021/08/12<br>
+・1万枚の桜の花びらが舞う。<br>
+<br>
+・ナカメアルカスでいつも流れて<br>
+<span class="m" />いる映像のイメージ。<br>
+<br>
+・coumarin<br>
+<br>
+2021/08/09<br>
+・Float32 を格納するピクセルの vec4<br>
+<span class="m" />と、GLSL の float を、双方向に<br>
+<span class="m" />型変換する関数を書いた。<br>
+<br>
+2021/08/08<br>
+・Matrix4 の回転行列と、行列どうし<br>
+<span class="m" />の積について勉強した。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="qr_2.html"><img src="qr_2_t.jpg"></a><br>
+"qr 2"<br>
+</div>
+<div class="as">
+2021/08/07<br>
+・グライダー銃とパルサーを入れた。<br>
+<br>
+2021/08/05<br>
+・GPGPU の結果を、転送しないで<br>
+<span class="m" />直接 InstancedMatrix で受け取る。<br>
+<span class="m" />リトルエンディアン限定なので、<br>
+<span class="m" />環境によっては動作しないかも。<br>
+<br>
+2021/08/04<br>
+・Float32 のビット構造を勉強した。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="qr.html"><img src="qr_t.jpg"></a><br>
+"qr"<br>
+</div>
+<div class="as">
+2021/07/27<br>
+・Suzanne にした。<br>
+<br>
+2021/07/24<br>
+・FOV を徐々に変化させた。<br>
+<br>
+2021/07/22<br>
+・GPGPU の結果を、ループで転写<br>
+<span class="m" />するのではなく、set 命令だけで<br>
+<span class="m" />THREE.InstancedMesh の<br>
+<span class="m" />Matrix4 配列に転送した。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_12.html"><img src="bon_12_t.jpg"></a><br>
+"bon 12"<br>
+</div>
+<div class="as">
+2021/08/01<br>
+・伴奏のベースを入れた。<br>
+<br>
+・振付は盆踊りではなく、動作試験。<br>
+<br>
+2021/07/28<br>
+・<span class="s">"Ievan Polkka"</span> を何度も聴いて<br>
+<span class="m" />歌詞を書き取った。<br>
+<br>
+2021/07/25<br>
+・ト音記号はソ、ヘ音記号はファ、<br>
+<span class="m" />の位置から書きはじめる。<br>
+<br>
+2021/07/20<br>
+・スワイプで回せるようにした。<br>
+<br>
+・肩の euler を <span class="s">reorder</span>。←便利。<br>
+<br>
+2021/07/17<br>
+・踊り手の前方に妄想した「田」の字<br>
+<span class="m" />に向けて、ひじも含めた手全体の<br>
+<span class="m" />軸を貫通させる方式を考案した。<br>
+<br>
+2021/07/10<br>
+・ずっと悩み続けていた肩の回転が<br>
+<span class="m" />解決。脳内がモルワイデ図法。<br>
+<br>
+2021/07/08<br>
+・電子キーボードを弾きまくり。<br>
+<span class="m" />でも囃子詞の音階が分からない。<br>
+<span class="m" />民謡・律・都節・琉球。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_11.html"><img src="bon_11_t.jpg"></a><br>
+"bon 11"<br>
+</div>
+<div class="as">
+2021/06/29<br>
+・エリックカール風のテクスチャを<br>
+<span class="m" />Photoshop で描いた。<br>
+<br>
+2021/06/27<br>
+・<span class="s">「鍵盤」</span>を付け加えた。<br>
+<br>
+2021/06/26<br>
+・<span class="s">「さくら音頭」</span>を踊る。耳コピ<br>
+<span class="m" />採譜。<span class="s">七・七・九</span>の部分は、<br>
+<span class="m" />音階が分からず割愛した。<br>
+<span class="m" />秋田音頭や会津磐梯山も調べた。<br>
+<br>
+2021/06/25<br>
+・<span class="s">エリックカール風</span>のテクスチャを<br>
+<span class="m" /><a target="glsl" href="http://www.mameson.com/sketchpad/2021_0625_eric_carle/arr.html">紙に描いてみた。</a>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_10.html"><img src="bon_10_t.jpg"></a><br>
+"bon 10"<br>
+</div>
+<div class="as">
+2021/06/22<br>
+・胴・腕・脚の長さを変えられる<br>
+<span class="m" />ようにした。子孫ボーンの長さ<br>
+<span class="m" />には影響しないように、直後に<br>
+<span class="m" />逆倍率のノードをはさみ込んだ。<br>
+<br>
+・逆 quaternion で world の回転を<br>
+<span class="m" />ローカルに変換した。<br>
+<br>
+2021/06/17<br>
+・KOSÉ の広告の NiziU の衣装を<br>
+<span class="m" />真似させていただきました。<br>
+<span class="m" /><img src="bon_10_niziu.jpg" style="width: 240px;"><br>
+<br>
+2021/06/15<br>
+・肩の回転は 4 軸なので、オイラー<br>
+<span class="m" />だと計算が複雑になるので<br>
+<span class="m" /><span class="s">quaternion</span> にした。<br>
+<br>
+2021/06/12<br>
+・テクスチャ入りの glb ファイルは、<br>
+<span class="m" />CORS 制限に引っかかるので、<br>
+<span class="m" />テクスチャを使いたい場合は、<br>
+<span class="m" />JSON にする必要があると思って<br>
+<span class="m" />いたけど、別ファイルで読込んで<br>
+<span class="m" />マテリアルに入れれば大丈夫だと<br>
+<span class="m" />分かった。Base64 化は必要。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_9.html"><img src="bon_9_t.jpg"></a><br>
+"bon 9"<br>
+</div>
+<div class="as">
+2021/06/11<br>
+・昨日の問題の原因は、Web Audio<br>
+<span class="m" />の AudioParam インターフェイス<br>
+<span class="m" />をいじる度に、その指示が蓄積<br>
+<span class="m" />していくことだと分かった。<br>
+<span class="m" />オートメーションしないように<br>
+<span class="m" />〜AtTime() 系を避けて、value に<br>
+<span class="m" />じかに値を代入しても同じ結果。<br>
+<span class="m" />cancelScheduledValues( 0) で<br>
+<span class="m" />直った。Web Audio のバグか。<br>
+<br>
+2021/06/10<br>
+・AudioBufferSourceNode を<br>
+<span class="m" />ループ再生していると、だんだん<br>
+<span class="m" />CPU の負荷が上がってきて、<br>
+<span class="m" />音にディストーションがかかる。<br>
+<span class="m" />ページをリロードすれば直る。<br>
+<br>
+2021/06/09<br>
+・<span class="s">グミっぽい人物</span>をモデリングした。<br>
+<br>
+2021/06/05<br>
+・初めて<span class="s">ボーン</span>を使った。<br>
+<span class="m" />Blender の Vertex Groups が、<br>
+<span class="m" />three.js の SkinnedMesh になる。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_8.html"><img src="bon_8_t.jpg"></a><br>
+"bon 8"<br>
+</div>
+<div class="as">
+2021/05/30<br>
+・パ行、タ行、の破裂音を入れた。<br>
+<span class="m" />ビートボックスぽくなった。<br>
+<span class="m" />歌声も楽器の音も全部プログラム<br>
+<span class="m" />で波形を生成している。<br>
+<span class="m" />(サンプリング音源不使用。)<br>
+<br>
+2021/05/29<br>
+・<span class="s">「ドンパン節」</span>を踊る。<br>
+<br>
+2021/05/27<br>
+・熱対策でポリゴン数を削減した。<br>
+<br>
+・ポストプロセスでクロマキー的に<br>
+<span class="m" />プロシージャルな模様を入れた。<br>
+<span class="m" />星条旗ぽくした。<br>
+<br>
+・テクスチャが物体とともに移動<br>
+<span class="m" />せず、スクリーン座標に従うのは<br>
+<span class="m" />"Eggggg" ぽい。<br>
+<span class="m" /><img src="bon_8.jpg" style="width: 120px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_7.html"><img src="bon_7_t.jpg"></a><br>
+"bon 7"<br>
+</div>
+<div class="as">
+2021/05/24<br>
+・ナ行、マ行、ラ行、を発声できる<br>
+<span class="m" />ようにした。<br>
+<br>
+・ブライスに敬意を込めて。<br>
+<span class="m" />代官山 Junie Moon を連日訪れた。<br>
+<br>
+2021/05/22<br>
+・<span class="s">「東京音頭」</span>を踊る。<br>
+<br>
+2021/05/20<br>
+・X→Y→Z→X だったジンバルを、<br>
+<span class="m" />X→Z→Y→X に変えた。<br>
+<span class="m" /><img src="bon_7_5.jpg" style="height: 150px;"><br>
+<br>
+2021/05/19<br>
+・正十二面体から変形して、いちご<br>
+<span class="m" />をモデリングした。<br>
+<span class="m" /><img src="bon_7_3.jpg" style="width: 330px;"><br>
+<span class="m" /><img src="bon_7_4.jpg" style="height: 100px;"><br>
+<br>
+2021/05/16<br>
+・肩に 4 自由度のジンバルを組込む<br>
+<span class="m" />機構を考案した。<br>
+<span class="m" /><img src="bon_7_1.jpg" style="height: 150px;">
+<img src="bon_7_2.jpg" style="height: 150px; margin-left: 10px;"><br>
+<span class="m" />パチッと嵌合させるエラストマー<br>
+<span class="m" />のインジェクション成型を妄想。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_6.html"><img src="bon_6_t.jpg"></a><br>
+"bon 6"<br>
+</div>
+<div class="as">
+2021/05/15<br>
+・音階をシフトできるようにした。<br>
+<br>
+・伴奏を入れた。<br>
+<br>
+2021/05/14<br>
+・ひざでためられるようにした。<br>
+<br>
+・手をグーにして、いいねができる<br>
+<span class="m" />ようにした。可動部を増やす度、<br>
+<span class="m" />コードがどんどん冗長に。<br>
+<br>
+2021/05/12<br>
+・<span class="s">「ビューティフルサンデー」</span><br>
+<span class="m" />を踊る。<br>
+<br>
+・New Order の "Blue Monday"<br>
+<span class="m" />みたいな太鼓を入れた。<br>
+<br>
+・腕の向きの偏微分で手首を<br>
+<span class="m" />ヒラヒラさせた。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_5.html"><img src="bon_5_t.jpg"></a><br>
+"bon 5"<br>
+</div>
+<div class="as">
+2021/05/09<br>
+・7人に増やした。古いマシンでは<br>
+<span class="m" />歌も動きも遅〜くなって情趣。<br>
+<br>
+・カメラも動かした。<br>
+<br>
+2021/05/08<br>
+・<span class="s">Diablada</span> の衣装をモデリングした。<br>
+<span class="m" /><img src="bon_5_t2.jpg" style="width: 150px;">
+<img src="bon_5_t3.jpg" style="width: 150px; margin-left: 10px;"><br>
+<br>
+・Java アプレットぽく見せるため、<br>
+<span class="m" />わざと明暗なしで、ローレゾで。<br>
+<br>
+2021/05/04<br>
+・<a target="glsl" href="https://mrl.cs.nyu.edu/~perlin/experiments/violet/">Ken Perlin 先生の "Violet"</a> に敬意を<br>
+<span class="m" />込めて。<br>
+<span class="m" /><img src="bon_5_perlin.jpg" style="width: 150px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_4.html"><img src="bon_4_t.jpg"></a><br>
+"bon 4"<br>
+</div>
+<div class="as">
+2021/05/02<br>
+・MML・BML にタイを追加した。<br>
+<br>
+2021/05/01<br>
+・足を持ち上げられるようにした。<br>
+<br>
+・やぐら方向に動けるようにした。<br>
+<br>
+2021/04/30<br>
+・手首を曲げられるようにした。<br>
+<br>
+2021/04/29<br>
+・<span class="s">「大東京音頭」</span>を踊る。ニ長調。<br>
+<br>
+・小島ゆみこ先生の踊りを参考に<br>
+<span class="m" />させていただきました。<br>
+<span class="m" /><img src="bon_4.jpg" style="width: 200px;"><br>
+<br>
+2021/04/27<br>
+・ハ行、を発声できるようにした。<br>
+<br>
+2021/04/23<br>
+・盆踊りで<span class="s">手拍子</span>を打つのは大切<br>
+<span class="m" />だと思うのでしっかり作った。<br>
+<br>
+・回転軸のことばかり考えている。<br>
+<br>
+・コロナのせいで1年以上、盆踊りを<br>
+<span class="m" />みていないけれど、上手な人の<br>
+<span class="m" />動きを思い出しながら作っている。<br>
+<br>
+2021/04/18<br>
+・ガイコツをモデリングした。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_3.html"><img src="bon_3_t.jpg"></a><br>
+"bon 3"<br>
+</div>
+<div class="as">
+2021/04/14<br>
+・まだいろいろおかしいけど、<br>
+<span class="m" />ここで完成とする。完成。<br>
+<br>
+2021/04/13<br>
+・<span class="s">「よこはまアラメヤ音頭」</span>を<br>
+<span class="m" />最後まで踊れるようになった。<br>
+<span class="m" />変ホ長調。<br>
+<br>
+2021/04/10<br>
+・チ、ツ、を発声できるようにした。<br>
+<br>
+・長い AudioBufferSourceNode の<br>
+<span class="m" />再生に合わせて動くのではなく、<br>
+<span class="m" />音も動きもフレーム主導にした。<br>
+<br>
+・フォルマント合成を、Web Audio に<br>
+<span class="m" />ぜんぶ任せた。マキシマイズも<br>
+<span class="m" />してくれるし、高速。楽チン。<br>
+<br>
+2021/04/04<br>
+・<a target="glsl" href="http://www.mameson.com/prw/prw.html">パンダのオセロ</a>の、あの親子が<br>
+<span class="m" />盆踊りの練習を始めました。<br>
+<span class="m" /><img src="bon_3_prw.jpg" style="width: 250px;"><br>
+<br>
+2021/03/21<br>
+・なんと、Web Audio の biquad filter<br>
+<span class="m" />を使えば、自力で IIR する必要<br>
+<span class="m" />ないんじゃん。<br>
+<br>
+2021/03/14<br>
+・カ行、サ行、を発声できるように<br>
+<span class="m" />した。<br>
+<br>
+2021/03/07<br>
+・MML・BML 内にループも記述。<br>
+<span class="m" />解析強化。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon_2.html"><img src="bon_2_t.jpg"></a><br>
+"bon 2"<br>
+</div>
+<div class="as">
+2021/03/04<br>
+・CORS 制限対策のため、<br>
+<span class="m" />glb ファイルを Base64 にして、<br>
+<span class="m" />Data URI scheme で読込んだ。<br>
+<br>
+2021/03/03<br>
+・三人で輪踊りにした。一つの BML<br>
+<span class="m" />で、三人の個性を変えて踊る。<br>
+<br>
+・<a target="glsl" href="https://www.youtube.com/watch?v=3qfvY0EO2rw&list=RD38ef4e5F_Ao&index=2">厚澄会様の炭坑節</a>を参考に<br>
+<span class="m" />させていただきました。<br>
+<span class="m" /><img src="bon_2.jpg" style="width: 200px;"><br>
+<br>
+2021/03/02<br>
+・分散シャドウマップ VSM は、<br>
+<span class="m" />古い iPad で表示できなかったの<br>
+<span class="m" />で PCFSoftShadowMap にした。<br>
+<br>
+・データに normal が無い場合、<br>
+<span class="m" />影を受けるためには、<br>
+<span class="m" />computeVertexNormals() が必要。<br>
+<br>
+・セルフシャドウのモアレを防ぐ<br>
+<span class="m" />ためには、light の shadow.bias<br>
+<span class="m" />を微調整。<br>
+<br>
+・DPR 上げてみた。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="bon.html"><img src="bon_t.jpg"></a><br>
+"bon"<br>
+</div>
+<div class="as">
+2021/02/24<br>
+・BML は、炭坑節以外の振付のこと<br>
+<span class="m" />も考慮して設計している。<br>
+<br>
+・パラメータを変えれば踊り手の<br>
+<span class="m" />個性が出せるようにした。<br>
+<br>
+2021/02/22<br>
+・足の振付を入れた。<span class="s">余弦定理</span>。<br>
+<br>
+・BML は、実際の動きではなく、<br>
+<span class="m" />人間の感覚に近い形で記述。<br>
+<br>
+2021/02/20<br>
+・<span class="s">ヨナ抜き音階</span>は、ファとシが無い。<br>
+<br>
+2021/02/18<br>
+・手の振付を入れた。<br>
+<br>
+2021/02/14<br>
+・手を上げた時に、袖がスライドする<br>
+<span class="m" />ようにした。<br>
+<br>
+・動き始めと終わりは裏拍。<br>
+<span class="m" />おもての拍は通過点。<br>
+<br>
+2021/02/06<br>
+・MML の展開を一気に処理すると<br>
+<span class="m" />1秒間ぐらい動作が固まるので、<br>
+<span class="m" />時分割化した。<br>
+<br>
+2021/01/25<br>
+・盆踊りの振付を記述する言語、<br>
+<span class="m" /><span class="s">"BML"</span> を考案した。振付の単位を<br>
+<span class="m" />盆符と呼ぶことにした。<br>
+<br>
+・<span class="s">「炭坑節」</span>を踊る。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="vitae.html"><img src="vitae_t.jpg"></a><br>
+"vitae"
+</div>
+<div class="as">
+sequel - 2021/04/17<br>
+・祝日追加。UI 改良。<br>
+<br>
+2021/01/22<br>
+・だいぶ入力したので完成とする。<br>
+<br>
+・五反田の電波ビルの前で考案した。<br>
+<span class="m" /><img src="vitae.jpg" style="width: 200px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="oto_5.html"><img src="oto_5_t.jpg"></a><br>
+"oto 5"
+</div>
+<div class="as">
+2021/01/21<br>
+・フォルマント合成で炭坑節を歌う。<br>
+<span class="m" />ムリムリ☆母音のみで。<br>
+<br>
+・歌声の記述は MML に混ぜ込んだ。<br>
+<br>
+・浴衣(ゆかた)で、<br>
+<span class="m" />初音ミクのコスプレをしている<br>
+<span class="m" />人物を入れた。左前…。<br>
+<br>
+・<a target="glsl" href="https://aidn.jp">daniwell さん</a>の動画を参考に<br>
+<span class="m" />させていただきました。<br>
+<span class="m" /><img src="oto_5_1.jpg" style="width: 300px;"><br>
+<br>
+・<a target="glsl" href="https://twitter.com/riseriseri37">@riseriseri37 さん</a>の造形を参考に<br>
+<span class="m" />させていただきました。<br>
+<span class="m" /><img src="oto_5_2.jpg" style="width: 300px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="oto_4.html"><img src="oto_4_t.jpg"></a><br>
+"oto 4"
+</div>
+<div class="as">
+2021/01/19<br>
+・ひとまず、フォルマント合成を<br>
+<span class="m" />入れた。<br>
+<br>
+・"Oh, yeah." と発音しています。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="oto_3.html"><img src="oto_3_t.jpg"></a><br>
+"oto 3"
+</div>
+<div class="as">
+2021/01/15<br>
+・ドラム音追加。旋律はのこぎり波。<br>
+<br>
+・のちに、フォルマント合成を入れ<br>
+<span class="m" />たいと思っているものの、GPU で<br>
+<span class="m" />IIR ができる気がしないので<br>
+<span class="m" />波形合成は全部 js にした。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="ami_2.html"><img src="ami_2_t.jpg"></a><br>
+"ami 2"
+</div>
+<div class="as">
+2021/01/07<br>
+・レインボーで。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="ami.html"><img src="ami_t.jpg"></a><br>
+"ami"
+</div>
+<div class="as">
+2021/01/06<br>
+・網点。(あみてん)<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="kin.html"><img src="kin_t.jpg"></a><br>
+"kin"
+</div>
+<div class="as">
+2021/01/05<br>
+・24万ポリゴン。<br>
+<br>
+・市松模様は和風。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="oto_2.html"><img src="oto_2_t.jpg"></a><br>
+"oto 2"
+</div>
+<div class="as">
+2021/01/02<br>
+・ループする瞬間、クリックノイズが<br>
+<span class="m" />出ないように、ゼロクロス。<br>
+<span class="m" />音量についてもループ。<br>
+<br>
+・サスペンド時と、レジューム時の、<br>
+<span class="m" />ノイズは消すことができなかった。<br>
+<br>
+2021/01/01<br>
+・正弦波にした。色バリにした。<br>
+<br>
+・プチプチ音が出ないように、<br>
+<span class="m" />各フレームの頭の位相を GPU に<br>
+<span class="m" />渡し、音量は瞬間的に変えないで<br>
+<span class="m" />60 分の 1 秒かけて変化させて、<br>
+<span class="m" />波形がずっと繋がるようにした。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="oto.html"><img src="oto_t.jpg"></a><br>
+"oto"
+</div>
+<div class="as">
+2020/12/30<br>
+・30 年前を思い出しながら <span class="s">MML</span>。<br>
+<br>
+・MML で用意した楽譜を、js で 60<br>
+<span class="m" />分の 1 秒単位のデータに展開して<br>
+<span class="m" />おいてさらに GPU で 48000 Hz<br>
+<span class="m" />か 44100 Hz 程度に展開。<br>
+<span class="m" />もちろん<span class="s">矩形波</span>。PSG 風。<br>
+<span class="m" />懐かしすぎ。<br>
+<span class="m" />メロディはデチューンで。<br>
+<br>
+・スケーターズワルツ、<br>
+<span class="m" />けっきょく南極大冒険。<br>
+<br>
+・iOS のためにタッチを要求。<br>
+<br>
+・アクリル板ぽく見えるシェーダを<br>
+<span class="m" />書いた。<br>
+<br>
+・PointLight を 24 個ぐらい以上に<br>
+<span class="m" />すると、古い iPad で表示できな<br>
+<span class="m" />かったので減らした。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="ferro_2.html"><img src="ferro_2_t.jpg"></a><br>
+"ferro 2"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/16 update</span><br>
+<br>
+2020/12/23<br>
+・反応拡散系をイキケイで。<br>
+<br>
+・カクレクマノミ、ベニテングタケ。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="young_2.html"><img src="young_2_t.jpg"></a><br>
+"young 2"
+</div>
+<div class="as">
+2020/12/23<br>
+・渦。<br>
+<br>
+・心理テスト、何色が強く見えるか。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mb_2.html"><img src="mb_2_t.jpg"></a><br>
+"mb 2"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/13 ・THREE.Points やめて平面に。</span><br>
+<br>
+2020/12/23<br>
+・メタボールをイキケイで。<br>
+<br>
+・斜線、版ズレ。<br>
+<br>
+・古い MacBook Pro で gl_PointSize<br>
+<span class="m" />を 256 より大きくできない。<br>
+<span class="m" />iPhone や、古い iPad や iMac では<br>
+<span class="m" />もっと大きくできる。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="vinyl_2.html"><img src="vinyl_2_t.jpg"></a><br>
+"vinyl 2"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/09/12 update</span><br>
+<br>
+2020/12/20<br>
+・核の数、500。<br>
+<span class="m" />ボロノイのための texture2D の回数<br>
+<span class="m" />は、通常の方法では、1フレーム<br>
+<span class="m" /> あたり 1億3000万回ぐらいだった<br>
+<span class="m" />ところ、アルゴリズムを改良<br>
+<span class="m" />(座標で区分け) したら、1200万回<br>
+<span class="m" />ぐらいですむようになったので<br>
+<span class="m" />GPU が熱くならなくなった。<br>
+<br>
+・インデックスの格納は、<br>
+<span class="m" />リトルエンディアン。<br>
+<span class="m" />私はザイログ畑なので。<br>
+<br>
+・GLSL は円形にも向いている。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="for_s.html"><img src="for_s_t.jpg"></a><br>
+"for S"
+</div>
+<div class="as">
+2020/12/17<br>
+・Mac OS X Leopard のように。<br>
+<span class="m" /><img src="for_s.jpg" style="width: 128px;"><br>
+<br>
+・圧力項なし。<br>
+<br>
+・ここ十数年、パソコンがデジタル<br>
+<span class="m" />ではなくなって浮動小数点のもの<br>
+<span class="m" />になってしまった感じがしていた<br>
+<span class="m" />けど、GLSL を扱っていると、<br>
+<span class="m" />やっぱりデジタルだったんだと<br>
+<span class="m" />思えて安心する。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="fro.html"><img src="fro_t.jpg"></a><br>
+"fro"
+</div>
+<div class="as">
+2020/12/13<br>
+・ナビエストークス方程式も、<br>
+<span class="m" />セミラグランジュ法も、<br>
+<span class="m" />分からないけれど、<br>
+<span class="m" />要はこういうことかな？と、<br>
+<span class="m" />想像しながらやってみた。<br>
+<br>
+・格子法の流体。<br>
+<br>
+・to and fro<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="aka_2.html"><img src="aka_2_t.jpg"></a><br>
+"aka 2"
+</div>
+<div class="as">
+2020/12/10<br>
+・LiquidFun の流体をイキケイで。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="aka.html"><img src="aka_t.jpg"></a><br>
+"aka"
+</div>
+<div class="as">
+2020/12/08<br>
+・パーティクルが動いている方向に<br>
+<span class="m" />伸びるようにした。<br>
+<br>
+・閼伽。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="young.html"><img src="young_t.jpg"></a><br>
+"young"
+</div>
+<div class="as">
+2020/12/03<br>
+・THREE.MeshNormalMaterial で、<br>
+<span class="m" />お手軽にカラフル。と思ったら、<br>
+<span class="m" />フォグが効かなかったので、<br>
+<span class="m" />フォグ付きで、色味シフトもできる<br>
+<span class="m" />シェーダを書いた。<br>
+<br>
+・通常の THREE.MeshNormal<br>
+<span class="m" />Material の場合は、こんな色。<br>
+<span class="m" /><img src="young.png" style="width: 100px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="picto_2.html"><img src="picto_2_t.jpg"></a><br>
+"picto 2"
+</div>
+<div class="as">
+2020/11/30<br>
+・Instagram のアイコンのように。<br>
+<span class="m" /><img src="picto_2.png" style="width: 100px;"><br>
+<br>
+・まるくなったり平行になったり<br>
+<span class="m" />するグラデーション。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="picto.html"><img src="picto_t.jpg"></a><br>
+"picto"
+</div>
+<div class="as">
+2020/11/29<br>
+・Tik Tok のアイコンのように。<br>
+<span class="m" /><img src="picto.png" style="width: 100px;"><br>
+<br>
+・版ズレ、ゆがみ。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="nez.html"><img src="nez_t.jpg"></a><br>
+"nez"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/18 update</span><br>
+<br>
+2020/11/28<br>
+・readRenderTargetPixels() で、<br>
+<span class="m" />GPGPU の演算結果を取得して、<br>
+<span class="m" />オブジェクトの座標に使用。<br>
+<br>
+・最新版の glTF ローダは、CORS<br>
+<span class="m" />制限にひっかかるみたい(？)<br>
+<span class="m" />なので古いバージョンを細工した。<br>
+<span class="m" />module てなに？<br>
+<br>
+・ガイコツは、以前 <a target="glsl" href="../../design/generation/generation.html">"skull"</a> のために<br>
+<span class="m" />作ってあったものを流用。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="blur.html"><img src="blur_t.jpg"></a><br>
+"blur"
+</div>
+<div class="as">
+2020/11/25<br>
+・ガウシアンぼかし。<br>
+<span class="m" />モザイクぼかし。<br>
+<br>
+・アニメーションを数式で補間。<br>
+<br>
+・THREE.InstancedMesh で、<br>
+<span class="m" />放射状の形状を自動的に作る。<br>
+<br>
+・THREE.MeshPhongMaterial で、<br>
+<span class="m" />ツヤ感を出す。<br>
+<br>
+・THREE.HemisphereLight で、<br>
+<span class="m" />陰側にも色付け。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="trypo.html"><img src="trypo_t.jpg"></a><br>
+"trypo"
+</div>
+<div class="as">
+2020/11/23<br>
+・より気持ち悪く見えるよう微調整。<br>
+<br>
+2020/11/21<br>
+・trypophobia トライポフォビア。<br>
+<br>
+・グラデーションを数式で補間。<br>
+<br>
+・さらに GPGPU。すべての核の<br>
+<span class="m" />組合せについて距離を計算して、<br>
+<span class="m" />最短の相手を見つける。<br>
+<br>
+・これぐらい計算量を増やすと<br>
+<span class="m" />GPU が熱くなってくる。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="vinyl.html"><img src="vinyl_t.jpg"></a><br>
+"vinyl"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/09/12 update</span><br>
+<br>
+2020/11/19<br>
+・まさか辺や交点の計算をしないで<br>
+<span class="m" />ボロノイ図を描けるとは。<br>
+<span class="m" />GPU まかせ。ラクすぎ。<br>
+<br>
+・加えて、核を動かすのも、GPU に<br>
+<span class="m" />ぜんぶ丸投げで <span class="s">GPGPU</span>。<br>
+<br>
+・Uint8Array を扱っていると、<br>
+<span class="m" />Z80 のマシン語を思い出す。<br>
+<br>
+・嶋正利氏。西和彦氏。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="zhu.html"><img src="zhu_t.jpg"></a><br>
+"zhu"
+</div>
+<div class="as">
+2020/11/16<br>
+・2D物理。液体の中に浮遊する物体。<br>
+<br>
+・GLSL はグラデーションが簡単。<br>
+<br>
+・赤いストローは<a target="glsl" href="https://www.chunshuitang.jp">春水堂</a>のイメージ。<br>
+<span class="m" /><img src="zhu.jpg" style="width: 100px;"><br>
+<br>
+・珍珠奶茶。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mai_2.html"><img src="mai_2_t.jpg"></a><br>
+"mai 2"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/16 update</span><br>
+<br>
+2020/11/14<br>
+・2D物理。<br>
+<br>
+・THREE.LineSegments で<br>
+<span class="m" />DebugDraw を表示。<br>
+<br>
+・古い iPad では Uint8ClampedArray<br>
+<span class="m" />が使えなかったので、自分で<br>
+<span class="m" />clamp した値を Uint8Array へ。<br>
+<span class="m" /><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mai.html"><img src="mai_t.jpg"></a><br>
+"mai"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/16 update</span><br>
+<br>
+2020/11/13<br>
+・<span class="s">LiquidFun</span> の流体を、<br>
+<span class="m" />できるだけ簡素なコードで表示。<br>
+<br>
+・メタボールで滑らかな液体表現。<br>
+<br>
+・"Sprinkle" の表現もできそう。<br>
+<span class="m" /><img src="mai.jpg" style="width: 120px;"><br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="ferro.html"><img src="ferro_t.jpg"></a><br>
+"ferro"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/13 update</span><br>
+<br>
+2020/11/08<br>
+・THREE.FloatType は、iOS では<br>
+<span class="m" />使用できない。<br>
+<span class="m" />THREE.HalfFloatType にすれば、<br>
+<span class="m" />大丈夫だけど iPhone と iPad で、<br>
+<span class="m" />なぜか結果が異なるので、<br>
+<span class="m" />THREE.UnsignedByteType<br>
+<span class="m" />にした。整数好き。8ビット♡<br>
+<br>
+2020/11/06<br>
+・reaction-diffusion system<br>
+<span class="m" />反応拡散系。<br>
+<br>
+・ferrofluid 磁性流体ぽく。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="kuma.html"><img src="kuma_t.jpg"></a><br>
+"kuma"
+</div>
+<div class="as">
+<span class="d">sequel - 2021/08/13 ・THREE.Points やめて平面に。</span><br>
+<br>
+2020/11/01<br>
+・<span class="s">比較(明)ブレンド</span>。<br>
+<span class="m" />フチだけ光と陰を付ける。<br>
+<br>
+・偏微分 dFdx()・dFdy() が役立つ。<br>
+<br>
+・"Where's My Mickey" の表現も<br>
+<span class="m" />できそう。<br>
+<span class="m" /><img src="kuma.jpg" style="height: 120px;"><br>
+<br>
+・隈笹。隈取。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="mb.html"><img src="mb_t.jpg"></a><br>
+"mb"
+</div>
+<div class="as">
+sequel - 2021/08/13<br>
+・M1 チップの MacBook Air では、<br>
+<span class="m" />最大の gl_PointSize が 64 ぐらい<br>
+<span class="m" />に下げられてしまったみたい<br>
+<span class="m" />なので、もう THREE.Points は<br>
+<span class="m" />やめて平面オブジェクトにした。<br>
+<br>
+2020/11/01<br>
+・<span class="s">メタボール</span>。<br>
+<br>
+・中心からの距離の二乗に反比例した<br>
+<span class="m" />濃度のボールを用意して、<br>
+<span class="m" />加算ブレンドして、しきい値で<br>
+<span class="m" />色分け。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="post.html"><img src="post_t.jpg"></a><br>
+"post"
+</div>
+<div class="as">
+2020/10/30<br>
+・<span class="s">ポストプロセッシング</span>。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="osr.html"><img src="osr_t.jpg"></a><br>
+"osr"
+</div>
+<div class="as">
+2020/10/30<br>
+・<span class="s">オフスクリーンレンダリング</span>。<br>
+</div><br>
+
+
+
+<br><hr><hr><br>
+
+
+
+<div class="wo">
+<a target="glsl" href="panels_2.html"><img src="panels_2_t.jpg"></a><br>
+"panels 2"
+</div>
+<div class="as">
+2020/09/14<br>
+・GL のために用意した Base64 の<br>
+<span class="m" />画像を、ページ上にも表示。<br>
+<span class="m" />"panels"、"textured" も同様に。<br>
+<br>
+2020/08/28<br>
+・テクスチャ2枚重ね。<br>
+<br>
+・自前でアルファブレンディング。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="panels.html"><img src="panels_t.jpg"></a><br>
+"panels"
+</div>
+<div class="as">
+2020/08/26<br>
+・パネルの配置を、Uint8Array の<br>
+<span class="m" />データテクスチャとして渡す。<br>
+<span class="m" />たった<span class="s">一枚の平面</span>に全部のパネル<br>
+<span class="m" />を、いっぺんに描画してくれる。<br>
+<span class="m" />楽チンすぎ。<br>
+<br>
+・レティナでも高速。<br>
+</div><br>
+
+
+
+<br><hr><hr><br>
+
+
+
+<div class="wo">
+<a target="glsl" href="clouded_pink.html"><img src="clouded_pink_t.jpg"></a><br>
+"clouded pink"
+</div>
+<div class="as">
+2020/06/17<br>
+・キューブの面に貼付け。<br>
+<br>
+・css を別ファイルに分離。<br>
+<span class="m" />いままで避けていた。
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="textured.html"><img src="textured_t.jpg"></a><br>
+"textured"
+</div>
+<div class="as">
+2020/01/07<br>
+・png 画像を Base64 で<br>
+<span class="m" />テクスチャとして読込んで、<br>
+<span class="m" />フラグメントシェーダで使用。<br>
+<br>
+・2枚のテクスチャを渡す。<br>
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="clouded.html"><img src="clouded_t.jpg"></a><br>
+"clouded"
+</div>
+<div class="as">
+2019/12/29<br>
+・Perlin noise、Simplex noise。<br>
+<br>
+2019/12/28<br>
+・shadertoy.com のソースコードを<br>
+<span class="m" />Three.js で実行。<br>
+<br>
+・レイマーチング。
+</div><br>
+
+
+
+<br>
+
+
+
+<div class="wo">
+<a target="glsl" href="blinker.html"><img src="blinker_t.jpg"></a><br>
+"blinker"
+</div>
+<div class="as">
+2019/12/16<br>
+・<a target="glsl" href="https://www.shadertoy.com">shadertoy.com</a> に、感動。<br>
+<span class="m" />(たぶん初めて見た。)<br>
+<br>
+・<span class="s">フラグメントシェーダ</span>。
+</div><br>
+
+
+
+</div><br>
+
+
+
+<div class="b"></div>
+
+
+
+</body>
+
+</html>
