@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>Oscillator | AudioWorklet samples</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, user-scalable=yes, shrink-to-fit=no, viewport-fit=cover" />
+</head>
+
+<body>
+
+<section>
+
+	<h1>Oscillator</h1>
+
+	<form>
+		<label><input type="radio" name="wt" value="sine" checked /> SINE</label>
+		<label><input type="radio" name="wt" value="square" /> SQUARE</label>
+		<label><input type="radio" name="wt" value="sawtooth" /> SAWTOOTH</label>
+		<label><input type="radio" name="wt" value="triangle" /> TRIANGLE</label>
+	</form>
+
+	<div>
+		<label><input type="range" value="440" min="20" max="4000" step="1" /> FREQUENCY</label>
+		<button type="button">START</button>
+	</div>
+
+</section>
+
+
+
+<script>
+
+'use strict';
+
+//let ac;
+//if( window.AudioContext) ac = new window.AudioContext();
+//else ac = new window.webkitAudioContext();
+const ac = new window.AudioContext();
+
+//const promise = ac.audioWorklet.addModule( "oscillator_w.js?3");
+const promise = ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+
+	'use strict';
+
+	class osc extends AudioWorkletProcessor{
+		static get parameterDescriptors(){
+			return [ {
+				name : "frequency",
+				defaultValue : 440,
+				minValue : 20,
+				maxValue : sampleRate / 2,
+				automationRate : "a-rate"
+			}];
+		}
+
+		constructor(){
+			super();
+
+			this.type = "sine";
+			this.n = 0;
+			this.port.onmessage = ( event) => {
+				this.type = event.data;
+			};
+		}
+
+		process( inputs, outputs, parameters){
+			const output = outputs[ 0];
+
+			const numberOfChannels = output.length;
+
+			for( let channel = 0; channel < numberOfChannels; channel++){
+				const outputChannel = output[channel];
+
+				for( let i = 0, len = outputChannel.length; i < len; i++){
+					const frequency = parameters.frequency.length > 1 ? parameters.frequency[ i] : parameters.frequency[ 0];
+					const t0 = sampleRate / frequency;
+
+					let output = 0;
+					let s = 0;
+
+					switch( this.type){
+					case "sine":
+						output = 0.1*Math.sin( ( 2 * Math.PI * frequency * this.n) / sampleRate);
+						break;
+
+					case "square":
+						output = ( this.n < ( t0 / 2)) ? 1 : -1;
+						break;
+
+					case "sawtooth":
+						output = 2 * this.n / t0 - 1;
+						break;
+
+					case "triangle":
+						s = 4 * this.n / t0;
+						output = ( this.n < ( t0 / 2)) ? ( -1 + s) : ( 3 - s);
+						break;
+
+					default:
+						break;
+					}
+
+					outputChannel[ i] = output;
+
+					this.n++;
+
+					if( this.n >= t0) this.n = 0;
+				}
+			}
+
+			return true;
+		}
+	}
+
+	registerProcessor( "o1", osc);
+
+`));
+
+promise.then( () => {
+	const o = new AudioWorkletNode( ac, "o1");
+
+	document.querySelector( 'button').addEventListener( "click", async ( event) => {
+		if( ac.state !== "running") await ac.resume();
+
+		const b = event.target;
+
+		if( b.textContent === "START"){
+			o.connect( ac.destination);
+			b.textContent = "STOP";
+		} else {
+			o.disconnect( 0);
+			b.textContent = "START";
+		}
+	}, false);
+
+	document.querySelector( "form").addEventListener( "change", ( event) => {
+		const form = event.currentTarget;
+
+		for( let i = 0, len = form.elements[ "wt"].length; i < len; i++){
+			if( form.elements[ "wt"][ i].checked){
+				const type = form.elements[ "wt"][ i].value;
+				o.port.postMessage( type);
+				break;
+			}
+		}
+	}, false);
+
+	document.querySelector( '[ type = "range"]').addEventListener( "change", ( event) => {
+		const f = event.currentTarget.valueAsNumber;
+		const t = ac.currentTime;
+		const p = o.parameters.get( "frequency");
+
+		//p.setValueAtTime( p.value, t);
+		p.linearRampToValueAtTime( f, t + 0.5);
+	}, false);
+
+}).catch( console.error);
+
+</script>
+
+</body>
+
+</html>
