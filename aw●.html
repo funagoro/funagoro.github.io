@@ -40,8 +40,11 @@
 //else ac = new window.webkitAudioContext();
 const ac = new window.AudioContext();
 
+let is_muted;
+
 //const promise = ac.audioWorklet.addModule( "oscillator_w.js?3");
-const promise = ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+//const promise = ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
 
 	'use strict';
 
@@ -59,55 +62,62 @@ const promise = ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( 
 		constructor(){
 			super();
 
+//this.port.postMessage( "123");
+//this.port.postMessage( ": "+sampleRate); //48000
+//this.port.postMessage( ": "+frequency); //なし
+
 			this.type = "sine";
 			this.n = 0;
-			this.port.onmessage = ( event) => {
-				this.type = event.data;
+			this.port.onmessage = ( e) => {
+				if( e.data == "ping"){
+					this.port.postMessage( "pong");
+					//console.log( e.data);
+				} else{
+					this.type = e.data;
+				}
 			};
 		}
 
 		process( inputs, outputs, parameters){
+			let i, n;
+
 			const output = outputs[ 0];
 
 			const numberOfChannels = output.length;
 
 			for( let channel = 0; channel < numberOfChannels; channel++){
-				const outputChannel = output[channel];
+				const outputChannel = output[ channel];
 
-				for( let i = 0, len = outputChannel.length; i < len; i++){
+				n = outputChannel.length;
+				for( i = 0; i < n; i++){
 					const frequency = parameters.frequency.length > 1 ? parameters.frequency[ i] : parameters.frequency[ 0];
-					const t0 = sampleRate / frequency;
+					const t = sampleRate / frequency;
 
-					let output = 0;
-					let s = 0;
+					let a;
 
 					switch( this.type){
 					case "sine":
-						output = 0.1*Math.sin( ( 2 * Math.PI * frequency * this.n) / sampleRate);
+						a = 0.3*Math.sin( 2 * Math.PI * frequency * this.n / sampleRate);
 						break;
 
 					case "square":
-						output = ( this.n < ( t0 / 2)) ? 1 : -1;
+						a = ( this.n < t / 2) ? 1 : -1;
 						break;
 
 					case "sawtooth":
-						output = 2 * this.n / t0 - 1;
+						a = 2 * this.n / t - 1;
 						break;
 
 					case "triangle":
-						s = 4 * this.n / t0;
-						output = ( this.n < ( t0 / 2)) ? ( -1 + s) : ( 3 - s);
+						a = 4 * this.n / t;
+						a = ( this.n < t / 2) ? a - 1 : 3 - a;
 						break;
 
-					default:
-						break;
 					}
 
-					outputChannel[ i] = output;
+					outputChannel[ i] = a;
 
-					this.n++;
-
-					if( this.n >= t0) this.n = 0;
+					if( t <= ++this.n) this.n = 0;
 				}
 			}
 
@@ -117,10 +127,11 @@ const promise = ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( 
 
 	registerProcessor( "o1", osc);
 
-`));
+`)).then( function(){
+	const awnode = new AudioWorkletNode( ac, "o1");
 
-promise.then( () => {
-	const o = new AudioWorkletNode( ac, "o1");
+	//setInterval( () => o.port.postMessage( "ping"), 1000);
+	awnode.port.onmessage = ( e) => console.log( e.data);
 
 	document.querySelector( 'button').addEventListener( "click", async ( event) => {
 		if( ac.state !== "running") await ac.resume();
@@ -128,21 +139,38 @@ promise.then( () => {
 		const b = event.target;
 
 		if( b.textContent === "START"){
-			o.connect( ac.destination);
+			awnode.connect( ac.destination);
 			b.textContent = "STOP";
 		} else {
-			o.disconnect( 0);
+			awnode.disconnect( 0);
 			b.textContent = "START";
 		}
 	}, false);
 
+	document.addEventListener( "visibilitychange", function(){
+		let s;
+
+		s = document.visibilityState;
+		if( s == "hidden"){
+			ac.suspend();
+			is_muted = true;
+			//dv.style.visibility = "visible";
+		} else if( s == "visible"){
+			//★ 何もしない。
+			ac.resume();
+		}
+	}, false);
+
 	document.querySelector( "form").addEventListener( "change", ( event) => {
+		let i, n;
+
 		const form = event.currentTarget;
 
-		for( let i = 0, len = form.elements[ "wt"].length; i < len; i++){
+		n = form.elements[ "wt"].length;
+		for( i = 0; i < n; i++){
 			if( form.elements[ "wt"][ i].checked){
 				const type = form.elements[ "wt"][ i].value;
-				o.port.postMessage( type);
+				awnode.port.postMessage( type);
 				break;
 			}
 		}
@@ -151,7 +179,7 @@ promise.then( () => {
 	document.querySelector( '[ type = "range"]').addEventListener( "change", ( event) => {
 		const f = event.currentTarget.valueAsNumber;
 		const t = ac.currentTime;
-		const p = o.parameters.get( "frequency");
+		const p = awnode.parameters.get( "frequency");
 
 		//p.setValueAtTime( p.value, t);
 		p.linearRampToValueAtTime( f, t + 0.5);
