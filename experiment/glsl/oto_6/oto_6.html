@@ -38,6 +38,7 @@
 <br>
 <span class="title">"oto 6"</span><br>
 &copy;2022 Maeda Mameo<br>
+<span id="sp"></span><br>
 
 
 
@@ -73,7 +74,7 @@ scene.background = new THREE.Color( "white");
 
 const o_touch = new THREE.Mesh(
 	new THREE.PlaneGeometry( 1, 1),
-	new THREE.MeshBasicMaterial( { color: 0xccffcc})
+	new THREE.MeshBasicMaterial( { color: 0xccccff})
 );
 o_touch.rotation.set( -1.57079, 0, 0);
 o_touch.rotation.set( 0, 0, 0);
@@ -259,6 +260,8 @@ function tic(){
 	requestAnimationFrame( tic);
 
 	skt.pre();
+
+if(ac&&count%30==0)document.getElementById( "sp").innerHTML=ac.state;
 
 	if( my_state == STATE_WORKING){
 		if( skt.start){
