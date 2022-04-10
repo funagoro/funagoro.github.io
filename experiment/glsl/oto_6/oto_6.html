@@ -73,7 +73,7 @@ scene.background = new THREE.Color( "white");
 
 const o_touch = new THREE.Mesh(
 	new THREE.PlaneGeometry( 1, 1),
-	new THREE.MeshBasicMaterial( { color: 0xffcccc})
+	new THREE.MeshBasicMaterial( { color: 0xccffcc})
 );
 o_touch.rotation.set( -1.57079, 0, 0);
 o_touch.rotation.set( 0, 0, 0);
@@ -84,7 +84,7 @@ scene.add( o_touch);
 
 let ac;
 let awnode;
-let ab_taiko, gn_taiko, absnode;
+let ab_taiko, gn_taiko, absn;
 
 //★ skeleton_touch.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
@@ -93,156 +93,154 @@ function touch_event_hook(){
 	if( skt.num == 1 && skt.x == skt.bx && skt.y == skt.by){
 		//★ シングルタッチでかつ、動いていないタッチに限る。
 
-		//if( my_state == STATE_WAIT_FOR_TOUCH){
-			//if( ac.state !== "running") await ac.resume();
+		//if( ac.state !== "running") await ac.resume();
 
-			//const b = event.target;
+		if( my_state == STATE_DEFAULT){
+			ac = new window.AudioContext();
+			ac.createBufferSource().start(); //★ こんなダミーでもいいので、再生する必要がある。
+			ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
 
-			if( my_state == STATE_DEFAULT){
-				ac = new window.AudioContext();
-				ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+				'use strict';
 
-					'use strict';
-
-					class awp extends AudioWorkletProcessor{
-						static get parameterDescriptors(){
-							return [ {
-								name : "frequency",
-								defaultValue : 440,
-								minValue : 20,
-								maxValue : sampleRate / 2,
-								automationRate : "a-rate"
-							}];
-						}
-
-						constructor(){
-							super();
-
-				//this.port.postMessage( "123");
-				//this.port.postMessage( ": "+sampleRate); //48000
-				//this.port.postMessage( ": "+frequency); //なし
-
-							this.type = "sine";
-							this.n = 0;
-							this.port.onmessage = ( e) => {
-								if( e.data == "ping"){
-									this.port.postMessage( "pong");
-									//console.log( e.data);
-								} else{
-									this.type = e.data;
-								}
-							};
-						}
-
-						process( inputs, outputs, parameters){
-							let i, n;
-
-							const output = outputs[ 0];
-
-							const numberOfChannels = output.length;
-
-				//this.port.postMessage( "n"+numberOfChannels);
-							for( let channel = 0; channel < numberOfChannels; channel++){
-								const outputChannel = output[ channel];
-
-								n = outputChannel.length;
-								for( i = 0; i < n; i++){
-									const frequency = parameters.frequency.length > 1 ? parameters.frequency[ i] : parameters.frequency[ 0];
-									const t = sampleRate / frequency;
-
-									let a;
-
-									switch( this.type){
-									case "sine":
-										a = 0.3*Math.sin( 2 * Math.PI * frequency * this.n / sampleRate);
-										break;
-
-									case "square":
-										a = ( this.n < t / 2) ? 1 : -1;
-										break;
-
-									case "sawtooth":
-										a = 2 * this.n / t - 1;
-										break;
-
-									case "triangle":
-										a = 4 * this.n / t;
-										a = ( this.n < t / 2) ? a - 1 : 3 - a;
-										break;
-
-									}
-
-									outputChannel[ i] = a;
-
-									if( t <= ++this.n) this.n = 0;
-								}
-							}
-
-							return true;
-						}
+				class awp extends AudioWorkletProcessor{
+					static get parameterDescriptors(){
+						return [ {
+							name : "frequency",
+							defaultValue : 440,
+							minValue : 20,
+							maxValue : sampleRate / 2,
+							automationRate : "a-rate"
+						}];
 					}
 
-					registerProcessor( "o1", awp);
+					constructor(){
+						super();
 
-				`)).then( function(){
-					awnode = new AudioWorkletNode( ac, "o1");
+			//this.port.postMessage( "123");
+			//this.port.postMessage( ": "+sampleRate); //48000
+			//this.port.postMessage( ": "+frequency); //なし
 
-					//setInterval( () => o.port.postMessage( "ping"), 1000);
-					awnode.port.onmessage = ( e) => console.log( e.data);
+						this.type = "sine";
+						this.n = 0;
+						this.port.onmessage = ( e) => {
+							if( e.data == "ping"){
+								this.port.postMessage( "pong");
+								//console.log( e.data);
+							} else{
+								this.type = e.data;
+							}
+						};
+					}
 
-					document.addEventListener( "visibilitychange", function(){
-						let s;
+					process( inputs, outputs, parameters){
+						let i, n;
 
-						s = document.visibilityState;
-						if( s == "hidden"){
-							ac.suspend();
-							my_state = STATE_MUTED;
-							//dv.style.visibility = "visible";
-							o_touch.visible = true;
-						} else if( s == "visible"){
-							//★ 何もしない。
-							//ac.resume();
+						const output = outputs[ 0];
+
+						const numberOfChannels = output.length;
+
+			//this.port.postMessage( "n"+numberOfChannels);
+						for( let channel = 0; channel < numberOfChannels; channel++){
+							const outputChannel = output[ channel];
+
+							n = outputChannel.length;
+							for( i = 0; i < n; i++){
+								const frequency = parameters.frequency.length > 1 ? parameters.frequency[ i] : parameters.frequency[ 0];
+								const t = sampleRate / frequency;
+
+								let a;
+
+								switch( this.type){
+								case "sine":
+									a = 0.3*Math.sin( 2 * Math.PI * frequency * this.n / sampleRate);
+									break;
+
+								case "square":
+									a = ( this.n < t / 2) ? 1 : -1;
+									break;
+
+								case "sawtooth":
+									a = 2 * this.n / t - 1;
+									break;
+
+								case "triangle":
+									a = 4 * this.n / t;
+									a = ( this.n < t / 2) ? a - 1 : 3 - a;
+									break;
+
+								}
+
+								outputChannel[ i] = a;
+
+								if( t <= ++this.n) this.n = 0;
+							}
 						}
-					}, false);
 
-let i, n, rate;
-let t, w;
-let d;
+						return true;
+					}
+				}
 
-rate = ac.sampleRate;
+				registerProcessor( "o1", awp);
 
-n = 2 * rate;
-ab_taiko = ac.createBuffer( 1, n, rate); //★ チャンネル数、サンプル数、レート。
-d = ab_taiko.getChannelData( 0);
-for( i = 0; i < n; i++){
-	t = 0.7 * i / rate;
-	t = Math.sqrt( t * 5) / 5;
-	w = Math.max( -1, Math.min( 1,
-		4 * Math.sin( 6.28318 * 100 * t)
-	)) * Math.exp( -10 * Math.max( t - 0.15, 0));
-	w += 3 * Math.exp( -15 * t);
-	d[ i] = 2 * w;
-}
-gn_taiko = ac.createGain();
-gn_taiko.gain.value = 0.18;
-gn_taiko.connect( ac.destination);
+			`)).then( function(){
+				awnode = new AudioWorkletNode( ac, "o1");
+
+				//setInterval( () => o.port.postMessage( "ping"), 1000);
+				awnode.port.onmessage = ( e) => console.log( e.data);
+
+				document.addEventListener( "visibilitychange", function(){
+					let s;
+
+					s = document.visibilityState;
+					if( s == "hidden"){
+						ac.suspend();
+						my_state = STATE_MUTED;
+						//dv.style.visibility = "visible";
+						o_touch.visible = true;
+					} else if( s == "visible"){
+						//★ 何もしない。
+						//ac.resume();
+					}
+				}, false);
+
+				let i, n, rate;
+				let t, w;
+				let d;
+
+				rate = ac.sampleRate;
+
+				n = 2 * rate;
+				ab_taiko = ac.createBuffer( 1, n, rate); //★ チャンネル数、サンプル数、レート。
+				d = ab_taiko.getChannelData( 0);
+				for( i = 0; i < n; i++){
+					t = 0.7 * i / rate;
+					t = Math.sqrt( t * 5) / 5;
+					w = Math.max( -1, Math.min( 1,
+						4 * Math.sin( 6.28318 * 100 * t)
+					)) * Math.exp( -10 * Math.max( t - 0.15, 0));
+					w += 3 * Math.exp( -15 * t);
+					d[ i] = 2 * w;
+				}
+				gn_taiko = ac.createGain();
+				gn_taiko.gain.value = 0.18;
+				gn_taiko.connect( ac.destination);
 
 				awnode.connect( ac.destination);
 				//b.textContent = "STOP";
 				my_state = STATE_WORKING;
 				o_touch.visible = false;
 
-				}).catch( console.error);
+			}).catch( console.error);
 
-			} else if( my_state == STATE_MUTED){
-				//awnode.disconnect( 0);
-				//b.textContent = "START";
+		} else if( my_state == STATE_MUTED){
+			//awnode.disconnect( 0);
+			//b.textContent = "START";
 
-				ac.resume();
-				my_state = STATE_WORKING;
-				//dv.style.visibility = "hidden";
-				o_touch.visible = false;
-			}
+			ac.resume();
+			my_state = STATE_WORKING;
+			//dv.style.visibility = "hidden";
+			o_touch.visible = false;
+		}
 	}
 }
 const skt = new skeleton_touch( can);
@@ -265,10 +263,10 @@ function tic(){
 	if( my_state == STATE_WORKING){
 		if( skt.start){
 console.log("don");
-			absnode = ac.createBufferSource();
-			absnode.buffer = ab_taiko;
-			absnode.connect( gn_taiko);
-			absnode.start();
+			absn = ac.createBufferSource();
+			absn.buffer = ab_taiko;
+			absn.connect( gn_taiko);
+			absn.start();
 		}
 	}
 
