@@ -56,7 +56,9 @@
 'use strict';
 
 const W = 512;
+let i;
 let t;
+let o;
 
 const STATE_DEFAULT = 0, STATE_INIT = 1, STATE_WORKING = 2, STATE_MUTED = 3;
 let my_state = STATE_DEFAULT;
@@ -65,13 +67,16 @@ const can = document.getElementById( "canvas1");
 	can.width = can.height = W;
 
 const ren = new THREE.WebGLRenderer( { canvas : can});
+ren.shadowMap.enabled = true;
+//ren.shadowMap.type = THREE.VSMShadowMap;
+ren.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const cam = new THREE.PerspectiveCamera( 40, 1 / 1, 0.1, 100);
-	cam.position.set( 0, 0, 5);
-	cam.lookAt( 0, 0, 0);
+	cam.position.set( 0, 4, 5);
+	cam.lookAt( 0, 0, 0.5);
 
 const scene = new THREE.Scene();
-	scene.background = new THREE.Color( "white");
+	scene.background = new THREE.Color( 0x223344);
 
 const ld = new THREE.TextureLoader();
 const tex = ld.load( "data:;base64," +
@@ -101,22 +106,78 @@ tex.magFilter = THREE.NearestFilter;
 const o_touch = new THREE.Mesh(
 	new THREE.PlaneGeometry( 150, 150),
 	//new THREE.MeshBasicMaterial( { color : 0xffeeff, blending : THREE.MultiplyBlending})
-	new THREE.MeshBasicMaterial( { color : 0xff7799, transparent : true, opacity : 0.5})
+	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.8})
 );
-o_touch.add( new THREE.Mesh(
+o = new THREE.Mesh(
 	new THREE.PlaneGeometry( 128, 8),
 	//new THREE.MeshBasicMaterial( { color : 0xffffff, map : tex, blending : THREE.SubtractiveBlending})
 	new THREE.MeshBasicMaterial( { color : 0xffffff, map : tex, blending : THREE.SubtractiveBlending, transparent : true})
-));
-t = 0.005;
+);
+o.position.z = 0.001;
+o_touch.add( o);
+t = 0.007;
 o_touch.scale.set( t, t, t);
-o_touch.position.z = 4;
+o_touch.position.set( 0, 3.1, 4);
+o_touch.rotation.x = -0.72;
 scene.add( o_touch);
 
-scene.add( new THREE.Mesh(
-	new THREE.BoxGeometry( 0.5, 0.5, 0.5),
-	new THREE.MeshBasicMaterial( { color : 0xff00ff})
-));
+const ball = new THREE.Mesh(
+	//new THREE.BoxGeometry( 0.5, 0.5, 0.5),
+	new THREE.SphereBufferGeometry( 1, 40, 20),
+	new THREE.MeshPhongMaterial( { color : 0xffffff})
+);
+ball.castShadow = true;
+ball.position.y = 0.5;
+scene.add( ball);
+
+const balls = new Array( 5);
+balls[ 0] = ball.clone();
+t = 0.5;
+balls[ 0].scale.set( t, t, t);
+for( i = 1; i < 5; i++) balls[ i] = balls[ 0].clone();
+for( i = 0; i < 5; i++) scene.add( balls[ i]);
+
+//★ 床。
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 5, 5),
+	new THREE.MeshPhongMaterial( { color : 0xffffff})
+);
+o.receiveShadow = true;
+o.rotation.x = -1.5708;
+scene.add( o);
+
+//色, 強さ, 距離, 拡がり, ボケ, 減衰
+o = new THREE.SpotLight( 0xffff00, 10, 10, 0.5, 0.5, 1);
+o.castShadow = true;
+o.shadow.camera.top = 2;
+o.shadow.camera.bottom = -2;
+o.shadow.camera.left = -1;
+o.shadow.camera.right = 1;
+o.shadow.camera.near = 0.1;
+o.shadow.camera.far = 10;
+o.shadow.mapSize.width = o.shadow.mapSize.height = 512;
+o.shadow.radius = 4;
+//o.shadow.bias = -0.001;
+o.position.set( 5, 4, -7);
+//o.lookAt( 0, 0, -5);
+o.target = ball;
+scene.add( o);
+
+o = o.clone();
+o.color.set( 0x00ffff);
+o.position.set( -5, 4, -7);
+//o.lookAt( 0, 0, 0);
+o.target = ball;
+scene.add( o);
+
+o = o.clone();
+o.intensity = 1;
+o.angle = 0.3;
+o.color.set( 0xff00ff);
+o.position.set( 0, 5, 7);
+//o.lookAt( 0, 0, 0);
+o.target = balls[ 3];
+scene.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -180,11 +241,11 @@ document.getElementById( "sp2").innerHTML="resu "+awnode;
 						//const channel_num = output.length;
 						const d = output[ 0];
 
+							m = Math.floor( 1000000 * this.f / sampleRate);
 							n = d.length;
-							m = Math.floor( sampleRate / this.f);
 							for( i = 0; i < n; i++){
-								d[ i] = 0.3 * Math.sin( 2 * Math.PI * this.p / m);
-								if( m <= ++this.p) this.p = 0;
+								d[ i] = 0.3 * Math.sin( 0.000002 * Math.PI * this.p);
+								this.p = ( this.p + m) % 1000000;
 							}
 
 						return true;
@@ -277,6 +338,17 @@ if(ac&&count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
 			absn.connect( gn_taiko);
 			absn.start();
 		}
+	}
+
+	ball.position.y = 0.5 + 0.5 * Math.sin( count % 30 / 30 * 3.14159);
+
+	for( i = 0; i < 5; i++){
+		t = 2 * 3.14159 * ( count % 200 + 40 * i) / 200;
+		balls[ i].position.set(
+			2 * Math.sin( t),
+			0.25 + 0.35 * Math.sin( count % 30 / 30 * 3.14159),
+			2 * Math.cos( t)
+		);
 	}
 
 	ren.render( scene, cam);
