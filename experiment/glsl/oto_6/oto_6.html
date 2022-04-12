@@ -71,12 +71,12 @@ ren.shadowMap.enabled = true;
 //ren.shadowMap.type = THREE.VSMShadowMap;
 ren.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const cam = new THREE.PerspectiveCamera( 40, 1 / 1, 0.1, 100);
-	cam.position.set( 0, 4, 5);
-	cam.lookAt( 0, 0, 0.5);
+const cam = new THREE.PerspectiveCamera( 35, 1 / 1, 0.1, 100);
 
 const scene = new THREE.Scene();
 	scene.background = new THREE.Color( 0x223344);
+	//scene.background = new THREE.Color( 0x000000);
+scene.fog = new THREE.Fog( scene.background, 5, 9);
 
 const ld = new THREE.TextureLoader();
 const tex = ld.load( "data:;base64," +
@@ -115,10 +115,10 @@ o = new THREE.Mesh(
 );
 o.position.z = 0.001;
 o_touch.add( o);
-t = 0.007;
+t = 0.006;
 o_touch.scale.set( t, t, t);
-o_touch.position.set( 0, 3.1, 4);
-o_touch.rotation.x = -0.72;
+o_touch.rotation.x = -0.785;
+o_touch.rotation.order = "YXZ";
 scene.add( o_touch);
 
 const ball = new THREE.Mesh(
@@ -147,36 +147,29 @@ o.rotation.x = -1.5708;
 scene.add( o);
 
 //色, 強さ, 距離, 拡がり, ボケ, 減衰
-o = new THREE.SpotLight( 0xffff00, 10, 10, 0.5, 0.5, 1);
+o = new THREE.SpotLight( 0xff0000, 5, 30, 1, 1.5, 3);
 o.castShadow = true;
-o.shadow.camera.top = 2;
-o.shadow.camera.bottom = -2;
+o.shadow.camera.top = 1;
+o.shadow.camera.bottom = -1;
 o.shadow.camera.left = -1;
 o.shadow.camera.right = 1;
-o.shadow.camera.near = 0.1;
-o.shadow.camera.far = 10;
+o.shadow.camera.near = 1;
+o.shadow.camera.far = 5;
 o.shadow.mapSize.width = o.shadow.mapSize.height = 512;
 o.shadow.radius = 4;
 //o.shadow.bias = -0.001;
-o.position.set( 5, 4, -7);
-//o.lookAt( 0, 0, -5);
-o.target = ball;
+o.position.set( 3, 4, -5);
 scene.add( o);
 
 o = o.clone();
-o.color.set( 0x00ffff);
-o.position.set( -5, 4, -7);
-//o.lookAt( 0, 0, 0);
-o.target = ball;
+o.color.set( 0x00ff00);
+o.position.set( -3, 4, -5);
 scene.add( o);
 
 o = o.clone();
-o.intensity = 1;
-o.angle = 0.3;
-o.color.set( 0xff00ff);
-o.position.set( 0, 5, 7);
-//o.lookAt( 0, 0, 0);
-o.target = balls[ 3];
+o.angle = 0.6;
+o.color.set( 0x0000ff);
+o.position.set( 0, 4, 2);
 scene.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
@@ -332,7 +325,7 @@ if(ac&&count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
 	} else if( my_state == STATE_WORKING){
 		awnode.port.postMessage( 440 * Math.pow( 2, Math.sin( 0.3 * count)));
 
-		if( skt.start){
+		if( skt.start || count % 30 == 0){
 			absn = ac.createBufferSource();
 			absn.buffer = ab_taiko;
 			absn.connect( gn_taiko);
@@ -340,15 +333,24 @@ if(ac&&count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
 		}
 	}
 
-	ball.position.y = 0.5 + 0.5 * Math.sin( count % 30 / 30 * 3.14159);
+	ball.position.y = 0.5 + 0.7 * Math.sin( count % 30 / 30 * 3.14159);
 
 	for( i = 0; i < 5; i++){
 		t = 2 * 3.14159 * ( count % 200 + 40 * i) / 200;
 		balls[ i].position.set(
 			2 * Math.sin( t),
-			0.25 + 0.35 * Math.sin( count % 30 / 30 * 3.14159),
+			0.25 + 0.15 * Math.sin( count % 15 / 15 * 3.14159),
 			2 * Math.cos( t)
 		);
+	}
+
+	t = 2 * 3.14159 * ( count % 300 / 300);
+	cam.position.set( 5 * Math.sin( t), 5, 5 * Math.cos( t));
+	cam.lookAt( 0, 0, 0);
+
+	if( o_touch.visible){
+		o_touch.position.set( 4 * Math.sin( t), 4, 4 * Math.cos( t));
+		o_touch.rotation.y = t;
 	}
 
 	ren.render( scene, cam);
