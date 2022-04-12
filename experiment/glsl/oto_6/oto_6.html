@@ -190,18 +190,15 @@ function touch_event_hook(){
 
 		if( my_state == STATE_DEFAULT){
 			acc();
-console.log( awnode);
 document.getElementById( "sp2").innerHTML="futu "+awnode;
 		} else if( my_state == STATE_MUTED){
 			//awnode.disconnect( 0);
 			//ac.resume();
 			acc();
-console.log( awnode);
 document.getElementById( "sp2").innerHTML="resu "+awnode;
-			my_state = STATE_WORKING;
-
+			//my_state = STATE_WORKING;
 			o_touch.visible = false;
-
+			//my_state = STATE_DEFAULT;
 		}
 		function acc(){
 			ac = new window.AudioContext();
@@ -293,7 +290,7 @@ function tic(){
 	skt.pre();
 
 if( ac && count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
-if( ac && ac.state == "interrupted"){
+if( ac && my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
 	ac.close();
 	my_state = STATE_MUTED;
 	o_touch.visible = true;
@@ -325,8 +322,10 @@ if( ac && ac.state == "interrupted"){
 			gn_taiko.gain.value = 0.18;
 			gn_taiko.connect( ac.destination);
 
-			my_state = STATE_WORKING;
 			count = 0;
+		} else{
+			if( ac.state != "suspended")
+				my_state = STATE_WORKING;
 		}
 	} else if( my_state == STATE_WORKING){
 		awnode.port.postMessage( 440 * Math.pow( 2, Math.sin( 0.3 * count)));
