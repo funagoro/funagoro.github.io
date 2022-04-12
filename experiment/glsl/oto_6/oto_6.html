@@ -34,12 +34,16 @@
 
 
 
-<canvas id="canvas1" style="width : 512px; height : 512px;"></canvas><br>
+<canvas id="canvas_1" style="
+	width : 512px; height : 512px;
+	user-select : none;
+	-webkit-tap-highlight-color : rgba( 0, 0, 0, 0);
+	touch-action : none;
+"></canvas><br>
+<span id="span_1">- - - - -</span><br>
 <br>
-<span class="title">"oto 6" 実験中。</span><br>
+<span class="title">"oto 6"</span><br>
 &copy;2022 Maeda Mameo<br>
-<span id="sp1"></span><br>
-<span id="sp2"></span><br>
 
 
 
@@ -63,8 +67,8 @@ let o;
 const STATE_DEFAULT = 0, STATE_INIT = 1, STATE_WORKING = 2, STATE_MUTED = 3;
 let my_state = STATE_DEFAULT;
 
-const can = document.getElementById( "canvas1");
-	can.width = can.height = W;
+const can = document.getElementById( "canvas_1");
+can.width = can.height = W;
 
 const ren = new THREE.WebGLRenderer( { canvas : can});
 ren.shadowMap.enabled = true;
@@ -74,10 +78,10 @@ ren.shadowMap.type = THREE.PCFSoftShadowMap;
 const cam = new THREE.PerspectiveCamera( 35, 1 / 1, 0.1, 100);
 
 const scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x223344);
-	//scene.background = new THREE.Color( 0x000000);
+scene.background = new THREE.Color( 0);
 scene.fog = new THREE.Fog( scene.background, 5, 9);
 
+//★ TAP TO PLAY AUDIO の文字。
 const ld = new THREE.TextureLoader();
 const tex = ld.load( "data:;base64," +
 `R0lGODlhgAAIAIAAAAAAAP///yH/C1hNUCBEYXRhWE1QPD94cGFja2V0IGJlZ2luPSLvu78iIGlk
@@ -89,29 +93,27 @@ ZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5z
 OnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0
 cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JU
 b29sPSJBZG9iZSBQaG90b3Nob3AgMjMuMSAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0i
-eG1wLmlpZDo2OTJBMTQwN0IyMTcxMUVDQjVEQjhFQzQzMTc0RkIwRiIgeG1wTU06RG9jdW1lbnRJ
-RD0ieG1wLmRpZDo2OTJBMTQwOEIyMTcxMUVDQjVEQjhFQzQzMTc0RkIwRiI+IDx4bXBNTTpEZXJp
-dmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjY5MkExNDA1QjIxNzExRUNCNURCOEVD
-NDMxNzRGQjBGIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjY5MkExNDA2QjIxNzExRUNCNURC
-OEVDNDMxNzRGQjBGIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRh
+eG1wLmlpZDpFRUMyQzdGOUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiIgeG1wTU06RG9jdW1lbnRJ
+RD0ieG1wLmRpZDpFRUMyQzdGQUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiI+IDx4bXBNTTpEZXJp
+dmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkVFQzJDN0Y3QjJEQTExRUNCRDFEQkNE
+MzBCQ0U4RDBCIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkVFQzJDN0Y4QjJEQTExRUNCRDFE
+QkNEMzBCQ0U4RDBCIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRh
 PiA8P3hwYWNrZXQgZW5kPSJyIj8+Af/+/fz7+vn49/b19PPy8fDv7u3s6+rp6Ofm5eTj4uHg397d
 3Nva2djX1tXU09LR0M/OzczLysnIx8bFxMPCwcC/vr28u7q5uLe2tbSzsrGwr66trKuqqainpqWk
 o6KhoJ+enZybmpmYl5aVlJOSkZCPjo2Mi4qJiIeGhYSDgoGAf359fHt6eXh3dnV0c3JxcG9ubWxr
 amloZ2ZlZGNiYWBfXl1cW1pZWFdWVVRTUlFQT05NTEtKSUhHRkVEQ0JBQD8+PTw7Ojk4NzY1NDMy
 MTAvLi0sKyopKCcmJSQjIiEgHx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQAAIfkEAAAA
-AAAsAAAAAIAACAAAAoSED6Eb6A+jnLTa+9plC/GjGYw3iqGpiBnIeq6adCg5pdaZrGzIO6f22/ly
-xGKuB0MagZIGLoJ7Kpmw1tLqfBGz2Cq1qDS+njprNynTBlFfsNkNn5rJ25otJgWV6Nf+vCT2EXeW
-BJHWdHdI2DZEo8UGF4iVmHZ4R8LnaILB2en5+Xn5UAAAOw==`);
+AAAsAAAAAIAACAAAAoWED6Eb6A+jnLTa+9plC/GjgJ04JhqpnaJxqiYIm2r5SqHluonH9n7sm8Fy
+vRZvh0SmjkFbckJ0GJu/n9D6nDauytg0yZVWI1HmR6b7gkczBpDlBmPnYy/0JssAl+RjOLsnRtUF
+aJeBZ4NHEzio51EGF/JV1qKISINIgtOG0en5CQqa6VAAADs=`);
 tex.magFilter = THREE.NearestFilter;
 const o_touch = new THREE.Mesh(
 	new THREE.PlaneGeometry( 150, 150),
-	//new THREE.MeshBasicMaterial( { color : 0xffeeff, blending : THREE.MultiplyBlending})
-	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.8})
+	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
 );
 o = new THREE.Mesh(
 	new THREE.PlaneGeometry( 128, 8),
-	//new THREE.MeshBasicMaterial( { color : 0xffffff, map : tex, blending : THREE.SubtractiveBlending})
-	new THREE.MeshBasicMaterial( { color : 0xffffff, map : tex, blending : THREE.SubtractiveBlending, transparent : true})
+	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex})
 );
 o.position.z = 0.001;
 o_touch.add( o);
@@ -122,12 +124,10 @@ o_touch.rotation.order = "YXZ";
 scene.add( o_touch);
 
 const ball = new THREE.Mesh(
-	//new THREE.BoxGeometry( 0.5, 0.5, 0.5),
 	new THREE.SphereBufferGeometry( 1, 40, 20),
 	new THREE.MeshPhongMaterial( { color : 0xffffff})
 );
 ball.castShadow = true;
-ball.position.y = 0.5;
 scene.add( ball);
 
 const balls = new Array( 5);
@@ -189,18 +189,14 @@ function touch_event_hook(){
 		//if( ac.state !== "running") await ac.resume();
 
 		if( my_state == STATE_DEFAULT){
-			acc();
-document.getElementById( "sp2").innerHTML="futu "+awnode;
+			init_ac();
 		} else if( my_state == STATE_MUTED){
-			//awnode.disconnect( 0);
 			//ac.resume();
-			acc();
-document.getElementById( "sp2").innerHTML="resu "+awnode;
-			//my_state = STATE_WORKING;
-			o_touch.visible = false;
-			//my_state = STATE_DEFAULT;
+			//★ ac.suspend() して、他のアプリで遊んだ後、ac.resume() しても、
+			//★ 音が出ない場合があるので、ac.close() して、次回は new する。
+			init_ac();
 		}
-		function acc(){
+		function init_ac(){
 			ac = new window.AudioContext();
 			ac.createBufferSource().start(); //★ こんなダミーでもいいので、再生する必要がある。
 			ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
@@ -289,12 +285,14 @@ function tic(){
 
 	skt.pre();
 
-if( ac && count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
-if( ac && my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
-	ac.close();
-	my_state = STATE_MUTED;
-	o_touch.visible = true;
-}
+	if( ac){
+		if( count % 20 == 0) document.getElementById( "span_1").innerHTML=ac.state;
+		if( my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
+			ac.close();
+			my_state = STATE_MUTED;
+			o_touch.visible = true;
+		}
+	}
 
 
 	if( my_state == STATE_INIT){
@@ -324,8 +322,7 @@ if( ac && my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == 
 
 			count = 0;
 		} else{
-			if( ac.state != "suspended")
-				my_state = STATE_WORKING;
+			if( ac.state != "suspended") my_state = STATE_WORKING;
 		}
 	} else if( my_state == STATE_WORKING){
 		awnode.port.postMessage( 440 * Math.pow( 2, Math.sin( 0.3 * count)));
