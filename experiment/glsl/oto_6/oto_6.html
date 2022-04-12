@@ -135,15 +135,16 @@ function touch_event_hook(){
 		//if( ac.state !== "running") await ac.resume();
 
 		if( my_state == STATE_DEFAULT){
-document.getElementById( "sp2").innerHTML="futu";
 			acc();
+console.log( ac);
+document.getElementById( "sp2").innerHTML="futu "+ac.audioWorklet;
 		} else if( my_state == STATE_MUTED){
 			if( !ac){
 document.getElementById( "sp2").innerHTML="nido";
 				acc();
 			} else{
 				//awnode.disconnect( 0);
-document.getElementById( "sp2").innerHTML="resu";
+document.getElementById( "sp2").innerHTML="resu"+ac.audioWorklet;
 				ac.resume();
 				my_state = STATE_WORKING;
 			}
