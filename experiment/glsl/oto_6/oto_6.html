@@ -136,16 +136,17 @@ function touch_event_hook(){
 
 		if( my_state == STATE_DEFAULT){
 			acc();
-console.log( ac);
-document.getElementById( "sp2").innerHTML="futu "+ac.destination;
+console.log( awnode);
+document.getElementById( "sp2").innerHTML="futu "+awnode;
 		} else if( my_state == STATE_MUTED){
 			if( !ac){
 document.getElementById( "sp2").innerHTML="nido";
 				acc();
 			} else{
 				//awnode.disconnect( 0);
-document.getElementById( "sp2").innerHTML="resu"+ac.destination;
 				ac.resume();
+console.log( awnode);
+document.getElementById( "sp2").innerHTML="futu "+awnode;
 				my_state = STATE_WORKING;
 			}
 			o_touch.visible = false;
