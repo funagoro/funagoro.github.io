@@ -38,7 +38,8 @@
 <br>
 <span class="title">"oto 6" 実験中。</span><br>
 &copy;2022 Maeda Mameo<br>
-<span id="sp"></span><br>
+<span id="sp1"></span><br>
+<span id="sp2"></span><br>
 
 
 
@@ -114,7 +115,7 @@ scene.add( o_touch);
 
 scene.add( new THREE.Mesh(
 	new THREE.BoxGeometry( 0.5, 0.5, 0.5),
-	new THREE.MeshBasicMaterial( { color : 0x00ff00})
+	new THREE.MeshBasicMaterial( { color : 0x0000ff})
 ));
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
@@ -134,13 +135,17 @@ function touch_event_hook(){
 		//if( ac.state !== "running") await ac.resume();
 
 		if( my_state == STATE_DEFAULT){
+document.getElementById( "sp2").innerHTML="futu";
 			acc();
 		} else if( my_state == STATE_MUTED){
-			if( !ac) acc();
-			else{
-			//awnode.disconnect( 0);
-			ac.resume();
-			my_state = STATE_WORKING;
+			if( !ac){
+document.getElementById( "sp2").innerHTML="nido";
+				acc();
+			} else{
+				//awnode.disconnect( 0);
+document.getElementById( "sp2").innerHTML="resu";
+				ac.resume();
+				my_state = STATE_WORKING;
 			}
 			o_touch.visible = false;
 
@@ -233,7 +238,7 @@ function tic(){
 
 	skt.pre();
 
-if(ac&&count%30==0)document.getElementById( "sp").innerHTML=ac.state;
+if(ac&&count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
 
 	if( my_state == STATE_INIT){
 		if( count == 0){
