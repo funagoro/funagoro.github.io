@@ -115,7 +115,7 @@ scene.add( o_touch);
 
 scene.add( new THREE.Mesh(
 	new THREE.BoxGeometry( 0.5, 0.5, 0.5),
-	new THREE.MeshBasicMaterial( { color : 0x0000ff})
+	new THREE.MeshBasicMaterial( { color : 0xff00ff})
 ));
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
@@ -137,14 +137,14 @@ function touch_event_hook(){
 		if( my_state == STATE_DEFAULT){
 			acc();
 console.log( ac);
-document.getElementById( "sp2").innerHTML="futu "+ac.audioWorklet;
+document.getElementById( "sp2").innerHTML="futu "+ac.destination;
 		} else if( my_state == STATE_MUTED){
 			if( !ac){
 document.getElementById( "sp2").innerHTML="nido";
 				acc();
 			} else{
 				//awnode.disconnect( 0);
-document.getElementById( "sp2").innerHTML="resu"+ac.audioWorklet;
+document.getElementById( "sp2").innerHTML="resu"+ac.destination;
 				ac.resume();
 				my_state = STATE_WORKING;
 			}
