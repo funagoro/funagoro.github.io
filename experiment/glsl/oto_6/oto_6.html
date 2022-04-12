@@ -292,7 +292,13 @@ function tic(){
 
 	skt.pre();
 
-if(ac&&count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
+if( ac && count%30==0)document.getElementById( "sp1").innerHTML=ac.state;
+if( ac && ac.state == "interrupted"){
+	ac.close();
+	my_state = STATE_MUTED;
+	o_touch.visible = true;
+}
+
 
 	if( my_state == STATE_INIT){
 		if( count == 0){
