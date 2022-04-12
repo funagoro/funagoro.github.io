@@ -139,16 +139,13 @@ function touch_event_hook(){
 console.log( awnode);
 document.getElementById( "sp2").innerHTML="futu "+awnode;
 		} else if( my_state == STATE_MUTED){
-			if( !ac){
-document.getElementById( "sp2").innerHTML="nido";
-				acc();
-			} else{
-				//awnode.disconnect( 0);
-				ac.resume();
+			//awnode.disconnect( 0);
+			//ac.resume();
+			acc();
 console.log( awnode);
-document.getElementById( "sp2").innerHTML="futu "+awnode;
-				my_state = STATE_WORKING;
-			}
+document.getElementById( "sp2").innerHTML="resu "+awnode;
+			my_state = STATE_WORKING;
+
 			o_touch.visible = false;
 
 		}
@@ -206,7 +203,8 @@ document.getElementById( "sp2").innerHTML="futu "+awnode;
 
 					s = document.visibilityState;
 					if( s == "hidden"){
-						ac.suspend();
+						//ac.suspend();
+						ac.close();
 						my_state = STATE_MUTED;
 						o_touch.visible = true;
 					} else if( s == "visible"){
