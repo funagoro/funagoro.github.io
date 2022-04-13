@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html lang="ja" style="-webkit-user-select : none; user-select : none; touch-action : manipulation;">
+<html lang="ja" style="-webkit-user-select : none; user-select : none;">
 
 <head>
 
@@ -41,7 +41,6 @@
 	touch-action : none;
 "></canvas><br>
 <span id="span_1">- - - - -</span><br>
-<br>
 <span class="title">"oto 6"</span><br>
 &copy;2022 Maeda Mameo<br>
 
@@ -106,20 +105,20 @@ AAAsAAAAAIAACAAAAoWED6Eb6A+jnLTa+9plC/GjgJ04JhqpnaJxqiYIm2r5SqHluonH9n7sm8Fy
 vRZvh0SmjkFbckJ0GJu/n9D6nDauytg0yZVWI1HmR6b7gkczBpDlBmPnYy/0JssAl+RjOLsnRtUF
 aJeBZ4NHEzio51EGF/JV1qKISINIgtOG0en5CQqa6VAAADs=`);
 tex.magFilter = THREE.NearestFilter;
-const o_tap = new THREE.Mesh(
-	new THREE.PlaneGeometry( 150, 150),
-	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
-);
 o = new THREE.Mesh(
 	new THREE.PlaneGeometry( 128, 8),
 	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex})
 );
 o.position.z = 0.001;
+const o_tap = new THREE.Mesh(
+	new THREE.PlaneGeometry( 150, 150),
+	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
+);
 o_tap.add( o);
 t = 0.006;
 o_tap.scale.set( t, t, t);
 o_tap.rotation.x = -0.785;
-o_tap.rotation.order = "YXZ";
+o_tap.rotation.order = "YXZ"; //★ ← ここ大事。
 scene.add( o_tap);
 
 //★ 大きいボール。
@@ -170,13 +169,10 @@ scene.add( o);
 
 let ac;
 let awnode;
-let ab_taiko, gn_taiko;
-let absn;
 
 //★ skeleton_touch.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
-
 	if( skt.can_ios_audio_start){
 		if( my_state == STATE_DEFAULT){
 			init_ac();
@@ -199,11 +195,19 @@ function touch_event_hook(){
 
 						super();
 
-						this.f = 440;
-						this.p = 0;
+						this.s0 = this.s1 = 0;
+						this.p0 = this.p1 = 0;
 						that = this;
+
 						this.port.onmessage = function( e){
-							that.f = parseFloat( e.data);
+							let i;
+							let f0, f1;
+
+							i = e.data.indexOf( " ");
+							f0 = parseFloat( e.data.substr( 0, i));
+							f1 = parseFloat( e.data.substr( i + 1));
+							that.s0 = Math.floor( 1000000 * f0 / sampleRate);
+							that.s1 = Math.floor( 1000000 * f1 / sampleRate);
 						}
 
 						//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
@@ -211,18 +215,19 @@ function touch_event_hook(){
 					}
 
 					process( inputs, outputs, parameters){
-						let i, m, n;
+						let i, n;
 
-						const output = outputs[ 0];
-						//const channel_num = output.length;
-						const d = output[ 0];
+						const o = outputs[ 0];
+						//const channel_num = o.length;
+						const d = o[ 0];
 
-							m = Math.floor( 1000000 * this.f / sampleRate);
-							n = d.length;
-							for( i = 0; i < n; i++){
-								d[ i] = 0.3 * Math.sin( 0.000002 * Math.PI * this.p);
-								this.p = ( this.p + m) % 1000000;
-							}
+						n = d.length;
+						for( i = 0; i < n; i++){
+							d[ i] = 0.2 * Math.sign( this.p0 - 500000) +
+								0.3 * Math.sin( 0.000002 * Math.PI * this.p1);
+							this.p0 = ( this.p0 + this.s0) % 1000000;
+							this.p1 = ( this.p1 + this.s1) % 1000000;
+						}
 
 						return true;
 					}
@@ -232,29 +237,28 @@ function touch_event_hook(){
 
 			`)).then( function(){
 				awnode = new AudioWorkletNode( ac, "awp_name");
-
+				awnode.connect( ac.destination);
 				awnode.port.onmessage = function( e){ console.log( e.data);}
 
-				document.addEventListener( "visibilitychange", function(){
-					let s;
-
-					s = document.visibilityState;
-					if( s == "hidden"){
-						//ac.suspend();
-						ac.close();
-						my_state = STATE_MUTED;
-						o_tap.visible = true;
-					} else if( s == "visible"){
-						//★ タッチで再開するので、ここでは何もしない。
-					}
-				}, false);
-
-				awnode.connect( ac.destination);
 				o_tap.visible = false;
-
 				my_state = STATE_INIT;
 				count = 0;
 			}).catch( console.error);
+
+			document.addEventListener( "visibilitychange", function(){
+				let s;
+
+				s = document.visibilityState;
+				if( s == "hidden"){
+					//ac.suspend();
+					//★ ac.suspend() ではなく、ac.close()
+					ac.close();
+					o_tap.visible = true;
+					my_state = STATE_MUTED;
+				} else if( s == "visible"){
+					//★ タッチで再開するので、ここでは何もしない。
+				}
+			}, false);
 		}
 	}
 }
@@ -269,7 +273,7 @@ tic();
 
 function tic(){
 	let i;
-	let t;
+	let a, b, t;
 
 	requestAnimationFrame( tic);
 
@@ -278,62 +282,31 @@ function tic(){
 	if( ac){
 		if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
 		if( my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
+			//★ 電話の着信などで、visibility が hidden になることなく、中断された後、戻ってきた時。
 			ac.close();
-			my_state = STATE_MUTED;
 			o_tap.visible = true;
+			my_state = STATE_MUTED;
 		}
 	}
 
+	a = Math.sin( count % 40 / 40 * 3.14159);
+	b = Math.sin( count % 15 / 15 * 3.14159);
 
 	if( my_state == STATE_INIT){
 		if( count == 0){
-			let n, r;
-			let t, w;
-			let d;
-
-			r = ac.sampleRate;
-
-			//★ 太鼓の音を作る。
-			n = 2 * r;
-			ab_taiko = ac.createBuffer( 1, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_taiko.getChannelData( 0);
-			for( i = 0; i < n; i++){
-				t = 0.7 * i / r;
-				t = Math.sqrt( t * 5) / 5;
-				w = Math.max( -1, Math.min( 1,
-					4 * Math.sin( 6.28318 * 100 * t)
-				)) * Math.exp( -10 * Math.max( t - 0.15, 0));
-				w += 3 * Math.exp( -15 * t);
-				d[ i] = 2 * w;
-			}
-			gn_taiko = ac.createGain();
-			gn_taiko.gain.value = 0.18;
-			gn_taiko.connect( ac.destination);
-
-			count = 0;
+			//★ ここで音源等を用意する。
 		} else{
 			if( ac.state != "suspended") my_state = STATE_WORKING;
 		}
 	} else if( my_state == STATE_WORKING){
-		awnode.port.postMessage( 440 * Math.pow( 2, Math.sin( 0.3 * count)));
-
-		if( skt.start || count % 30 == 0){
-			absn = ac.createBufferSource();
-			absn.buffer = ab_taiko;
-			absn.connect( gn_taiko);
-			absn.start();
-		}
+		awnode.port.postMessage( 30 * Math.pow( 2, a) + " " + 880 * Math.pow( 2, b));
 	}
 
-	ball.position.y = 0.5 + 0.7 * Math.sin( count % 30 / 30 * 3.14159);
+	ball.position.y = 0.5 + 0.7 * a;
 
 	for( i = 0; i < 5; i++){
 		t = 2 * 3.14159 * ( count % 200 + 40 * i) / 200;
-		balls[ i].position.set(
-			2 * Math.sin( t),
-			0.25 + 0.15 * Math.sin( count % 15 / 15 * 3.14159),
-			2 * Math.cos( t)
-		);
+		balls[ i].position.set( 2 * Math.sin( t), 0.25 + 0.15 * b, 2 * Math.cos( t));
 	}
 
 	t = 2 * 3.14159 * ( count % 300 / 300);
