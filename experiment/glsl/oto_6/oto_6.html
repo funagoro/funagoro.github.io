@@ -51,7 +51,7 @@
 
 
 
-<script src="skeleton_touch.js"></script>
+<script src="skeleton_touch_2.js"></script>
 
 <script src="three_130_min.js"></script>
 
@@ -72,10 +72,9 @@ can.width = can.height = W;
 
 const ren = new THREE.WebGLRenderer( { canvas : can});
 ren.shadowMap.enabled = true;
-//ren.shadowMap.type = THREE.VSMShadowMap;
 ren.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const cam = new THREE.PerspectiveCamera( 35, 1 / 1, 0.1, 100);
+const cam = new THREE.PerspectiveCamera( 35, W / W, 0.1, 10);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0);
@@ -107,7 +106,7 @@ AAAsAAAAAIAACAAAAoWED6Eb6A+jnLTa+9plC/GjgJ04JhqpnaJxqiYIm2r5SqHluonH9n7sm8Fy
 vRZvh0SmjkFbckJ0GJu/n9D6nDauytg0yZVWI1HmR6b7gkczBpDlBmPnYy/0JssAl+RjOLsnRtUF
 aJeBZ4NHEzio51EGF/JV1qKISINIgtOG0en5CQqa6VAAADs=`);
 tex.magFilter = THREE.NearestFilter;
-const o_touch = new THREE.Mesh(
+const o_tap = new THREE.Mesh(
 	new THREE.PlaneGeometry( 150, 150),
 	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
 );
@@ -116,13 +115,14 @@ o = new THREE.Mesh(
 	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex})
 );
 o.position.z = 0.001;
-o_touch.add( o);
+o_tap.add( o);
 t = 0.006;
-o_touch.scale.set( t, t, t);
-o_touch.rotation.x = -0.785;
-o_touch.rotation.order = "YXZ";
-scene.add( o_touch);
+o_tap.scale.set( t, t, t);
+o_tap.rotation.x = -0.785;
+o_tap.rotation.order = "YXZ";
+scene.add( o_tap);
 
+//★ 大きいボール。
 const ball = new THREE.Mesh(
 	new THREE.SphereBufferGeometry( 1, 40, 20),
 	new THREE.MeshPhongMaterial( { color : 0xffffff})
@@ -130,6 +130,7 @@ const ball = new THREE.Mesh(
 ball.castShadow = true;
 scene.add( ball);
 
+//★ 小さいボール。
 const balls = new Array( 5);
 balls[ 0] = ball.clone();
 t = 0.5;
@@ -146,26 +147,19 @@ o.receiveShadow = true;
 o.rotation.x = -1.5708;
 scene.add( o);
 
-//色, 強さ, 距離, 拡がり, ボケ, 減衰
-o = new THREE.SpotLight( 0xff0000, 5, 30, 1, 1.5, 3);
+//★ 赤いライト。
+o = new THREE.SpotLight( 0xff0000, 5, 30, 1, 1.5, 3); //★ 色, 強さ, 距離, 拡がり, ボケ, 減衰。
 o.castShadow = true;
-o.shadow.camera.top = 1;
-o.shadow.camera.bottom = -1;
-o.shadow.camera.left = -1;
-o.shadow.camera.right = 1;
-o.shadow.camera.near = 1;
-o.shadow.camera.far = 5;
-o.shadow.mapSize.width = o.shadow.mapSize.height = 512;
-o.shadow.radius = 4;
-//o.shadow.bias = -0.001;
 o.position.set( 3, 4, -5);
 scene.add( o);
 
+//★ 緑のライト。
 o = o.clone();
 o.color.set( 0x00ff00);
 o.position.set( -3, 4, -5);
 scene.add( o);
 
+//★ 青いライト。
 o = o.clone();
 o.angle = 0.6;
 o.color.set( 0x0000ff);
@@ -183,11 +177,7 @@ let absn;
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
 
-	if( skt.num == 1 && skt.x == skt.bx && skt.y == skt.by){
-		//★ シングルタッチでかつ、動いていないタッチに限る。
-
-		//if( ac.state !== "running") await ac.resume();
-
+	if( skt.can_ios_audio_start){
 		if( my_state == STATE_DEFAULT){
 			init_ac();
 		} else if( my_state == STATE_MUTED){
@@ -253,14 +243,14 @@ function touch_event_hook(){
 						//ac.suspend();
 						ac.close();
 						my_state = STATE_MUTED;
-						o_touch.visible = true;
+						o_tap.visible = true;
 					} else if( s == "visible"){
 						//★ タッチで再開するので、ここでは何もしない。
 					}
 				}, false);
 
 				awnode.connect( ac.destination);
-				o_touch.visible = false;
+				o_tap.visible = false;
 
 				my_state = STATE_INIT;
 				count = 0;
@@ -290,7 +280,7 @@ function tic(){
 		if( my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
 			ac.close();
 			my_state = STATE_MUTED;
-			o_touch.visible = true;
+			o_tap.visible = true;
 		}
 	}
 
@@ -350,9 +340,9 @@ function tic(){
 	cam.position.set( 5 * Math.sin( t), 5, 5 * Math.cos( t));
 	cam.lookAt( 0, 0, 0);
 
-	if( o_touch.visible){
-		o_touch.position.set( 4 * Math.sin( t), 4, 4 * Math.cos( t));
-		o_touch.rotation.y = t;
+	if( o_tap.visible){
+		o_tap.position.set( 4 * Math.sin( t), 4, 4 * Math.cos( t));
+		o_tap.rotation.y = t;
 	}
 
 	ren.render( scene, cam);
