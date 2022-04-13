@@ -177,7 +177,7 @@ let absn;
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
 
-	if( skt.can_ios_audio_start){
+	if( skt.can_ios_audio_start && skt.num == 1){ //★ ダブルタップして、指で隠れた部分を見る窓が出ている時は、num が 0 でここに来る。
 		if( my_state == STATE_DEFAULT){
 			init_ac();
 		} else if( my_state == STATE_MUTED){
@@ -275,9 +275,8 @@ function tic(){
 
 	skt.pre();
 
-document.getElementById( "span_1").innerHTML = skt.num + " / "+skt.can_ios_audio_start;
 	if( ac){
-		//if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
+		if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
 		if( my_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
 			ac.close();
 			my_state = STATE_MUTED;
