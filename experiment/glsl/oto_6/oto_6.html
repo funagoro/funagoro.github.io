@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html lang="ja">
+<html lang="ja" style="-webkit-user-select : none, user-select : none">
 
 <head>
 
@@ -26,7 +26,7 @@
 
 </head>
 
-<body style="-webkit-touch-callout : none">
+<body>
 
 
 
@@ -58,12 +58,6 @@
 <script>
 
 'use strict';
-
-window.oncontextmenu = function( e){
-	e.preventDefault();
-	e.stopPropagation();
-	return false;
-};
 
 const W = 512;
 let i;
