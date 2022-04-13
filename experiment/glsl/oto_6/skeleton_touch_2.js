@@ -244,6 +244,11 @@ constructor( c){
 		//e.preventDefault();
 		//e.stopPropagation();
 
+		//★ iOS でダブルタップして指を離さなかった時、
+		//★ 指で隠れている部分を見る窓が出て、
+		//★ そのまま canvas の中にドラッグして指を離した場合、
+		//★ this.num が 0 でここに来る。その場合、再生開始できない。
+		if( this.num != 1) this.can_ios_audio_start = false;
 		if( typeof touch_event_hook == "function") touch_event_hook( e);
 
 		if( e.touches && e.touches.length == 0){

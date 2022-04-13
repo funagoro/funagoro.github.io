@@ -177,7 +177,7 @@ let absn;
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
 
-	if( skt.can_ios_audio_start && skt.num == 1){ //★ ダブルタップして、指で隠れた部分を見る窓が出ている時は、num が 0 でここに来る。
+	if( skt.can_ios_audio_start){
 		if( my_state == STATE_DEFAULT){
 			init_ac();
 		} else if( my_state == STATE_MUTED){
