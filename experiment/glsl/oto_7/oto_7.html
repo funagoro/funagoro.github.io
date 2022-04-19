@@ -548,7 +548,8 @@ function filterSaw( freq, time, cutoff, resonance, c){
 		o_tap.rotation.y = t;
 	}
 
-	plane.position.set( 3.9 * Math.sin( t), 3.9, 3.9 * Math.cos( t));
+a=2+2*Math.cos(0.03*count);
+	plane.position.set( a * Math.sin( t), a, a * Math.cos( t));
 	plane.rotation.y = t;
 	t = count % 20;
 	t = 0.5 * ( 1.2 - 0.01 * t);
