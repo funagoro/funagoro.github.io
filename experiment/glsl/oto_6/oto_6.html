@@ -167,6 +167,7 @@ scene.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
+let is_visibility_listener = false;
 let ac;
 let awnode;
 
@@ -178,6 +179,7 @@ function touch_event_hook(){
 			init_ac();
 		} else if( my_state == STATE_MUTED){
 			//ac.resume();
+
 			//★ ac.suspend() して、他のアプリで遊んだ後、ac.resume() しても、
 			//★ 音が出ない場合があるので、ac.close() して、次回は new する。
 			init_ac();
@@ -245,20 +247,28 @@ function touch_event_hook(){
 				count = 0;
 			}).catch( console.error);
 
-			document.addEventListener( "visibilitychange", function(){
-				let s;
+			if( !is_visibility_listener){ //★ 何重にもリスナを登録してはいけない。
+				document.addEventListener( "visibilitychange", function(){
+					let s;
 
-				s = document.visibilityState;
-				if( s == "hidden"){
-					//ac.suspend();
-					//★ ac.suspend() ではなく、ac.close()
-					ac.close();
-					o_tap.visible = true;
-					my_state = STATE_MUTED;
-				} else if( s == "visible"){
-					//★ タッチで再開するので、ここでは何もしない。
-				}
-			}, false);
+					s = document.visibilityState;
+					if( s == "hidden"){
+						if( ac.state != "closed"){ //★ すでに closed の時に、close() してはいけない。
+							//ac.suspend();
+
+							//★ ac.suspend() ではなく、ac.close()
+							ac.close();
+							o_tap.visible = true;
+							my_state = STATE_MUTED;
+						}else{
+						}
+					} else if( s == "visible"){
+						//★ タッチで再開するので、ここでは何もしない。
+					}
+				}, false);
+
+				is_visibility_listener = true;
+			}
 		}
 	}
 }
