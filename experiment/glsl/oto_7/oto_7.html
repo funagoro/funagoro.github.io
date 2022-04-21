@@ -128,6 +128,21 @@ let is_visibility_listener = false;
 let ac;
 let awnode;
 
+const VOW = [
+	570, 1450, 3000, //★ ラ行。
+	250, 2400, 3000, //★ い。
+	450, 1800, 2600, //★ え。
+	800, 1400, 3000, //★ あ。
+	525, 800, 3000, //★ お。
+	425, 1200, 3000 //★ う。
+];
+function set_value( p, v){
+	p.cancelScheduledValues( 0);
+	p.value = v;
+}
+let bqf_1, bqf_2, bqf_3;
+let gain_boin;
+
 //★ skeleton_touch.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
@@ -197,6 +212,50 @@ function touch_event_hook(){
 				count = 0;
 			}).catch( console.error);
 
+let i, n;
+let ab;
+let d;
+let absn;
+let gn;
+			bqf_1 = ac.createBiquadFilter();
+			bqf_1.type = "bandpass";
+			bqf_1.Q.value = 7;
+			bqf_1.connect( ac.destination);
+
+			bqf_2 = ac.createBiquadFilter();
+			bqf_2.type = "bandpass";
+			bqf_2.Q.value = 7;
+			bqf_2.connect( ac.destination);
+
+			bqf_3 = ac.createBiquadFilter();
+			bqf_3.type = "bandpass";
+			bqf_3.Q.value = 7;
+			bqf_3.connect( ac.destination);
+
+			n = Math.floor( ac.sampleRate / 100); //★ 100 分の 1 秒間分。
+			ab = ac.createBuffer( 1, n, ac.sampleRate); //★ チャンネル数、サンプル数、レート。
+			d = ab.getChannelData( 0);
+			for( i = 0; i < n; i++){
+				t = 1.2 * i / n;
+				if( t < 0.9) t = -Math.cos( 3.14159 * t / 0.9);
+				else if( t < 1) t = 2 * Math.cos( 1.57079 * Math.pow( ( t - 0.9) / 0.1, 2)) - 1;
+				else t = -1;
+				d[ i] = t;
+			}
+
+			gn = ac.createGain();
+			gn.connect( bqf_1);
+			gn.connect( bqf_2);
+			gn.connect( bqf_3);
+			set_value( gain_boin = gn.gain, 0);
+
+			absn = ac.createBufferSource();
+			absn.buffer = ab;
+			absn.loop = true;
+			absn.connect( gn);
+			absn.start();
+			//pbr_boin = absn.playbackRate;
+
 			if( !is_visibility_listener){ //★ 何重にもリスナを登録してはいけない。
 				document.addEventListener( "visibilitychange", function(){
 					let s;
@@ -227,6 +286,7 @@ skt.set_mag_and_orientation( 1, 0);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
+let vol;
 let ab_kick, gn_kick;
 let ab_bass, gn_bass;
 let ab_scratch, gn_scratch;
@@ -247,13 +307,17 @@ function play_audio( b, g, v){
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let count = 0;
-let vol;
 
 tic();
 
 function tic(){
 	let i, j;
 	let a, b, t;
+
+	function rnd( a){
+		let b = Math.sin( 12.9898 * a) * 43758.5453;
+		return b - Math.floor( b);
+	}
 
 	requestAnimationFrame( tic);
 
@@ -281,11 +345,6 @@ function tic(){
 			const BPM = 180;
 
 			r = ac.sampleRate;
-
-			function rnd( a){
-				let b = Math.sin( 12.9898 * a) * 43758.5453;
-				return b - Math.floor( b);
-			}
 
 			function noise( f, t, s){
 				let a;
@@ -406,17 +465,23 @@ function tic(){
 
 		vol = Math.min( vol + 0.02, 1);
 
+//vol=0;
 		if( count % 20 == 0) play_audio( ab_kick, gn_kick, 0.5);
-
 		if( count % 5 == 0){
 			play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
 			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.1);
 			play_audio( ab_hihat, gn_hihat, 0.2);
 		}
-
 		if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
-
 		if( count % 40 == 20) play_audio( ab_beam, gn_beam, 0.08);
+
+		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 8)));
+		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 8) + 1));
+		t = count % 8 / 8;
+		set_value( bqf_1.frequency, ( 1 - t) * VOW[ i] + t * VOW[ j]);
+		set_value( bqf_2.frequency, ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]);
+		set_value( bqf_3.frequency, ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]);
+		set_value( gain_boin, 2 - count % 40 / 30);
 	}
 
 	t = 1.2 - count % 20 * 0.01;
