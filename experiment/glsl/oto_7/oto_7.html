@@ -60,7 +60,6 @@
 'use strict';
 
 const W = 512;
-let i;
 let t;
 let o;
 
@@ -71,14 +70,10 @@ const can = document.getElementById( "canvas_1");
 can.width = can.height = W;
 
 const ren = new THREE.WebGLRenderer( { canvas : can});
-ren.shadowMap.enabled = true;
-ren.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const cam = new THREE.PerspectiveCamera( 35, W / W, 0.1, 10);
+const cam = new THREE.OrthographicCamera( -1, 1, 1, -1, -1, 1);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color( 0);
-scene.fog = new THREE.Fog( scene.background, 5, 9);
 
 //★ TAP TO PLAY AUDIO の文字。
 const ld = new THREE.TextureLoader();
@@ -111,15 +106,13 @@ o = new THREE.Mesh(
 	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex_touch})
 );
 o.position.z = 0.001;
+t = 0.015;
+o.scale.set( t, t, t);
 const o_tap = new THREE.Mesh(
-	new THREE.PlaneGeometry( 150, 150),
+	new THREE.PlaneGeometry( 2, 2),
 	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
 );
 o_tap.add( o);
-t = 0.006;
-o_tap.scale.set( t, t, t);
-o_tap.rotation.x = -0.785;
-o_tap.rotation.order = "YXZ"; //★ ← ここ大事。
 scene.add( o_tap);
 
 const tex = ld.load( "data:;base64," + oto_7_jpg_b64);
@@ -127,60 +120,13 @@ const plane = new THREE.Mesh(
 	new THREE.PlaneGeometry( 2, 2),
 	new THREE.MeshBasicMaterial( { map : tex})
 );
-plane.rotation.x = -0.785;
-plane.rotation.order = "YXZ"; //★ ← ここ大事。
 scene.add( plane);
-
-//★ 大きいボール。
-const ball = new THREE.Mesh(
-	new THREE.SphereBufferGeometry( 1, 40, 20),
-	new THREE.MeshPhongMaterial( { color : 0xffffff})
-);
-ball.castShadow = true;
-scene.add( ball);
-
-//★ 小さいボール。
-const balls = new Array( 5);
-balls[ 0] = ball.clone();
-t = 0.5;
-balls[ 0].scale.set( t, t, t);
-for( i = 1; i < 5; i++) balls[ i] = balls[ 0].clone();
-for( i = 0; i < 5; i++) scene.add( balls[ i]);
-
-//★ 床。
-o = new THREE.Mesh(
-	new THREE.PlaneGeometry( 5, 5),
-	new THREE.MeshPhongMaterial( { color : 0xffffff})
-);
-o.receiveShadow = true;
-o.rotation.x = -1.5708;
-scene.add( o);
-
-//★ 赤いライト。
-o = new THREE.SpotLight( 0xff0000, 5, 30, 1, 1.5, 3); //★ 色, 強さ, 距離, 拡がり, ボケ, 減衰。
-o.castShadow = true;
-o.position.set( 3, 4, -5);
-scene.add( o);
-
-//★ 緑のライト。
-o = o.clone();
-o.color.set( 0x00ff00);
-o.position.set( -3, 4, -5);
-scene.add( o);
-
-//★ 青いライト。
-o = o.clone();
-o.angle = 0.6;
-o.color.set( 0x0000ff);
-o.position.set( 0, 4, 2);
-scene.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let is_visibility_listener = false;
 let ac;
 let awnode;
-let absn;
 
 //★ skeleton_touch.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
@@ -232,7 +178,7 @@ function touch_event_hook(){
 							d0[ i] = 0.03 * Math.sin( 6.28318 * 0.000001 * this.p);
 							this.p = ( this.p + this.s) % 1000000;
 
-							//d1[ i] = -d0[ i];
+							d1[ i] = -d0[ i];
 						}
 
 						return true;
@@ -243,7 +189,6 @@ function touch_event_hook(){
 
 			`)).then( function(){
 				awnode = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオにする。
-//console.log( awnode.numberOfOutputs);
 				awnode.connect( ac.destination);
 				awnode.port.onmessage = function( e){ console.log( e.data);}
 
@@ -289,6 +234,17 @@ let ab_hihat, gn_hihat;
 let ab_metal, gn_metal;
 let ab_beam, gn_beam;
 
+function play_audio( b, g){
+	let n;
+
+	n = ac.createBufferSource();
+	n.buffer = b;
+	n.connect( g);
+	n.start();
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
 let count = 0;
 
 tic();
@@ -316,39 +272,35 @@ function tic(){
 
 	if( current_state == STATE_INIT){
 		if( count == 0){
-			let n, r;
-			let t, w;
-			let d, d1;
+			let n;
+			let r, t;
+			let d0, d1;
 
-const BPM = 180;
+			const BPM = 180;
+
 			r = ac.sampleRate;
 
-function mod( x, y){ return x - y * Math.floor( x / y);}
-
-function texrnd( x, y){
-	let a;
-
-	a = Math.sin( 12.9898 * x + 78.233 * y) * 43758.5453;
-	return a - Math.floor( a);
-}
+			function rnd( a){
+				let b = Math.sin( 12.9898 * a) * 43758.5453;
+				return b - Math.floor( b);
+			}
 
 			//★ kick。
 			n = Math.floor( 60 / BPM * r);
 			ab_kick = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_kick.getChannelData( 0);
+			d0 = ab_kick.getChannelData( 0);
 			d1 = ab_kick.getChannelData( 1);
 			for( i = 0; i < n; i++){
-				t = i / r % ( 60 / BPM);
-				d[ i] = 0.5 * Math.max( Math.min(
-					Math.exp( -10 * t) * Math.sin( 6.28318 * (
+				t = i / r;
+				d0[ i] = d1[ i] = 0.5 * Math.exp( -10 * t) *
+					Math.max( Math.sin( 6.28318 * (
 						50 * t - 6 * (
 							Math.exp( -10 * t) +
 							Math.exp( -80 * t) +
 							Math.exp( -400 * t)
 						)
 					))
-				, 1), 0);
-				d1[ i] = d[ i];
+				, 0);
 			}
 			gn_kick = ac.createGain();
 			gn_kick.gain.value = 1;
@@ -356,37 +308,40 @@ function texrnd( x, y){
 
 			//★ bass。
 			n = Math.floor( 0.25 * 60 / BPM * r);
-			ab_bass = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_bass.getChannelData( 0);
+			ab_bass = ac.createBuffer( 2, n, r);
+			d0 = ab_bass.getChannelData( 0);
 			d1 = ab_bass.getChannelData( 1);
 			for( i = 0; i < n; i++){
-				t = i / r % ( 0.25 * 60 / BPM);
+				t = i / r;
 				a = Math.exp( -20.0 * t);
-				let cutoff = 100.0 + 400 * a;
-				let freq = ( 440.0 * Math.pow( 2, -38 / 12));
-				b = filterSaw( freq, t + 0.004 * Math.sin( 4 * 3.14159 * freq * t), cutoff, 1, -1);
-				d[ i] += a * b;
-				b = filterSaw( freq, t + 0.004 * Math.sin( 4 * 3.14159 * freq * t), cutoff, 1, 1);
+				let freq = 440 * Math.pow( 2, -38 / 12);
+				b = filterSaw( freq, t + 0.004 * Math.sin( 4 * 3.14159 * freq * t), -1);
+				//b = filterSaw( freq, t, 1, -1);
+				d0[ i] += a * b;
+				b = filterSaw( freq, t + 0.004 * Math.sin( 4 * 3.14159 * freq * t), 1);
+				//b = filterSaw( freq, t, 1, 1);
 				d1[ i] += a * b;
 			}
 			gn_bass = ac.createGain();
 			gn_bass.connect( ac.destination);
 
+			//★ saw。
 			ab_saw = new Array( 20);
 			for( i = 0; i < 20; i++){
 				n = Math.floor( 0.25 * 60 / BPM * r);
-				ab_saw[ i] = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-				d = ab_saw[ i].getChannelData( 0);
+				ab_saw[ i] = ac.createBuffer( 2, n, r);
+				d0 = ab_saw[ i].getChannelData( 0);
 				d1 = ab_saw[ i].getChannelData( 1);
 				for( j = 0; j < n; j++){
-					t = j / r % ( 0.25 * 60 / BPM);
-					//let begin = j / r - t;
-					let begin = i / 20;
-					let dice = texrnd( 256 * 0.741 * begin, 256 * 0.891 * begin);
+					t = j / r;
+					let begin = i / 10;
+					let dice = rnd( 256 * begin);
 					if( t < ( 0.25 - dice * 0.2) * 60 / BPM){
-						let freq = 20 * Math.sin( 4 * 3.14159 * begin);
-						a = 2 * mod( 20 * Math.exp( -2 * mod( 10 * Math.exp( -freq * t), 1)), 1) - 1;
-						d[ j] = d1[ j] = a;
+						//let freq = 20 * Math.sin( 4 * 3.14159 * begin);
+						let freq = 20 * Math.sin( 2 * 3.14159 * begin);
+						//let freq = -20 + 40 * begin;
+						a = 2 * ( 20 * Math.exp( -2 * ( 10 * Math.exp( -freq * t) % 1)) % 1) - 1;
+						d0[ j] = d1[ j] = a;
 					}
 				}
 			}
@@ -396,18 +351,16 @@ function texrnd( x, y){
 
 			//★ hihat。
 			n = Math.floor( 0.25 * 60 / BPM * r);
-			ab_hihat = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_hihat.getChannelData( 0);
+			ab_hihat = ac.createBuffer( 2, n, r);
+			d0 = ab_hihat.getChannelData( 0);
 			d1 = ab_hihat.getChannelData( 1);
 			for( i = 0; i < n; i++){
-				t = mod( i / r, 0.25 * 60 / BPM);
-				a = Math.floor( i / r / ( 0.25 * 60 / BPM));
-				let open = 30 + 170 * texrnd( 0.741 * a, 0.891 * a);
-				a = Math.exp( -open * t);
-				b = wavetable( 20, t, 4, 0, 0);
-				d[ i] += a * b;
+				t = i / r;
+				a = Math.exp( -60 * t); //★ -30 長い 〜 -200 短い。
+				b = noise( 20, t, 3);
+				d0[ i] += a * b;
 
-				b = wavetable( 20, t, 4, 0, 256);
+				b = noise( 20, t + 1, 3);
 				d1[ i] += a * b;
 			}
 			gn_hihat = ac.createGain();
@@ -416,16 +369,16 @@ function texrnd( x, y){
 
 			//★ metal。
 			n = Math.floor( 0.25 * 60 / BPM * r);
-			ab_metal = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_metal.getChannelData( 0);
+			ab_metal = ac.createBuffer( 2, n, r);
+			d0 = ab_metal.getChannelData( 0);
 			d1 = ab_metal.getChannelData( 1);
 			for( i = 0; i < n; i++){
 				t = i / r;
 				a = 0.3 * Math.exp( -30 * t);
-				b = wavetable( 100, t, 0.8, 0, 0);
-				d[ i] += a * b;
+				b = noise( 100, t, 0.8);
+				d0[ i] += a * b;
 
-				b = wavetable( 100, t, 0.8, 0, 256);
+				b = noise( 100, t + 1, 0.8);
 				d1[ i] += a * b;
 			}
 			gn_metal = ac.createGain();
@@ -434,47 +387,46 @@ function texrnd( x, y){
 
 			//★ beam。
 			n = Math.floor( 0.5 * 60 / BPM * r);
-			ab_beam = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
-			d = ab_beam.getChannelData( 0);
+			ab_beam = ac.createBuffer( 2, n, r);
+			d0 = ab_beam.getChannelData( 0);
 			d1 = ab_beam.getChannelData( 1);
 			for( i = 0; i < n; i++){
 				t = i / r;
 				a = 0.1 + 0.2 * Math.exp( -30.0 * t);
-				b = wavetable( 14, t, 2, 0, 0);
-				d[ i] += a * b;
+				b = noise( 40, t, 2);
+				d0[ i] += a * b;
 
-				b = wavetable( 14, t, 2, 0, 256);
+				b = noise( 40, t + 1, 2);
 				d1[ i] += a * b;
 			}
 			gn_beam = ac.createGain();
 			gn_beam.gain.value = 1;
 			gn_beam.connect( ac.destination);
 
+function noise( f, t, s){
+	let a;
+
+	a = 1 - 4 * Math.abs( f * t % 1 - 0.5);
+	return 1.0 - 2.0 * rnd( Math.floor( 256 * a * s));
+}
+
 function smoothstep( a, b, c){
 	let t = Math.max( Math.min( ( c - a) / ( b - a), 1), 0);
 	return t * t * ( 3 - 2 * t);
 }
 
-function tri( p){ return 1 - 4 * Math.abs( mod( p, 1) - 0.5);}
-
-function wavetable( freq, time, speed, offset, y){
-	if( time < 0) return 0;
-	let p = tri( freq * time);
-	let t = p * speed + offset;
-	return 1.0 - 2.0 * texrnd( Math.floor( 256 * 0.741 * t), y + Math.floor( 256 * 0.891 * t));
-}
-
-function filterSaw( freq, time, cutoff, resonance, c){
+function filterSaw( f, t, s){
 	let i;
-	if( time < 0) return 0;
-	let sum = 0;
-	for( let i = 1; i <= 32; i++){
-		let cut = smoothstep( cutoff * 1.2, cutoff * 0.8, i * freq );
-		cut += smoothstep( cutoff * 0.3, 0.0, Math.abs( cutoff - i * freq ) ) * resonance;
-		let offset = c * 0.1 * ( i - 1.0);
-		sum += Math.sin( 6.28318 * i * freq * time + offset ) / i * cut;
+	let a, b, c;
+
+	a = 0;
+	for( i = 1; i <= 32; i++){
+		b = smoothstep( 960, 640, i * f) +
+			smoothstep( 240, 0, Math.abs( 800 - i * f));
+		c = s * 0.1 * ( i - 1);
+		a += Math.sin( 6.28318 * i * f * t + c) / i * b;
 	}
-	return sum;
+	return a;
 }
 
 		} else{
@@ -485,74 +437,21 @@ function filterSaw( freq, time, cutoff, resonance, c){
 	} else if( current_state == STATE_WORKING){
 		awnode.port.postMessage( 880 * Math.pow( 2, b));
 
-		if( skt.start || count % 40 < 0){
-			absn = ac.createBufferSource();
-			absn.buffer = ab_bass;
-			absn.connect( gn_bass);
-			absn.start();
-		}
-
-		if( count % 20 == 0){
-			absn = ac.createBufferSource();
-			absn.buffer = ab_kick;
-			absn.connect( gn_kick);
-			absn.start();
-		}
+		if( count % 20 == 0) play_audio( ab_kick, gn_kick);
 
 		if( count % 5 == 0){
 			gn_bass.gain.value = 0.4 * Math.min( count % 20 * 1.6 / 20, 1);
-			absn = ac.createBufferSource();
-			absn.buffer = ab_bass;
-			absn.connect( gn_bass);
-			absn.start();
-
-			absn = ac.createBufferSource();
-			absn.buffer = ab_saw[ Math.floor( 20 * Math.random())];
-			absn.connect( gn_saw);
-			absn.start();
-
-			absn = ac.createBufferSource();
-			absn.buffer = ab_hihat;
-			absn.connect( gn_hihat);
-			absn.start();
+			play_audio( ab_bass, gn_bass);
+			play_audio( ab_saw[ Math.floor( 20 * Math.random())], gn_saw);
+			play_audio( ab_hihat, gn_hihat);
 		}
 
-		if( count % 20 == 10){
-			absn = ac.createBufferSource();
-			absn.buffer = ab_metal;
-			absn.connect( gn_metal);
-			absn.start();
-		}
+		if( count % 20 == 10) play_audio( ab_metal, gn_metal);
 
-		if( count % 40 == 20){
-			absn = ac.createBufferSource();
-			absn.buffer = ab_beam;
-			absn.connect( gn_beam);
-			absn.start();
-		}
+		if( count % 40 == 20) play_audio( ab_beam, gn_beam);
 	}
 
-	ball.position.y = 0.5 + 0.7 * a;
-
-	for( i = 0; i < 5; i++){
-		t = 2 * 3.14159 * ( count % 200 + 40 * i) / 200;
-		balls[ i].position.set( 2 * Math.sin( t), 0.25 + 0.15 * b, 2 * Math.cos( t));
-	}
-
-	t = 2 * 3.14159 * ( count % 300 / 300);
-	cam.position.set( 5 * Math.sin( t), 5, 5 * Math.cos( t));
-	cam.lookAt( 0, 0, 0);
-
-	if( o_tap.visible){
-		o_tap.position.set( 4 * Math.sin( t), 4, 4 * Math.cos( t));
-		o_tap.rotation.y = t;
-	}
-
-a=2+2*Math.cos(0.03*count);
-	plane.position.set( a * Math.sin( t), a, a * Math.cos( t));
-	plane.rotation.y = t;
-	t = count % 20;
-	t = 0.5 * ( 1.2 - 0.01 * t);
+	t = 1.2 - count % 20 * 0.01;
 	plane.scale.set( t, t, t);
 
 	ren.render( scene, cam);
