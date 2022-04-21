@@ -141,7 +141,7 @@ function set_value( p, v){
 	p.value = v;
 }
 let bqf_1, bqf_2, bqf_3;
-let gain_boin;
+let gain_boin, pbr_boin;
 
 //★ skeleton_touch.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
@@ -177,7 +177,7 @@ function touch_event_hook(){
 						}
 
 						//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
-						this.port.postMessage( "hello!");
+						this.port.postMessage( "sing!");
 					}
 
 					process( inputs, outputs, parameters){
@@ -258,6 +258,7 @@ function touch_event_hook(){
 			absn.loop = true;
 			absn.connect( gn);
 			absn.start();
+			pbr_boin = absn.playbackRate;
 
 			//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -466,7 +467,7 @@ function tic(){
 			}
 		}
 	} else if( current_state == STATE_WORKING){
-		//awnode.port.postMessage( 880 * Math.pow( 2, b));
+		awnode.port.postMessage( 220);
 
 		vol = Math.min( vol + 0.02, 1);
 
@@ -482,11 +483,14 @@ function tic(){
 		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 8)));
 		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 8) + 1));
 		t = count % 8 / 8;
-		a = Math.sin( 3.14159 * ( 40 + count % 40) / 100);
+		a = Math.sin( 3.14159 * ( 45 + count % 40) / 100);
 		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
 		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
 		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
 		set_value( gain_boin, 2 - count % 40 / 30);
+		b = Math.floor( 3 * rnd( Math.floor( count / 40))) / 3;
+		b = rnd( Math.floor( count / 40));
+		set_value( pbr_boin, 1 - b + b * a);
 	}
 
 	t = 1.2 - count % 20 * 0.01;
