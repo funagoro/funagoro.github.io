@@ -229,7 +229,7 @@ skt.set_mag_and_orientation( 1, 0);
 
 let ab_kick, gn_kick;
 let ab_bass, gn_bass;
-let ab_saw, gn_saw;
+let ab_scratch, gn_scratch;
 let ab_hihat, gn_hihat;
 let ab_metal, gn_metal;
 let ab_beam, gn_beam;
@@ -325,29 +325,26 @@ function tic(){
 			gn_bass = ac.createGain();
 			gn_bass.connect( ac.destination);
 
-			//★ saw。
-			ab_saw = new Array( 20);
+			//★ scratch。
+			ab_scratch = new Array( 20);
 			for( i = 0; i < 20; i++){
 				n = Math.floor( 0.25 * 60 / BPM * r);
-				ab_saw[ i] = ac.createBuffer( 2, n, r);
-				d0 = ab_saw[ i].getChannelData( 0);
-				d1 = ab_saw[ i].getChannelData( 1);
+				ab_scratch[ i] = ac.createBuffer( 2, n, r);
+				d0 = ab_scratch[ i].getChannelData( 0);
+				d1 = ab_scratch[ i].getChannelData( 1);
+				a = 40 * rnd( i) - 20;
 				for( j = 0; j < n; j++){
 					t = j / r;
-					let begin = i / 10;
-					let dice = rnd( 256 * begin);
-					if( t < ( 0.25 - dice * 0.2) * 60 / BPM){
-						//let freq = 20 * Math.sin( 4 * 3.14159 * begin);
-						let freq = 20 * Math.sin( 2 * 3.14159 * begin);
-						//let freq = -20 + 40 * begin;
-						a = 2 * ( 20 * Math.exp( -2 * ( 10 * Math.exp( -freq * t) % 1)) % 1) - 1;
-						d0[ j] = d1[ j] = a;
+					if( t < ( 0.25 - 0.01 * i) * 60 / BPM){
+						b = 10 * Math.exp( a * t) % 1;
+						b = 20 * Math.exp( -2 * b) % 1;
+						d0[ j] = d1[ j] = 2 * b - 1;
 					}
 				}
 			}
-			gn_saw = ac.createGain();
-			gn_saw.gain.value = 0.1;
-			gn_saw.connect( ac.destination);
+			gn_scratch = ac.createGain();
+			gn_scratch.gain.value = 0.1;
+			gn_scratch.connect( ac.destination);
 
 			//★ hihat。
 			n = Math.floor( 0.25 * 60 / BPM * r);
@@ -442,7 +439,7 @@ function filterSaw( f, t, s){
 		if( count % 5 == 0){
 			gn_bass.gain.value = 0.4 * Math.min( count % 20 * 1.6 / 20, 1);
 			play_audio( ab_bass, gn_bass);
-			play_audio( ab_saw[ Math.floor( 20 * Math.random())], gn_saw);
+			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch);
 			play_audio( ab_hihat, gn_hihat);
 		}
 
