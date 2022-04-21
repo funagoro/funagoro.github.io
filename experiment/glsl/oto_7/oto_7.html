@@ -292,7 +292,7 @@ function tic(){
 			d1 = ab_kick.getChannelData( 1);
 			for( i = 0; i < n; i++){
 				t = i / r;
-				d0[ i] = d1[ i] = 0.5 * Math.exp( -10 * t) *
+				d0[ i] = d1[ i] = Math.exp( -10 * t) *
 					Math.max( Math.sin( 6.28318 * (
 						50 * t - 6 * (
 							Math.exp( -10 * t) +
@@ -303,7 +303,7 @@ function tic(){
 				, 0);
 			}
 			gn_kick = ac.createGain();
-			gn_kick.gain.value = 1;
+			gn_kick.gain.value = 0.5;
 			gn_kick.connect( ac.destination);
 
 			//★ bass。
@@ -371,7 +371,7 @@ function tic(){
 			d1 = ab_metal.getChannelData( 1);
 			for( i = 0; i < n; i++){
 				t = i / r;
-				a = 0.3 * Math.exp( -30 * t);
+				a = Math.exp( -30 * t);
 				b = noise( 100, t, 0.8);
 				d0[ i] += a * b;
 
@@ -379,7 +379,7 @@ function tic(){
 				d1[ i] += a * b;
 			}
 			gn_metal = ac.createGain();
-			gn_metal.gain.value = 1;
+			gn_metal.gain.value = 0.2;
 			gn_metal.connect( ac.destination);
 
 			//★ beam。
@@ -389,7 +389,7 @@ function tic(){
 			d1 = ab_beam.getChannelData( 1);
 			for( i = 0; i < n; i++){
 				t = i / r;
-				a = 0.1 + 0.2 * Math.exp( -30.0 * t);
+				a = 1 + 2 * Math.exp( -30.0 * t);
 				b = noise( 40, t, 2);
 				d0[ i] += a * b;
 
@@ -397,7 +397,7 @@ function tic(){
 				d1[ i] += a * b;
 			}
 			gn_beam = ac.createGain();
-			gn_beam.gain.value = 1;
+			gn_beam.gain.value = 0.1;
 			gn_beam.connect( ac.destination);
 
 function noise( f, t, s){
