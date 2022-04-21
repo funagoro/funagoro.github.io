@@ -212,11 +212,14 @@ function touch_event_hook(){
 				count = 0;
 			}).catch( console.error);
 
-let i, n;
-let ab;
-let d;
-let absn;
-let gn;
+			//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+			let i, n;
+			let d;
+			let ab;
+			let absn;
+			let gn;
+
 			bqf_1 = ac.createBiquadFilter();
 			bqf_1.type = "bandpass";
 			bqf_1.Q.value = 7;
@@ -247,14 +250,16 @@ let gn;
 			gn.connect( bqf_1);
 			gn.connect( bqf_2);
 			gn.connect( bqf_3);
-			set_value( gain_boin = gn.gain, 0);
+			gain_boin = gn.gain;
+			set_value( gain_boin, 0);
 
 			absn = ac.createBufferSource();
 			absn.buffer = ab;
 			absn.loop = true;
 			absn.connect( gn);
 			absn.start();
-			//pbr_boin = absn.playbackRate;
+
+			//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 			if( !is_visibility_listener){ //★ 何重にもリスナを登録してはいけない。
 				document.addEventListener( "visibilitychange", function(){
@@ -461,11 +466,10 @@ function tic(){
 			}
 		}
 	} else if( current_state == STATE_WORKING){
-		awnode.port.postMessage( 880 * Math.pow( 2, b));
+		//awnode.port.postMessage( 880 * Math.pow( 2, b));
 
 		vol = Math.min( vol + 0.02, 1);
 
-//vol=0;
 		if( count % 20 == 0) play_audio( ab_kick, gn_kick, 0.5);
 		if( count % 5 == 0){
 			play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
@@ -478,9 +482,10 @@ function tic(){
 		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 8)));
 		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 8) + 1));
 		t = count % 8 / 8;
-		set_value( bqf_1.frequency, ( 1 - t) * VOW[ i] + t * VOW[ j]);
-		set_value( bqf_2.frequency, ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]);
-		set_value( bqf_3.frequency, ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]);
+		a = Math.sin( 3.14159 * ( 40 + count % 40) / 100);
+		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
+		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
+		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
 		set_value( gain_boin, 2 - count % 40 / 30);
 	}
 
