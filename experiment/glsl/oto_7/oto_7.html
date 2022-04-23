@@ -481,7 +481,7 @@ function tic(){
 			mel_vol = 1;
 		} else mel_vol *= 0.99;
 		awnode.port.postMessage( 440 * Math.pow( 2, 1 + ( mel + 2 * Math.sin( 6.28318 * count / 10)) / 12));
-		gn_aw.gain.value = 0.15 * mel_vol * vol;
+		gn_aw.gain.value = 0.1 * mel_vol * vol;
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
