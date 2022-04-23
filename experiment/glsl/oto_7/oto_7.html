@@ -126,7 +126,7 @@ scene.add( plane);
 
 let is_visibility_listener = false;
 let ac;
-let awnode;
+let awnode, gn_aw;
 
 const VOW = [
 	570, 1450, 3000, //★ ラ行。
@@ -168,11 +168,12 @@ function touch_event_hook(){
 
 						super();
 
-						this.s = 0;
 						this.p = 0;
+						this.s = 0;
 						that = this;
 
 						this.port.onmessage = function( e){
+							that.p = 0;
 							that.s = Math.floor( 1000000 * parseFloat( e.data) / sampleRate);
 						}
 
@@ -190,10 +191,24 @@ function touch_event_hook(){
 
 						n = d0.length;
 						for( i = 0; i < n; i++){
-							d0[ i] = 0.03 * Math.sin( 6.28318 * 0.000001 * this.p);
-							this.p = ( this.p + this.s) % 1000000;
+							let q;
 
-							d1[ i] = -d0[ i];
+							q = 0.000001 * this.p;
+							//q *= 1 + 0.0001 * q;
+							d0[ i] = 4 * Math.abs( q % 1 - 0.5) - 1 +
+								4 * Math.abs( Math.pow( 2, 4 / 12) * q % 1 - 0.5) - 1 +
+								4 * Math.abs( Math.pow( 2, 7 / 12) * q % 1 - 0.5) - 1;
+
+							q = 0.0000012 * this.p;
+							//q *= 1 + 0.0002 * q;
+							d1[ i] = 4 * Math.abs( q % 1 - 0.5) - 1 +
+								4 * Math.abs( Math.pow( 2, 4 / 12) * q % 1 - 0.5) - 1 +
+								4 * Math.abs( Math.pow( 2, 7 / 12) * q % 1 - 0.5) - 1;
+
+							//this.p = ( this.p + this.s) % 1000000;
+							this.p += this.s;
+
+							//d1[ i] = -d0[ i];
 						}
 
 						return true;
@@ -203,8 +218,11 @@ function touch_event_hook(){
 				registerProcessor( "awp_name", awp);
 
 			`)).then( function(){
+				gn_aw = ac.createGain();
+				gn_aw.connect( ac.destination);
 				awnode = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオにする。
-				awnode.connect( ac.destination);
+				//awnode.connect( ac.destination);
+				awnode.connect( gn_aw);
 				awnode.port.onmessage = function( e){ console.log( e.data);}
 
 				o_tap.visible = false;
@@ -217,8 +235,7 @@ function touch_event_hook(){
 			let i, n;
 			let d;
 			let ab;
-			let absn;
-			let gn;
+			let absn, gn;
 
 			bqf_1 = ac.createBiquadFilter();
 			bqf_1.type = "bandpass";
@@ -299,6 +316,8 @@ let ab_scratch, gn_scratch;
 let ab_hihat, gn_hihat;
 let ab_metal, gn_metal;
 let ab_beam, gn_beam;
+
+let mel = 0, mel_vol = 0;
 
 function play_audio( b, g, v){
 	let n;
@@ -467,7 +486,17 @@ function tic(){
 			}
 		}
 	} else if( current_state == STATE_WORKING){
-		awnode.port.postMessage( 220);
+		//★ でたらめなメロディ。
+		if( count % 40 == 0){
+			//t = [ -7, -5, -2][ Math.floor( 3 * rnd( count))];
+			t = 2 * Math.floor( 6 * rnd( count));
+			if( t != mel){
+				awnode.port.postMessage( 440 * Math.pow( 2, 2 + t / 12));
+				mel = t;
+				mel_vol = 1;
+			}
+		} else mel_vol *= 0.996;
+		gn_aw.gain.value = 0.02 * mel_vol * vol;
 
 		vol = Math.min( vol + 0.02, 1);
 
@@ -494,8 +523,12 @@ function tic(){
 		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
 		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
 		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
-		b = 1.8 - 0.03 * b;
-		if( b < 1.3) b *= 1.5;
+		if( rnd( Math.floor( count / 40)) < 0.5 && 5 < b && b < 10) b = 0;
+		else if( rnd( Math.floor( count / 40) + 99) < 0.5 && 15 < b && b < 20) b = 0;
+		else{
+			b = 1.8 - 0.03 * b;
+			if( b < 1.3) b *= 1.5;
+		}
 		set_value( gain_boin, b * vol);
 		b = Math.floor( 2 * rnd( Math.floor( count / 40))) / 2;
 		set_value( pbr_boin, 1 - b + b * a);
