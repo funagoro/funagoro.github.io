@@ -191,24 +191,8 @@ function touch_event_hook(){
 
 						n = d0.length;
 						for( i = 0; i < n; i++){
-							let q;
-
-							q = 0.000001 * this.p;
-							//q *= 1 + 0.0001 * q;
-							d0[ i] = 4 * Math.abs( q % 1 - 0.5) - 1 +
-								4 * Math.abs( Math.pow( 2, 4 / 12) * q % 1 - 0.5) - 1 +
-								4 * Math.abs( Math.pow( 2, 7 / 12) * q % 1 - 0.5) - 1;
-
-							q = 0.0000012 * this.p;
-							//q *= 1 + 0.0002 * q;
-							d1[ i] = 4 * Math.abs( q % 1 - 0.5) - 1 +
-								4 * Math.abs( Math.pow( 2, 4 / 12) * q % 1 - 0.5) - 1 +
-								4 * Math.abs( Math.pow( 2, 7 / 12) * q % 1 - 0.5) - 1;
-
-							//this.p = ( this.p + this.s) % 1000000;
+							d0[ i] = d1[ i] = 4 * Math.abs( 0.000001 * this.p % 1 - 0.5) - 1;
 							this.p += this.s;
-
-							//d1[ i] = -d0[ i];
 						}
 
 						return true;
@@ -486,19 +470,18 @@ function tic(){
 			}
 		}
 	} else if( current_state == STATE_WORKING){
-		//★ でたらめなメロディ。
-		if( count % 40 == 0){
-			//t = [ -7, -5, -2][ Math.floor( 3 * rnd( count))];
-			t = 2 * Math.floor( 6 * rnd( count));
-			if( t != mel){
-				awnode.port.postMessage( 440 * Math.pow( 2, 2 + t / 12));
-				mel = t;
-				mel_vol = 1;
-			}
-		} else mel_vol *= 0.996;
-		gn_aw.gain.value = 0.02 * mel_vol * vol;
 
 		vol = Math.min( vol + 0.02, 1);
+
+		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+		//★ でたらめなメロディ。
+
+		if( count % 80 == 0){
+			mel = [ -7, -5, -2, 0, 5, 7][ Math.floor( 6 * rnd( count))];
+			mel_vol = 1;
+		} else mel_vol *= 0.99;
+		awnode.port.postMessage( 440 * Math.pow( 2, 1 + ( mel + 2 * Math.sin( 6.28318 * count / 10)) / 12));
+		gn_aw.gain.value = 0.15 * mel_vol * vol;
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
@@ -524,7 +507,7 @@ function tic(){
 		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
 		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
 		if( rnd( Math.floor( count / 40)) < 0.5 && 5 < b && b < 10) b = 0;
-		else if( rnd( Math.floor( count / 40) + 99) < 0.5 && 15 < b && b < 20) b = 0;
+		else if( rnd( Math.floor( count / 40) + 99) < 0.2 && 12 < b && b < 20) b = 0;
 		else{
 			b = 1.8 - 0.03 * b;
 			if( b < 1.3) b *= 1.5;
