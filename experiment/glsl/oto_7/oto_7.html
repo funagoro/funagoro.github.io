@@ -471,6 +471,7 @@ function tic(){
 		}
 	} else if( current_state == STATE_WORKING){
 
+		//★ 始めのフェードイン。
 		vol = Math.min( vol + 0.02, 1);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
@@ -501,20 +502,27 @@ function tic(){
 		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 8)));
 		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 8) + 1));
 		b = count % 40;
-		a = Math.sin( 3.14159 * ( 50 + b) / 120);
-		t = count % 8 / 8;
+		a = Math.sin( 3.14159 * ( 50 + b) / 120); //★ 山形。
+		t = count % 8 / 8; //★ フォルマント遷移。
 		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
 		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
 		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
-		if( rnd( Math.floor( count / 40)) < 0.5 && 5 < b && b < 10) b = 0;
-		else if( rnd( Math.floor( count / 40) + 99) < 0.2 && 12 < b && b < 20) b = 0;
+
+		t = rnd( Math.floor( count / 40));
+		if( t < 0.5 && 5 < b && b < 10) b = 0; //★ 2 声目の直前を閉塞。
+		else if( rnd( Math.floor( count / 40) + 99) < 0.2 && 12 < b && b < 20) b = 0; //★ 3 声目の直前を閉塞。
 		else{
-			b = 1.8 - 0.03 * b;
-			if( b < 1.3) b *= 1.5;
+			b = 1.8 - 0.03 * b; //★ 語尾の音量を絞る。
+			if( b < 1.3) b *= 1.5; //★ 3・4 声目を強める。
 		}
 		set_value( gain_boin, b * vol);
-		b = Math.floor( 2 * rnd( Math.floor( count / 40))) / 2;
-		set_value( pbr_boin, 1 - b + b * a);
+
+		if( count % 20 < 10 && t < 0.2){
+			//★ 1・3 声目にアクセント。
+			a *= ( 1 + count % 10 / 10 * 0.7 * ( 1 - count % 40 / 40 * 0.5));
+		} else if( t < 0.5) a = 1; //★ 平音。
+		else a = 1 - 0.2 * ( 1 - a); //★ 語尾下がり。
+		set_value( pbr_boin, a);
 	}
 
 	//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
