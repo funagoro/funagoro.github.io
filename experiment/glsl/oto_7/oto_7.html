@@ -491,7 +491,7 @@ function tic(){
 		if( count % 5 == 0){
 			play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
 			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.1);
-			play_audio( ab_hihat, gn_hihat, 0.2);
+			play_audio( ab_hihat, gn_hihat, 0.15);
 		}
 		if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
 		if( count % 40 == 20) play_audio( ab_beam, gn_beam, 0.08);
@@ -517,10 +517,10 @@ function tic(){
 		}
 		set_value( gain_boin, b * vol);
 
-		if( count % 20 < 10 && t < 0.2){
+		/*if( count % 20 < 10 && t < 0.2){
 			//★ 1・3 声目にアクセント。
 			a *= ( 1 + count % 10 / 10 * 0.7 * ( 1 - count % 40 / 40 * 0.5));
-		} else if( t < 0.5) a = 1; //★ 平音。
+		} else */if( t < 0.5) a = 1; //★ 平音。
 		else a = 1 - 0.2 * ( 1 - a); //★ 語尾下がり。
 		set_value( pbr_boin, a);
 	}
