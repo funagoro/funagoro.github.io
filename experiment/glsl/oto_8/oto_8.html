@@ -335,9 +335,7 @@ function init_reverb(){
 	lpf.frequency.value = 3000;
 	lpf.Q.value = 0.2;
 
-	o_ac.oncomplete = function( buf){
-		rev.buffer = buf.renderedBuffer;
-	}
+	o_ac.oncomplete = function( buf){ rev.buffer = buf.renderedBuffer;}
 
 	absn.connect( hpf);
 	hpf.connect( lpf);
