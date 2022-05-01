@@ -1,7 +1,9 @@
 
 //★ skeleton_touch_2.js
 
-//★ 前バージョンとの違い。can_ios_audio_start 追加。
+//★ 前バージョンとの違い。
+//★ can_ios_audio_start 追加。
+//★ touchstart や mousedown 等を消して、pointerdown 等だけにした。
 
 //★ 必要なグローバル変数。
 //★ REFW, REFH
@@ -54,28 +56,11 @@ constructor( c){
 
 	f = false;
 
-	if( window.PointerEvent){
-		//★Windows 用。Chrome 55 以降も。
-		c.addEventListener( "pointerover", eve_touch_in.bind( this), f);
-		c.addEventListener( "pointerdown", eve_touch_start.bind( this), f);
-		c.addEventListener( "pointermove", eve_touch_move.bind( this), f);
-		c.addEventListener( "pointerup", eve_touch_end.bind( this), f);
-		c.addEventListener( "pointerleave", eve_touch_out.bind( this), f);
-	} else{
-		//★Windows 以外用
-		c.addEventListener( "touchstart", eve_touch_start.bind( this), f);
-		c.addEventListener( "touchmove", eve_touch_move.bind( this), f);
-		c.addEventListener( "touchend", eve_touch_end.bind( this), f);
-		c.addEventListener( "touchcancel", eve_touch_end.bind( this), f);
-
-		//c.addEventListener( "mouseover", eve_touch_in.bind( this), f);
-		c.addEventListener( "mouseenter", eve_touch_in.bind( this), f);
-		c.addEventListener( "mousedown", eve_touch_start.bind( this), f);
-		c.addEventListener( "mousemove", eve_touch_move.bind( this), f);
-		c.addEventListener( "mouseup", eve_touch_end.bind( this), f);
-		//c.addEventListener( "mouseout", eve_touch_out.bind( this), f);
-		c.addEventListener( "mouseleave", eve_touch_out.bind( this), f);
-	}
+	c.addEventListener( "pointerover", eve_touch_in.bind( this), f);
+	c.addEventListener( "pointerdown", eve_touch_start.bind( this), f);
+	c.addEventListener( "pointermove", eve_touch_move.bind( this), f);
+	c.addEventListener( "pointerup", eve_touch_end.bind( this), f);
+	c.addEventListener( "pointerleave", eve_touch_out.bind( this), f);
 
 	if( CAN_PINCH){
 		let that = this;
@@ -114,47 +99,7 @@ constructor( c){
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 	function eve_touch_in( e){
-		let i;
 		let x, y;
-		let t;
-
-		//e.preventDefault();
-		//e.stopPropagation();
-
-		const r = e.target.getBoundingClientRect();
-		x = r.left;
-		y = r.top;
-
-		if( window.PointerEvent){
-			//★Windows 用。Chrome も。
-			x = e.clientX - x;
-			y = e.clientY - y;
-			if( e.pointerType == "mouse"){
-				this.my_touch_in.bind( this)( this.MOUSEID, x, y);
-				if( CAN_PINCH && e.shiftKey){
-					this.my_touch_in.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
-				}
-			} else this.my_touch_in.bind( this)( e.pointerId, x, y);
-		} else if( e.changedTouches){
-			for( i = 0; i < e.changedTouches.length; i++){
-				t = e.changedTouches[ i];
-				this.my_touch_in.bind( this)( t.identifier, t.clientX - x, t.clientY - y);
-			}
-		} else{
-			x = e.clientX - x;
-			y = e.clientY - y;
-			this.my_touch_in.bind( this)( this.MOUSEID, x, y);
-			if( CAN_PINCH && e.shiftKey){
-				this.my_touch_in.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
-			}
-		}
-		//return false;
-	}
-
-	function eve_touch_start( e){
-		let i, n;
-		let x, y;
-		let t;
 
 		e.preventDefault();
 		//e.stopPropagation();
@@ -162,47 +107,49 @@ constructor( c){
 		const r = e.target.getBoundingClientRect();
 		x = r.left;
 		y = r.top;
-		n = Date.now();
 
-		if( window.PointerEvent){
-			//★Windows 用。Chrome も。
-			x = e.clientX - x;
-			y = e.clientY - y;
-			if( e.pointerType == "mouse"){
-				this.my_touch_start.bind( this)( this.MOUSEID, x, y);
-				if( CAN_PINCH && e.shiftKey){
-					this.my_touch_start.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
-				}
-			} else this.my_touch_start.bind( this)( e.pointerId, x, y);
-		} else if( e.changedTouches){
-			//★タッチ
-			if( this.latest_mouse + 500 < n){
-				this.latest_touch = n;
-				for( i = 0; i < e.changedTouches.length; i++){
-					t = e.changedTouches[ i];
-					this.my_touch_start.bind( this)( t.identifier, t.clientX - x, t.clientY - y);
-				}
+		x = e.clientX - x;
+		y = e.clientY - y;
+		if( e.pointerType == "mouse"){
+			this.my_touch_in.bind( this)( this.MOUSEID, x, y);
+			if( CAN_PINCH && e.shiftKey){
+				this.my_touch_in.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
 			}
-		} else{
-			//★マウス
-			if( this.latest_touch + 500 < n){
-				this.latest_mouse = n;
-				x = e.clientX - x;
-				y = e.clientY - y;
-				this.my_touch_start.bind( this)( this.MOUSEID, x, y);
-				if( CAN_PINCH && e.shiftKey){
-					this.my_touch_start.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
-				}
+		} else this.my_touch_in.bind( this)( e.pointerId, x, y);
+
+		//return false;
+	}
+
+	function eve_touch_start( e){
+		let x, y;
+
+		e.preventDefault();
+		//e.stopPropagation();
+
+		//★ 複数同時タッチの touchstart で生成した AudioContext は音が出ない。
+		//★ ここに来た時点では、複数同時タッチであることを判定する手段がないし、
+		//★ 生成した AudioContext から音が出ているか判定する手段もないので、
+		//★ 確実に音を出すためには、やはり、touchstart ではなく touchend で AudioContext を生成するしかない。
+		//if( typeof touch_event_hook == "function") touch_event_hook( e);
+
+		const r = e.target.getBoundingClientRect();
+		x = r.left;
+		y = r.top;
+
+		x = e.clientX - x;
+		y = e.clientY - y;
+		if( e.pointerType == "mouse"){
+			this.my_touch_start.bind( this)( this.MOUSEID, x, y);
+			if( CAN_PINCH && e.shiftKey){
+				this.my_touch_start.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
 			}
-		}
+		} else this.my_touch_start.bind( this)( e.pointerId, x, y);
 
 		//return false;
 	}
 
 	function eve_touch_move( e){
-		let i;
 		let x, y;
-		let t;
 
 		e.preventDefault();
 		//e.stopPropagation();
@@ -211,29 +158,15 @@ constructor( c){
 		x = r.left;
 		y = r.top;
 
-		if( window.PointerEvent){
-			//★Windows 用。Chrome も。
-			x = e.clientX - x;
-			y = e.clientY - y;
-			if( e.pointerType == "mouse"){
-				this.my_touch_moved.bind( this)( this.MOUSEID, x, y);
-				if( CAN_PINCH && e.shiftKey){
-				this.my_touch_moved.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
-				}
-			} else this.my_touch_moved.bind( this)( e.pointerId, x, y);
-		} else if( e.changedTouches){
-			for( i = 0; i < e.changedTouches.length; i++){
-				t = e.changedTouches[ i];
-				this.my_touch_moved.bind( this)( t.identifier, t.clientX - x, t.clientY - y);
-			}
-		} else{
-			x = e.clientX - x;
-			y = e.clientY - y;
+		x = e.clientX - x;
+		y = e.clientY - y;
+		if( e.pointerType == "mouse"){
 			this.my_touch_moved.bind( this)( this.MOUSEID, x, y);
 			if( CAN_PINCH && e.shiftKey){
-				this.my_touch_moved.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
+			this.my_touch_moved.bind( this)( this.PINCHMOUSEID, this.mag * REFW - x, this.mag * REFH - y);
 			}
-		}
+		} else this.my_touch_moved.bind( this)( e.pointerId, x, y);
+
 		//return false;
 	}
 
@@ -241,21 +174,23 @@ constructor( c){
 		let i;
 		let t;
 
-		//e.preventDefault();
+		e.preventDefault();
 		//e.stopPropagation();
 
 		//★ iOS でダブルタップして指を離さなかった時、
 		//★ 指で隠れている部分を見る窓が出て、
 		//★ そのまま canvas の中にドラッグして指を離した場合、
 		//★ this.num が 0 でここに来る。その場合、再生開始できない。
-		if( this.num != 1) this.can_ios_audio_start = false;
-		if( typeof touch_event_hook == "function") touch_event_hook( e);
+		if( typeof touch_event_hook == "function"){
+			if( this.num != 1) this.can_ios_audio_start = false;
+			touch_event_hook( e);
+		}
 
 		if( e.touches && e.touches.length == 0){
-			//★不正なトラッキングが残っていたら消す。
-			//(タッチデバイスなのに、MOUSEID が残ってしまう場合があるから。)
-			//(canvas 外でダブルタップして、ルーペ機能が出た時に？
-			//window.touches が undefined になって、タッチデバイスなのに MOUSEID が残る？)
+			//★ 不正なトラッキングが残っていたら消す。
+			// (タッチデバイスなのに、MOUSEID が残ってしまう場合があるから。)
+			// (canvas 外でダブルタップして、ルーペ機能が出た時に？
+			// window.touches が undefined になって、タッチデバイスなのに MOUSEID が残る？)
 			for( i = 0; i < e.changedTouches.length; i++){
 				t = e.changedTouches[ i];
 				this.my_touch_ended.bind( this)( t.identifier);
@@ -264,46 +199,24 @@ constructor( c){
 			return;//★抜ける。
 		}
 
-		if( window.PointerEvent){
-			//★Windows 用。Chrome も。
-			if( e.pointerType == "mouse"){
-				this.my_touch_ended.bind( this)( this.MOUSEID);
-				if( CAN_PINCH && e.shiftKey) this.my_touch_ended( this.PINCHMOUSEID);
-			} else this.my_touch_ended.bind( this)( e.pointerId);
-		} else if( e.changedTouches){
-			for( i = 0; i < e.changedTouches.length; i++){
-				t = e.changedTouches[ i];
-				this.my_touch_ended.bind( this)( t.identifier);
-			}
-		} else{
+		if( e.pointerType == "mouse"){
 			this.my_touch_ended.bind( this)( this.MOUSEID);
-			if( CAN_PINCH && e.shiftKey) this.my_touch_ended.bind( this)( this.PINCHMOUSEID);
-		}
+			if( CAN_PINCH && e.shiftKey) this.my_touch_ended( this.PINCHMOUSEID);
+		} else this.my_touch_ended.bind( this)( e.pointerId);
+
 		//return false;
 	}
 
 	function eve_touch_out( e){
-		let i;
-		let t;
 
-		//e.preventDefault();
+		e.preventDefault();
 		//e.stopPropagation();
 
-		if( window.PointerEvent){
-			//★Windows 用。Chrome も。
-			if( e.pointerType == "mouse"){
-				this.my_touch_out.bind( this)( this.MOUSEID);
-				if( CAN_PINCH && e.shiftKey) this.my_touch_out.bind( this)( this.PINCHMOUSEID);
-			} else this.my_touch_out.bind( this)( e.pointerId);
-		} else if( e.changedTouches){
-			for( i = 0; i < e.changedTouches.length; i++){
-				t = e.changedTouches[ i];
-				this.my_touch_out.bind( this)( t.identifier);
-			}
-		} else{
+		if( e.pointerType == "mouse"){
 			this.my_touch_out.bind( this)( this.MOUSEID);
 			if( CAN_PINCH && e.shiftKey) this.my_touch_out.bind( this)( this.PINCHMOUSEID);
-		}
+		} else this.my_touch_out.bind( this)( e.pointerId);
+
 		//return false;
 	}
 
