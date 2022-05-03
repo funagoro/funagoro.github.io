@@ -541,7 +541,7 @@ function tic(){
 	requestAnimationFrame( tic);
 
 	if( 0 < skip){ skip--; return;}
-	if( 640 < count % 800) skip = 2;
+	if( 640 < count % 800) skip = 1;
 
 	skt.pre();
 
