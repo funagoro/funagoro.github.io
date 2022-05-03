@@ -147,7 +147,7 @@ const VOW = [
 ];
 
 let bqf_1, bqf_2, bqf_3;
-let gain_boin, pbr_boin;
+let gn_boin, pbr_boin;
 
 let ab_kick, gn_kick;
 let ab_bass, gn_bass;
@@ -230,9 +230,9 @@ function init_ac(){
 
 			s = document.visibilityState;
 			if( s == "hidden"){
-				if( ac.state != "closed"){ //★ すでに closed の時に、close() してはいけない。
-					//ac.suspend();
-					ac.close(); //★ ac.suspend() ではなく、ac.close()
+				if( ac.state != "closed"){ //★ すでに closed の時には、close() してはいけない。
+					//ac.suspend(); //★ ac.suspend() ではなく、ac.close()
+					ac.close();
 
 					o_tap.visible = true;
 					current_state = next_state = STATE_MUTED;
@@ -247,7 +247,7 @@ function init_ac(){
 	}
 }
 
-//★ skeleton_touch.js のための設定。
+//★ skeleton_touch_2.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
 	if( skt.can_ios_audio_start){
@@ -274,7 +274,7 @@ function set_value( p, v){
 function play_audio( b, g, v){
 	let n;
 
-	g.gain.value = v * vol;
+	set_value( g.gain, v * vol);
 	n = ac.createBufferSource();
 	n.buffer = b;
 	n.connect( g);
@@ -304,7 +304,7 @@ function init_reverb(){
 	all.connect( gn_dry);
 
 	r = ac.sampleRate;
-	n = 2 * r; //★ 残響の長さ、2 秒。
+	n = 2 * r; //★ 残響の長さ、2 秒間。
 
 	o_ac = new window.OfflineAudioContext( 2, n, r);
 
@@ -352,7 +352,7 @@ function init_vocal(){
 	let t;
 	let d;
 	let ab;
-	let absn, gn;
+	let absn;
 
 	bqf_1 = ac.createBiquadFilter();
 	bqf_1.type = "bandpass";
@@ -373,6 +373,7 @@ function init_vocal(){
 	ab = ac.createBuffer( 1, n, ac.sampleRate); //★ チャンネル数、サンプル数、レート。
 	d = ab.getChannelData( 0);
 	for( i = 0; i < n; i++){
+		//★ 声帯の波形。
 		const u = 0.01;
 
 		//t = 100 * i / n % 1 * 1.2;
@@ -391,18 +392,17 @@ function init_vocal(){
 		d[ i] = t;
 	}
 
-	gn = ac.createGain();
-	gn.connect( bqf_1);
-	gn.connect( bqf_2);
-	gn.connect( bqf_3);
+	gn_boin = ac.createGain();
+	gn_boin.connect( bqf_1);
+	gn_boin.connect( bqf_2);
+	gn_boin.connect( bqf_3);
 
-	gain_boin = gn.gain;
-	set_value( gain_boin, 0);
+	set_value( gn_boin.gain, 0);
 
 	absn = ac.createBufferSource();
 	absn.buffer = ab;
 	absn.loop = true;
-	absn.connect( gn);
+	absn.connect( gn_boin);
 	absn.start();
 
 	pbr_boin = absn.playbackRate;
@@ -578,7 +578,7 @@ function tic(){
 		awnode.port.postMessage( 440 * Math.pow( 2, 1 + mel / 12));
 		a = count % 20;
 		if( a < 10) a = 0; else a = 0.3 * Math.max( 1 - a % 5 / 5, 0);
-		gn_aw.gain.value = a * vol;
+		set_value( gn_aw.gain, a * vol);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
@@ -611,18 +611,18 @@ function tic(){
 		set_value( pbr_boin, 3.5 * a);
 
 		//★ 閉塞音。
-		if( 5 < b && b < 10 && rnd( Math.floor( count / 40)) < 0.5) b = 0;
+		if( 8 < b && b < 10 && rnd( Math.floor( count / 40)) < 0.5) b = 0;
 		else if( 15 < b && b < 20 && rnd( Math.floor( count / 40) + 10) < 0.4) b = 0;
-		else if( 25 < b && b < 30 && rnd( Math.floor( count / 40) + 20) < 0.4) b = 0;
+		else if( 28 < b && b < 30 && rnd( Math.floor( count / 40) + 20) < 0.4) b = 0;
 		else if( 35 < b && b < 40 && rnd( Math.floor( count / 40) + 30) < 0.3) b = 0;
-		else if( 45 < b && b < 50 && rnd( Math.floor( count / 40) + 40) < 0.3) b = 0;
-		else b = 1.8 - b % 20 * 0.03;
-		set_value( gain_boin, 0.5 * b * vol);
+		else if( 48 < b && b < 50 && rnd( Math.floor( count / 40) + 40) < 0.3) b = 0;
+		else b = 1 - b % 20 * 0.015; //★ 閉塞しない。
+		set_value( gn_boin.gain, b * vol);
 
 		//★ リバーブの強さ。
 		t = 0.5 + 0.5 * Math.sin( 3.14159 * count / 160);
-		gn_dry.gain.value = 0.2 + 0.8 * t;
-		gn_rev.gain.value = 2 * ( 1 - t);
+		set_value( gn_dry.gain, 0.2 + 0.8 * t);
+		set_value( gn_rev.gain, 2 * ( 1 - t));
 	}
 
 	//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
