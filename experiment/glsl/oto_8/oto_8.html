@@ -530,7 +530,7 @@ function init_drums(){
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-let count = 0;
+let count = 0, skip = 0;
 
 tic();
 
@@ -539,6 +539,9 @@ function tic(){
 	let a, b, t;
 
 	requestAnimationFrame( tic);
+
+	if( 0 < skip){ skip--; return;}
+	if( 640 < count % 800) skip = 2;
 
 	skt.pre();
 
