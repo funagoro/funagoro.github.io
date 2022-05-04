@@ -171,22 +171,22 @@ const plane = new THREE.Mesh(
 
 				v = gl_FragCoord.xy * s - 0.5;
 				v *= 1.0 + 0.2 * abs( cos( 3.14159 * 3.0 * t / 60.0));
-				v *= 1.0 + 2.0 * smoothstep( -0.1, 0.1, sin( 0.5 * 3.14159 * ( t + 10.0) / 80.0));
+				v *= 0.5 + 2.0 * smoothstep( -0.1, 0.1, sin( 0.5 * 3.14159 * ( t + 10.0) / 80.0));
 				v *= rot( 0.01 * t);
-				z = -0.03 * t;
+				z = -0.05 * t;
 
 				c = vec3( 0);
 				j = floor( z);
-				for( i = 0.0; i < 7.0; i++, j--){
+				for( i = 0.0; i < 9.0; i++, j--){
 					d = fract( z) + i;
-					w = 0.3 * v * ( 2.0 + d);
-					a = 2.0 * max( sin( rnd2m( w + rnd( j) * 500.0) * 20.0) + 0.5, 0.0) *
-						( 0.5 + max( sin( rnd2m( 0.5 * w + rnd( 1.2 * j) * 500.0) * 20.0), 0.0));
-					c += smoothstep( 0.0, 0.6, d) *
-						( 0.4 + 0.4 * cos( vec3( 0, 2, 4) + 5.0 * j)) *
-						a * exp( -0.007 * ( 50.0 * dot( w, w) + 10.0 * d * d));
+					w = 0.3 * v * ( 1.0 + d);
+					a = 1.0 * max( sin( rnd2m( w + rnd( j) * 300.0) * 15.0) + ( 0.07 * i - 0.8), 0.0) *
+						( 1.0 + 3.0 * max( sin( rnd2m( w + rnd( 2.0 * j) * 30.0) * 15.0), 0.0));
+					c += ( 0.2 + 0.8 * smoothstep( 0.0, 1.0, d)) *
+						( 0.6 + 0.4 * cos( vec3( 0, 2, 4) + 0.6 * j)) *
+						a * exp( -0.007 * ( 10.0 * dot( w, w) + 3.0 * d * d));
 				}
-				c = pow( c, vec3( 0.7));
+				//c = pow( c, vec3( 0.5));
 				gl_FragColor = vec4( c, 1);
 			}
 		`
@@ -685,7 +685,7 @@ a=0;
 		if( a == 0 || a == 20 || a == 40 || a == 50 || a == 80 || a == 90 || a == 100 || a == 160 || a == 170 || a == 200 || a == 210 || a == 240 || a == 250 || a == 260) play_audio( ab_kick, gn_kick, 0.7);
 		if( count % 5 == 0){
 			play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
-			//play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.2);
+			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.1);
 			play_audio( ab_hihat, gn_hihat, 0.2);
 		}
 		if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
