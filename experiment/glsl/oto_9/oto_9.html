@@ -641,8 +641,8 @@ function tic(){
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ でたらめなボーカル。
 
-		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 10)));
-		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 10) + 1));
+		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 20)));
+		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 20) + 1));
 		a = 1.1;
 		t = count % 10 / 10;
 		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
