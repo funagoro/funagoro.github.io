@@ -529,7 +529,7 @@ function init_drums(){
 					Math.exp( -80 * t) +
 					Math.exp( -400 * t)
 				)
-			)) + Math.sin( 6.28318 * ( 150 - 60 * t) * t)
+			)) + Math.sin( 6.28318 * ( 155 - 60 * t) * t)
 		, 0);
 	}
 	gn_kick = ac.createGain();
@@ -591,14 +591,20 @@ function init_drums(){
 	d1 = ab_metal.getChannelData( 1);
 	for( i = 0; i < n; i++){
 		t = i / r;
-		a = Math.exp( -30 * t);
-		b = noise( 100, t, 0.8);
-		d0[ i] = a * b;
-		b = noise( 200, t, 0.8);
-		d1[ i] = a * b;
+
+		a = 2 * Math.exp( -100 * t);
+		b = 2.1 * 18000 * t;
+		d0[ i] = a * ( Math.sin( t) + Math.sin( 2.2 * t));
+		d1[ i] = a * ( Math.sin( 1.3 * t) + Math.sin( 3.1 * t));
+
+		a = 0.5 * Math.exp( -20 * t);
+		b = 1 * 18000 * t;
+		d0[ i] += a * ( Math.sin( b) + Math.sin( 2.2 * b));
+		d1[ i] += a * ( Math.sin( 1.3 * b) + Math.sin( 3.1 * b));
 	}
 	gn_metal = ac.createGain();
 	gn_metal.connect( all);
+	//pbr_metal = ab_metal.playbackRate;
 
 	//★ beam。
 	n = Math.floor( 0.5 * 60 / BPM * r);
@@ -688,7 +694,19 @@ a=0;
 			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.15);
 			play_audio( ab_hihat, gn_hihat, 0.2);
 		}
-		if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
+		//if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
+if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor( count / 20)) < 0.2)){
+	//set_value( ab_metal.playbackRate, 1 + 1 * Math.random());
+	//play_audio( ab_metal, gn_metal, 0.4);
+	let n;
+
+	set_value( gn_metal.gain, 0.3 * vol);
+	n = ac.createBufferSource();
+	n.buffer = ab_metal;
+	set_value( n.playbackRate, 1 + 0.03 * Math.random());
+	n.connect( gn_metal);
+	n.start();
+}
 		if( count % 40 == 20) play_audio( ab_beam, gn_beam, 0.08);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
