@@ -128,7 +128,7 @@ const plane = new THREE.Mesh(
 		fragmentShader : `
 			uniform float s, t;
 
-			mat3 rotate3D( float angle, vec3 axis){
+			mat3 rot3( float angle, vec3 axis){
 				vec3 a = normalize( axis);
 				float s = sin( angle);
 				float c = cos( angle);
@@ -155,8 +155,8 @@ const plane = new THREE.Mesh(
 
 				for( i = 0.0; i < 50.0; i++){
 					c = ( 5.0 - 1.0 * abs( sin( 3.14159 * t / 20.0))) *
-						( 2.0 * fract( sin( vec3( 1, 2, 3) * i) * 5.0) - 1.0) *
-						rotate3D( 0.005 * t, sin( 0.005 * t * vec3( 7, 5, 3)));
+						sin( vec3( 13, 15, 17) * i + 0.01 * t) *
+						rot3( 0.005 * t, sin( 0.005 * t * vec3( 7, 5, 3)));
 					c.z += 7.0;
 					c = cross( c, v);
 					o.rgb += 0.08 * ( 0.6 + 0.5 * cos( vec3( 0, 2, 4) + 6.0 * i / 50.0)) / dot( c, c);
@@ -653,10 +653,10 @@ function tic(){
 		//★ 音程。
 		set_value( pbr_boin, Math.pow( 2, 1 + [ -7, -5, -2, 0, 2, 5, 7][ mel] / 12));
 
-		//★ 閉塞音。
-		if( 12 < b && b < 20 && rnd( Math.floor( count / 40)) < 0.5) a = 0;
-		else if( 32 < b && b < 40 && rnd( Math.floor( count / 40) + 99) < 0.3) a = 0;
-		else{ a = b / 80; a = 1.1 - a % 20 * 0.01 - 0.8 * a * a;} //★ 閉塞しない。
+		//★ 音量。
+		if( 12 < b && b < 20 && rnd( Math.floor( count / 40)) < 0.5) a = 0; //★ 第 2 声の前に閉塞音。
+		else if( 32 < b && b < 40 && rnd( Math.floor( count / 40) + 99) < 0.3) a = 0; //★ 第 3 声の前に閉塞音。
+		else{ a = b / 80; a = 1.1 - b % 20 * 0.015 - 0.8 * a * a;}
 		set_value( gn_boin.gain, a * vol);
 	}
 
