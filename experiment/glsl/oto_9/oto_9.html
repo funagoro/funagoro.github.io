@@ -236,7 +236,9 @@ function init_ac(){
 
 				n = d0.length;
 				for( i = 0; i < n; i++){
-					d0[ i] = d1[ i] = 4 * Math.abs( 0.000001 * this.p % 1 - 0.5) - 1;
+					d0[ i] = d1[ i] = 4 * Math.abs( 0.000001 * this.p % 1 - 0.5) - 1 +
+						4 * Math.abs( 0.0000008409 * this.p % 1 - 0.5) - 1 +
+						4 * Math.abs( 0.00000066742 * this.p % 1 - 0.5) - 1;
 					this.p += this.s;
 				}
 
@@ -619,11 +621,14 @@ function tic(){
 
 		b = count % 80;
 		if( b == 0 || b == 20 || b == 40){
-			mel = Math.max( Math.min( Math.floor( mel + 0.5 + 1.7 * ( 2 * rnd( count) - 1)), 6), 0);
+			a = Math.floor( 1.2 * ( 2 * rnd( count) - 1));
+			if( 0 <= a) a++;
+			mel += a;
+			if( mel < 0) mel = 1; else if( 6 < mel) mel = 5;
 			awnode.port.postMessage( 100 * Math.pow( 2, 3 + [ -7, -5, -2, 0, 2, 5, 7][ mel] / 12));
 		}
 		a = count % 20;
-		if( a < 10) a = 0; else a = 0.2 * Math.max( 1 - a % 5 / 5, 0);
+		if( a < 10) a = 0; else a = 0.15 * Math.max( 1 - a % 5 / 5, 0);
 		set_value( gn_aw.gain, a * vol);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
