@@ -170,7 +170,7 @@ const plane = new THREE.Mesh(
 				vec3 c;
 
 				v = gl_FragCoord.xy * s - 0.5;
-				v *= 1.0 + 0.1 * abs( cos( 3.14159 * 3.0 * t / 60.0));
+				v *= 1.0 + 0.1 * abs( sin( 3.14159 * 3.0 * t / 60.0));
 				v *= 1.0 + 4.0 * smoothstep( -0.1, 0.1, sin( 0.5 * 3.14159 * ( t + 10.0) / 80.0));
 				v *= rot( 0.01 * t);
 				z = -0.005 * t;
