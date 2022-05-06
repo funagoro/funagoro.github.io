@@ -661,7 +661,7 @@ function tic(){
 		//★ 音量。
 		if( 12 < b && b < 20 && rnd( Math.floor( count / 40)) < 0.5) a = 0; //★ 第 2 声の前に閉塞音。
 		else if( 32 < b && b < 40 && rnd( Math.floor( count / 40) + 99) < 0.3) a = 0; //★ 第 3 声の前に閉塞音。
-		else{ a = b / 80; a = 1.2 - b % 20 * 0.015 - 0.8 * a * a;}
+		else{ a = b / 80; a = 1.4 - b % 20 * 0.015 - 0.8 * a * a;}
 		set_value( gn_boin.gain, a * vol);
 	}
 
