@@ -240,15 +240,20 @@ function init_ac(){
 
 				this.p = 0;
 				this.s = 0;
+
+				this.d = new Float32Array( 1000);
+				for( let i = 0; i < 1000; i++) this.d[ i] = Math.sin( 6.28318 * i / 1000);
+
 				that = this;
 
 				this.port.onmessage = function( e){
 					that.p = 0;
-					that.s = Math.floor( 1000000 * parseFloat( e.data) / sampleRate);
+					//that.s = Math.floor( 1000000 * parseFloat( e.data) / sampleRate);
+					that.s = parseFloat( e.data) / sampleRate;
 				}
 
 				//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
-				this.port.postMessage( "echo!");
+				this.port.postMessage( "saint!");
 			}
 
 			process( inputs, outputs, parameters){
@@ -261,8 +266,9 @@ function init_ac(){
 
 				n = d0.length;
 				for( i = 0; i < n; i++){
-					d0[ i] = d1[ i] = 4 * Math.abs( 0.000001 * this.p % 1 - 0.5) - 1;
-					this.p += this.s;
+					d0[ i] = d1[ i] = this.d[ Math.floor( this.p % 1 * 1000)]
+						+ Math.random();
+					this.p = ( this.p + this.s) % 1000;
 				}
 
 				return true;
@@ -515,7 +521,7 @@ function init_drums(){
 		return 2 * rnd( Math.floor( 256 * a * s)) - 1;
 	}
 
-	//★ kick。(団扇太鼓。)
+	//★ kick。(大きい団扇太鼓。)
 	n = Math.floor( 60 / BPM * r);
 	ab_kick = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
 	d0 = ab_kick.getChannelData( 0);
@@ -535,7 +541,7 @@ function init_drums(){
 	gn_kick = ac.createGain();
 	gn_kick.connect( all);
 
-	//★ bass。
+	//★ bass。(小さい団扇太鼓。)
 	n = Math.floor( 60 / BPM * r);
 	ab_bass = ac.createBuffer( 2, n, r); //★ チャンネル数、サンプル数、レート。
 	d0 = ab_bass.getChannelData( 0);
@@ -555,7 +561,7 @@ function init_drums(){
 	gn_bass = ac.createGain();
 	gn_bass.connect( all);
 
-	//★ scratch。
+	//★ scratch。(喧騒。)
 	ab_scratch = new Array( 20);
 	for( i = 0; i < 20; i++){
 		n = Math.floor( 0.25 * 60 / BPM * r);
@@ -575,14 +581,14 @@ function init_drums(){
 	gn_scratch = ac.createGain();
 	gn_scratch.connect( all);
 
-	//★ hihat。
+	//★ hihat。(よその囃子。)
 	n = Math.floor( 0.25 * 60 / BPM * r);
 	ab_hihat = ac.createBuffer( 2, n, r);
 	d0 = ab_hihat.getChannelData( 0);
 	d1 = ab_hihat.getChannelData( 1);
 	for( i = 0; i < n; i++){
 		t = i / r;
-		a = Math.exp( -60 * t); //★ -30 長い 〜 -200 短い。
+		a = Math.exp( -30 * t); //★ -30 長い 〜 -200 短い。
 		d0[ i] = d1[ i] = a * noise( 20, t, 3);
 	}
 	gn_hihat = ac.createGain();
@@ -690,14 +696,18 @@ function tic(){
 		//★ でたらめなメロディ。
 
 		b = count % 80;
-		if( b == 0 || b == 20 || b == 40){
-			mel = Math.max( Math.min( Math.floor( mel + 0.5 + 1.7 * ( 2 * rnd( count) - 1)), 6), 0);
-			awnode.port.postMessage( 100 * Math.pow( 2, 3 + [ -7, -5, -2, 0, 2, 5, 7][ mel] / 12));
+		if( b == 0 || b == 20 || b == 30 || b == 40){
+			//mel = Math.max( Math.min( Math.floor( mel + 0.5 + 1.7 * ( 2 * rnd( count) - 1)), 6), 0);
+			awnode.port.postMessage( 100 * Math.pow( 2, 4 + ( 7 + Math.floor( b / 20) % 2 * 3) / 12));
+			mel = 0;
 		}
-		a = count % 20;
-		if( a < 10) a = 0; else a = 0.2 * Math.max( 1 - a % 5 / 5, 0);
-a=0;
-		set_value( gn_aw.gain, a * vol);
+		//a = count % 20;
+		//a = 0.5 * Math.max( 1 - count % 20 / 20, 0);
+
+		if( mel < 4) a = mel / 4; else a = 1 - 0.003 * ( mel - 4);
+		set_value( gn_aw.gain, 0.1 * a * vol);
+		//mel *= 0.95;
+		mel++;
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
@@ -714,8 +724,8 @@ a=0;
 
 		if( count % 5 == 0){
 			//play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
-			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.2);
-			play_audio( ab_hihat, gn_hihat, 0.2);
+			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.15);
+			play_audio( ab_hihat, gn_hihat, 0.15);
 		}
 		//if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
 if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor( count / 20)) < 0.2)){
@@ -733,35 +743,21 @@ if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor
 		//if( count % 40 == 20) play_audio( ab_beam, gn_beam, 0.08);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
-		//★ でたらめなボーカル。
+		//★ 掛け声。
 
-		i = 3 * Math.floor( 6 * rnd( Math.floor( count / 20)));
-		j = 3 * Math.floor( 6 * rnd( Math.floor( count / 20) + 1));
-t=count%20;
-if(t<10){i=3*4;j=0;t=t/10;}
-else{i=0;j=3*2;;t=(t-10)/10;}
+		if( count % 20 < 10){ i = 3 * 4; j = 0;} //★ オr。
+		else{ i = 0; j = 3 * 2;} //★ rエ。
+		t = count % 10 / 10;
 
-		//t = count % 20 / 20;
-		//t *= t;
-//t=1-t;
-//t=1-t*t*t;
 		a = 1.1;
 		set_value( bqf_1.frequency, a * ( ( 1 - t) * VOW[ i] + t * VOW[ j]));
 		set_value( bqf_2.frequency, a * ( ( 1 - t) * VOW[ i + 1] + t * VOW[ j + 1]));
 		set_value( bqf_3.frequency, a * ( ( 1 - t) * VOW[ i + 2] + t * VOW[ j + 2]));
 
 		//★ 音程。
-		//set_value( pbr_boin, Math.pow( 2, 1 + [ -7, -5, -2, 0, 2, 5, 7][ mel] / 12));
-t=count%20;
-//if(t<10)a=3;else a=2;
-a=3.5+0.5*Math.sin(3.14159*t/13);
-set_value( pbr_boin, a);
+		set_value( pbr_boin, 3.5 + 0.5 * Math.sin( count % 20 / 13 * 3.14159));
 
 		//★ 閉塞音。
-		//if( 12 < b && b < 20 && rnd( Math.floor( count / 40)) < 0.5) a = 0;
-		//else if( 32 < b && b < 40 && rnd( Math.floor( count / 40) + 99) < 0.3) a = 0;
-		//else{ a = b / 80; a = 1.1 - a % 20 * 0.01 - 0.8 * a * a;} //★ 閉塞しない。
-//a=0;
 		a = count % 160;
 		if( a < 100 + 20 * Math.floor( 2 * rnd( Math.floor( count / 160)))) a = 0;
 		//else if( a < 115) a = 1.1;
