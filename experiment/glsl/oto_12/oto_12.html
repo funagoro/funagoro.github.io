@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="Perry Cook's slide flute AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -41,7 +41,7 @@
 	touch-action : none;
 "></canvas><br>
 <span id="span_1">- - - - -</span><br>
-<span class="title">"oto 12" 実験中。</span><br>
+<span class="title">"oto 12"</span><br>
 &copy;2022 Maeda Mameo<br>
 
 
@@ -64,11 +64,6 @@ let o;
 
 const STATE_DEFAULT = 0, STATE_INIT = 1, STATE_WORKING = 2, STATE_MUTED = 3;
 let current_state = STATE_DEFAULT, next_state = STATE_DEFAULT;
-
-function rnd( a){
-	let b = Math.sin( 12.9898 * a) * 43758.5453;
-	return b - Math.floor( b);
-}
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -150,12 +145,10 @@ const plane = new THREE.Mesh(
 				if( 0.0 <= a && a < 1.0){
 					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
 					if( 0.0 <= b && b < 1.0){
-						//b = floor( b * b * 1024.0);
 						b = 8.0 * floor( b * 128.0);
-						//b = 16.0 * floor( b * 64.0);
 						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
 						b = 0.3 * ( d.r + d.g + d.b + d.a);
-						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.4 * a);
+						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.3 * a);
 						else c = vec3( 0.9);
 					}
 				}
@@ -183,14 +176,14 @@ function init_ac(){
 
 	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
 
-	m = make_filter( "highshelf", 5000, -20); m.connect( n); n = m;
+	m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
 	m = make_filter( "peaking", 1200, 5); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
 
 	gn_aw = ac.createGain();
 	gn_aw.connect( n);
 
-	perry_cook();
+	perry_cook_flute();
 
 	function make_filter( t, f, g){
 		const bqf = ac.createBiquadFilter();
@@ -200,7 +193,7 @@ function init_ac(){
 		return bqf;
 	}
 
-	function perry_cook(){
+	function perry_cook_flute(){
 		ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
 
 			'use strict';
@@ -210,37 +203,42 @@ function init_ac(){
 
 					super();
 
-					this.f = 440;
+					this.spkf = this.f = 440;
 					this.t = 10;
-					this.db = new Float32Array( Math.floor( sampleRate / 100)); //★ 最低周波数。
+
+					this.db = new Float32Array( Math.floor( sampleRate / 100)); //★ 対応可能な最低周波数。
 					this.pb = 0;
 					this.de = new Float32Array( Math.floor( 0.5 * sampleRate / 100));
 					this.pe = 0;
-this.preb = 0, this.pret = 0, this.prey0 = 0, this.prey1 = 0;
+
+					this.preb = 0;
+					this.pred = 0;
+					this.pre0 = this.pre1 = 0;
 
 					this.port.onmessage = ( e) => {
 						this.f = parseFloat( e.data);
 						this.t = 0;
 					}
 
-					//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
+					//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
 					this.port.postMessage( "Perry Cook!");
 				}
 
 				process( inputs, outputs, parameters){
-					let g, i, n;
+					let g, h, i, n;
 
 					const o = outputs[ 0];
 					//const channel_num = o.length;
 					const d0 = o[ 0];
 					const d1 = o[ 1];
 
-//let preb = 0, pret = 0, prey0 = 0, prey1 = 0;
-let preb = this.preb, pret = this.pret, prey0 = this.prey0, prey1 = this.prey1;
 					n = d0.length;
-					g = Math.floor( sampleRate / this.f);
+					this.spkf += ( 20 * n / sampleRate) * ( this.f - this.spkf);
+					g = Math.floor( sampleRate / this.spkf);
+					//if( 0.09 < this.t && this.t < 0.13) g = Math.floor( 0.97 * g);
+					h = Math.floor( 0.25 * g);
 					for( i = 0; i < n; i++){
-						let a, b, c, t;
+						let a, b, c, d;
 
 						a = this.de[ this.pe];
 						b = this.db[ this.pb];
@@ -249,30 +247,28 @@ let preb = this.preb, pret = this.pret, prey0 = this.prey0, prey1 = this.prey1;
 						else c = Math.max( 1 - 0.2 * ( this.t - 0.05));
 						c += 0.03 * Math.sin( 5 * 2 * 3.14159 * this.t);
 
-						//this.de[ this.pe] = c + 0.0356 * c * ( 2 * Math.random() - 1) + ( 0.5 * b);
-						this.de[ this.pe] = c + 0.04 * c * ( 2 * Math.random() - 1) + ( 0.64 * b);
+						this.de[ this.pe] = c + 0.3 * c * ( 2 * Math.random() - 1) + ( 0.95 * b);
 
 						a -= a * a * a;
-						//this.db[ this.pb] = b = 0.7 * ( a + 0.55 * b) - 0.3 * preb;
-						//this.db[ this.pb] = b = 0.7 * ( a + 0.3 * b) - 0.3 * preb;
-						this.db[ this.pb] = b = 0.5 * ( 0.7 * ( a + 0.55 * b) - 0.3 * preb + this.db[ ( this.pb + 1) % g]);
+						this.db[ this.pb] = b = 0.5 * (
+							0.7 * ( a + 0.55 * b) - 0.3 * this.preb +
+							this.db[ ( this.pb + 1) % g]
+						);
 
-						//t = this.db[ ( this.pb + Math.floor( ( 1 - 0.764264) * g)) % g];
-						t = this.db[ ( this.pb + Math.floor( 0.25 * g)) % g];
+						d = this.db[ ( this.pb + h) % g];
 
-						prey0 = b - preb + 0.995 * prey0;
-						prey1 = t - pret + 0.995 * prey1;
-						preb = b;
-						pret = t;
+						this.pre0 = b - this.preb + 0.995 * this.pre0;
+						this.pre1 = d - this.pred + 0.995 * this.pre1;
+						this.preb = b;
+						this.pred = d;
 
-						d0[ i] = 3 * prey0;
-						d1[ i] = 3 * prey1;
+						d0[ i] = 2 * this.pre0;
+						d1[ i] = 2 * this.pre1;
 
 						this.pb = ++this.pb % g;
 						this.pe = ++this.pe % Math.floor( 0.5 * g);
 						this.t += 1 / sampleRate;
 					}
-this.preb = preb, this.pret = pret, this.prey0 = prey0, this.prey1 = prey1;
 
 					return true;
 				}
@@ -343,10 +339,9 @@ function set_value( p, v){
 let count = 0;
 
 tic();
-//console.log(440*Math.pow(2,2));//1760
-//console.log(440*Math.pow(2,2+3/12));//2093
+
 function tic(){
-	let a, i, n;
+	let i, n;
 	let t;
 
 	requestAnimationFrame( tic);
@@ -375,32 +370,18 @@ function tic(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, 0.5 * vol);
+		set_value( gn_aw.gain, 0.3 * vol);
 
 		i = count % ( 56 * 15);
-		if( i % 15 == 0){
-			i /= 15;
-			i = [
-				12, 15, 12, 0, 12, 15, 12, 0, 12, 15, 12, 7, 12, 15, 12, 0,
-				19, 19, 19, 0, 19, 19, 19, 0,
-				19, 22, 19, 0, 19, 22, 19, 0, 19, 22, 19, 15, 19, 22, 19, 0,
-				7, 5, 7, 0, 7, 5, 7, 0, 7, 10, 7, 5, 7, 10, 7, 0
-			][ i];
-			if( 0 < i) awnode.port.postMessage( 440 * Math.pow( 2, 1 + i / 12));
+		n = [
+			12, 15, 12, 0, 12, 15, 12, 0, 12, 15, 12, 7, 12, 15, 12, 0,
+			19, 19, 19, 0, 19, 19, 19, 0,
+			19, 22, 19, 0, 19, 22, 19, 0, 19, 22, 19, 15, 19, 22, 19, 0,
+			7, 5, 7, 0, 7, 5, 7, 0, 7, 10, 7, 5, 7, 10, 7, 0
+		][ Math.floor( i / 15)];
+		if( ( i % 15 == 0 || i % 60 == 21) && 0 < n){
+			awnode.port.postMessage( 440 * Math.pow( 2, 0.5 + n / 12) * ( 1 + 0.035 * Math.random()));
 		}
-		i = count % ( 56 * 15);
-		if( i % 60 == 21){
-			i = Math.floor( i / 15);
-			i = [
-				12, 15, 12, 0, 12, 15, 12, 0, 12, 15, 12, 7, 12, 15, 12, 0,
-				19, 19, 19, 0, 19, 19, 19, 0,
-				19, 22, 19, 0, 19, 22, 19, 0, 19, 22, 19, 15, 19, 22, 19, 0,
-				7, 5, 7, 0, 7, 5, 7, 0, 7, 10, 7, 5, 7, 10, 7, 0
-			][ i];
-			if( 0 < i) awnode.port.postMessage( 440 * Math.pow( 2, 1 + i / 12));
-		}
-//console.log(440*Math.pow(2,2));//1760
-//console.log(440*Math.pow(2,2+3/12));//2093
 
 		ana.getByteFrequencyData( ad);
 		tex_a.needsUpdate = true;
