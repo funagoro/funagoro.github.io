@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="Karplus-Strong AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -221,7 +221,7 @@ function init_ac(){
 						this.t = 0.007;
 					}
 
-					//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
+					//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
 					this.port.postMessage( "Karplus Strong!");
 				}
 
@@ -352,7 +352,7 @@ function tic(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, 0.2 * vol);
+		set_value( gn_aw.gain, 0.25 * vol);
 
 		i = count % 60;
 		if( i < 25){ if( i < 24 && i % 6 == 0) i /= 6; else i = 9;}
