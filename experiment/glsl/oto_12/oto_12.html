@@ -233,7 +233,7 @@ function init_ac(){
 					const d1 = o[ 1];
 
 					n = d0.length;
-					this.spkf += ( 20 * n / sampleRate) * ( this.f - this.spkf);
+					this.spkf += ( 15 * n / sampleRate) * ( this.f - this.spkf);
 					g = Math.floor( sampleRate / this.spkf);
 					//if( 0.09 < this.t && this.t < 0.13) g = Math.floor( 0.97 * g);
 					h = Math.floor( 0.25 * g);
