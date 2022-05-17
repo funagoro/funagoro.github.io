@@ -337,23 +337,25 @@ function set_value( p, v){
 }
 
 let count = 0;
-let latest_date, latest_date_2;
+let latest_date, date_fragment;
 
 latest_date = Date.now() - 1000 / 60;
-latest_date_2 = Date.now() - 2 * 1000 / 60;
+date_fragment = 0;
 tic();
 
 function tic(){
-	let d, t;
+	let t;
 
 	requestAnimationFrame( tic);
 
 	t = Date.now();
-	d = t - latest_date_2;
+	date_fragment = Math.min( date_fragment + t - latest_date, 2.5 * 1000 / 60);
+	latest_date = t;
 
-	if( 2.6 * 1000 / 60 < d) tac();
-	else if( d < 1.4 * 1000 / 60) return;
-	latest_date_2 = latest_date; latest_date = t; tac();
+	while( 1000 / 60 <= date_fragment){
+		tac();
+		date_fragment -= 1000 / 60;
+	}
 }
 function tac(){
 	let i, n;
