@@ -531,14 +531,29 @@ function init_drums(){
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let count = 0, skip = 0;
+let latest_date, latest_date_2;
 
+latest_date = Date.now() - 1000 / 60;
+latest_date_2 = Date.now() - 2 * 1000 / 60;
 tic();
 
 function tic(){
-	let i, j;
-	let a, b, t;
+	let d, t;
 
 	requestAnimationFrame( tic);
+
+	t = Date.now();
+	d = t - latest_date_2;
+
+	if( 2.6 * 1000 / 60 < d){
+		latest_date_2 = latest_date; latest_date = t; tac();
+	} else if( 1.4 * 1000 / 60 < d){
+		latest_date_2 = latest_date; latest_date = t; tac();
+	}
+}
+function tac(){
+	let i, j;
+	let a, b, t;
 
 	if( 0 < skip){ skip--; return;}
 	if( 640 < count % 800) skip = 1;
