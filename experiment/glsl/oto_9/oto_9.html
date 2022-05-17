@@ -223,7 +223,7 @@ function init_ac(){
 				}
 
 				//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
-				this.port.postMessage( "echo!");
+				this.port.postMessage( "Manhattan!");
 			}
 
 			process( inputs, outputs, parameters){
@@ -571,14 +571,27 @@ function init_drums(){
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let count = 0;
+let latest_date, latest_date_2;
 
+latest_date = Date.now() - 1000 / 60;
+latest_date_2 = Date.now() - 2 * 1000 / 60;
 tic();
 
 function tic(){
-	let i, j;
-	let a, b, t;
+	let d, t;
 
 	requestAnimationFrame( tic);
+
+	t = Date.now();
+	d = t - latest_date_2;
+
+	if( 2.6 * 1000 / 60 < d) tac();
+	else if( d < 1.4 * 1000 / 60) return;
+	latest_date_2 = latest_date; latest_date = t; tac();
+}
+function tac(){
+	let i, j;
+	let a, b, t;
 
 	skt.pre();
 
