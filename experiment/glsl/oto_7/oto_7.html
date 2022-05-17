@@ -306,7 +306,7 @@ let mel = 0, mel_vol = 0;
 function play_audio( b, g, v){
 	let n;
 
-	g.gain.value = v * vol;
+	set_value( g.gain, v * vol);
 	n = ac.createBufferSource();
 	n.buffer = b;
 	n.connect( g);
@@ -316,10 +316,25 @@ function play_audio( b, g, v){
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let count = 0;
+let latest_date, latest_date_2;
 
+latest_date = Date.now() - 1000 / 60;
+latest_date_2 = Date.now() - 2 * 1000 / 60;
 tic();
 
 function tic(){
+	let d, t;
+
+	requestAnimationFrame( tic);
+
+	t = Date.now();
+	d = t - latest_date_2;
+
+	if( 2.6 * 1000 / 60 < d) tac();
+	else if( d < 1.4 * 1000 / 60) return;
+	latest_date_2 = latest_date; latest_date = t; tac();
+}
+function tac(){
 	let i, j;
 	let a, b, t;
 
@@ -327,8 +342,6 @@ function tic(){
 		let b = Math.sin( 12.9898 * a) * 43758.5453;
 		return b - Math.floor( b);
 	}
-
-	requestAnimationFrame( tic);
 
 	skt.pre();
 
@@ -482,7 +495,7 @@ function tic(){
 			mel_vol = 1;
 		} else mel_vol *= 0.99;
 		awnode.port.postMessage( 440 * Math.pow( 2, 1 + ( mel + 2 * Math.sin( 6.28318 * count / 10)) / 12));
-		gn_aw.gain.value = 0.1 * mel_vol * vol;
+		set_value( gn_aw.gain, 0.1 * mel_vol * vol);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
@@ -513,14 +526,11 @@ function tic(){
 		else if( rnd( Math.floor( count / 40) + 99) < 0.2 && 12 < b && b < 20) b = 0; //★ 3 声目の直前を閉塞。
 		else{
 			b = 1.8 - 0.03 * b; //★ 語尾の音量を絞る。
-			if( b < 1.3) b *= 1.5; //★ 3・4 声目を強める。
+			if( b < 1.3) b *= 1.5; //★ 3 声目以降を強める。
 		}
 		set_value( gain_boin, b * vol);
 
-		/*if( count % 20 < 10 && t < 0.2){
-			//★ 1・3 声目にアクセント。
-			a *= ( 1 + count % 10 / 10 * 0.7 * ( 1 - count % 40 / 40 * 0.5));
-		} else */if( t < 0.5) a = 1; //★ 平音。
+		if( t < 0.5) a = 1; //★ 平音。
 		else a = 1 - 0.2 * ( 1 - a); //★ 語尾下がり。
 		set_value( pbr_boin, a);
 	}
