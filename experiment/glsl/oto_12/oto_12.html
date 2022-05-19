@@ -257,13 +257,10 @@ function init_ac(){
 
 						d = this.db[ ( this.pb + h) % g];
 
-						this.pre0 = b - this.preb + 0.995 * this.pre0;
-						this.pre1 = d - this.pred + 0.995 * this.pre1;
+						this.pre0 = d0[ i] = b - this.preb + 0.995 * this.pre0;
+						this.pre1 = d1[ i] = d - this.pred + 0.995 * this.pre1;
 						this.preb = b;
 						this.pred = d;
-
-						d0[ i] = 2 * this.pre0;
-						d1[ i] = 2 * this.pre1;
 
 						this.pb = ++this.pb % g;
 						this.pe = ++this.pe % Math.floor( 0.5 * g);
@@ -385,7 +382,7 @@ function tac(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, 0.3 * vol);
+		set_value( gn_aw.gain, 0.5 * vol);
 
 		i = count % ( 56 * 15);
 		n = [
