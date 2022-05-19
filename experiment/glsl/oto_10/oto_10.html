@@ -264,52 +264,52 @@ function init_ac(){
 				this.port.postMessage( "saint!");
 			}
 
-				process( inputs, outputs, parameters){
-					let g, h, i, n;
+			process( inputs, outputs, parameters){
+				let g, h, i, n;
 
-					const o = outputs[ 0];
-					const d0 = o[ 0];
-					const d1 = o[ 1];
+				const o = outputs[ 0];
+				const d0 = o[ 0];
+				const d1 = o[ 1];
 
-					n = d0.length;
-					this.spkf += ( 300 * n / sampleRate) * ( this.f - this.spkf);
-					g = Math.floor( sampleRate / this.spkf);
-					h = Math.floor( 0.25 * g);
-					for( i = 0; i < n; i++){
-						let a, b, c, u;
+				n = d0.length;
+				this.spkf += ( 300 * n / sampleRate) * ( this.f - this.spkf);
+				g = Math.floor( sampleRate / this.spkf);
+				h = Math.floor( 0.25 * g);
+				for( i = 0; i < n; i++){
+					let a, b, c, u;
 
-						a = this.e[ this.q];
-						b = this.d[ this.p];
+					a = this.e[ this.q];
+					b = this.d[ this.p];
 
-						if( this.t < 0.05) c = 20 * this.t;
-						else c = Math.max( 1 - 0.2 * ( this.t - 0.05));
-						c += 0.03 * Math.sin( 5 * 2 * 3.14159 * this.t); //★ 震え。
+					if( this.t < 0.05) c = 20 * this.t;
+					else c = Math.max( 1 - 0.2 * ( this.t - 0.05), 0);
+					c += 0.03 * Math.sin( 5 * 2 * 3.14159 * this.t); //★ 震え。
 
-						this.e[ this.q] = c + 0.3 * c * ( 2 * Math.random() - 1) + ( 0.95 * b);
+					this.e[ this.q] = c + 0.3 * c * ( 2 * Math.random() - 1) + ( 0.95 * b);
 
-						a -= a * a * a; //★ 篠笛の末端での跳ね返り。
-						this.d[ this.p] = b = 0.499 * ( //★ 隣のサンプルとの平均をとる。Karplus-Strong と同じ。
-							0.7 * ( a + 0.55 * b) - 0.3 * this.preb + //★ ローパス。高周波が減衰しやすい特徴を模倣。
-							this.d[ ( this.p + 1) % g] //★ 環状バッファ。
-						);
+					a -= a * a * a; //★ 篠笛の末端での跳ね返り。
+					this.d[ this.p] = b = Math.max( Math.min( 0.499 * ( //★ 隣のサンプルとの平均をとる。Karplus-Strong と同じ。
+						0.7 * ( a + 0.55 * b) - 0.3 * this.preb + //★ ローパス。高周波が減衰しやすい特徴を模倣。
+						this.d[ ( this.p + 1) % g] //★ 環状バッファ。
+					), 1), -1);
 
-						u = this.d[ ( this.p + h) % g];
+					u = this.d[ ( this.p + h) % g];
 
-						this.pre0 = b - this.preb + 0.99 * this.pre0;
-						this.pre1 = u - this.preu + 0.99 * this.pre1;
-						this.preb = b;
-						this.preu = u;
+					this.pre0 = b - this.preb + 0.995 * this.pre0;
+					this.pre1 = u - this.preu + 0.995 * this.pre1;
+					this.preb = b;
+					this.preu = u;
 
-						d0[ i] = this.pre0;
-						d1[ i] = this.pre1;
+					d0[ i] = this.pre0;
+					d1[ i] = this.pre1;
 
-						this.p = ++this.p % g;
-						this.q = ++this.q % Math.floor( 0.5 * g);
-						this.t += 1 / sampleRate;
-					}
-
-					return true;
+					this.p = ++this.p % g;
+					this.q = ++this.q % Math.floor( 0.5 * g);
+					this.t += 1 / sampleRate;
 				}
+
+				return true;
+			}
 		}
 		registerProcessor( "awp_name", awp);
 
