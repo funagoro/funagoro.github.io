@@ -295,13 +295,10 @@ function init_ac(){
 
 					u = this.d[ ( this.p + h) % g];
 
-					this.pre0 = b - this.preb + 0.995 * this.pre0;
-					this.pre1 = u - this.preu + 0.995 * this.pre1;
+					this.pre0 = d0[ i] = b - this.preb + 0.995 * this.pre0;
+					this.pre1 = d1[ i] = u - this.preu + 0.995 * this.pre1;
 					this.preb = b;
 					this.preu = u;
-
-					d0[ i] = this.pre0;
-					d1[ i] = this.pre1;
 
 					this.p = ++this.p % g;
 					this.q = ++this.q % Math.floor( 0.5 * g);
