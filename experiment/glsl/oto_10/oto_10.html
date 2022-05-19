@@ -41,7 +41,7 @@
 	touch-action : none;
 "></canvas><br>
 <span id="span_1">- - - - -</span><br>
-<span class="title">"oto 10" 実験中</span><br>
+<span class="title">"oto 10"</span><br>
 &copy;2022 Maeda Mameo<br>
 
 
@@ -220,7 +220,6 @@ let ab_metal, gn_metal;
 let ab_beam, gn_beam;
 
 let vol;
-let mel = 0;
 
 function init_ac(){
 	ac = new window.AudioContext();
@@ -234,47 +233,84 @@ function init_ac(){
 
 		class awp extends AudioWorkletProcessor{
 			constructor(){
-				let that;
 
 				super();
 
+				this.spkf = this.f = 440;
+				this.t = 10;
+
+				this.d = new Float32Array( Math.floor( sampleRate / 100)); //★ 対応可能な最低周波数。
 				this.p = 0;
-				this.s = 0;
+				this.e = new Float32Array( Math.floor( 0.5 * sampleRate / 100));
+				this.q = 0;
 
-				this.d = new Float32Array( 1000);
-				for( let i = 0; i < 1000; i++) this.d[ i] = Math.sin( 6.28318 * i / 1000);
+				this.preb = 0;
+				this.preu = 0;
+				this.pre0 = this.pre1 = 0;
 
-				that = this;
+				this.port.onmessage = ( e) => {
+					let a;
 
-				this.port.onmessage = function( e){
-					that.p = 0;
-					//that.s = Math.floor( 1000000 * parseFloat( e.data) / sampleRate);
-					that.s = parseFloat( e.data) / sampleRate;
+					a = parseFloat( e.data);
+					if( a == 0) this.t = 9; //★ 休符。
+					else{
+						if( a < 0) a *= -1; //★ スラー。
+						else this.t = 0; //★ タンギング。
+						this.f = a;
+					}
 				}
 
 				//★ こちらのスレッドでは console.log() ができないので、デバグ情報などは、文字列としてメインスレッドに送る。
 				this.port.postMessage( "saint!");
 			}
 
-			process( inputs, outputs, parameters){
-				let i, n;
+				process( inputs, outputs, parameters){
+					let g, h, i, n;
 
-				const o = outputs[ 0];
-				//const channel_num = o.length;
-				const d0 = o[ 0];
-				const d1 = o[ 1];
+					const o = outputs[ 0];
+					const d0 = o[ 0];
+					const d1 = o[ 1];
 
-				n = d0.length;
-				for( i = 0; i < n; i++){
-					d0[ i] = d1[ i] = this.d[ Math.floor( this.p % 1 * 1000)]
-						+ Math.random();
-					this.p = ( this.p + this.s) % 1000;
+					n = d0.length;
+					this.spkf += ( 300 * n / sampleRate) * ( this.f - this.spkf);
+					g = Math.floor( sampleRate / this.spkf);
+					h = Math.floor( 0.25 * g);
+					for( i = 0; i < n; i++){
+						let a, b, c, u;
+
+						a = this.e[ this.q];
+						b = this.d[ this.p];
+
+						if( this.t < 0.05) c = 20 * this.t;
+						else c = Math.max( 1 - 0.2 * ( this.t - 0.05));
+						c += 0.03 * Math.sin( 5 * 2 * 3.14159 * this.t); //★ 震え。
+
+						this.e[ this.q] = c + 0.3 * c * ( 2 * Math.random() - 1) + ( 0.95 * b);
+
+						a -= a * a * a; //★ 篠笛の末端での跳ね返り。
+						this.d[ this.p] = b = 0.499 * ( //★ 隣のサンプルとの平均をとる。Karplus-Strong と同じ。
+							0.7 * ( a + 0.55 * b) - 0.3 * this.preb + //★ ローパス。高周波が減衰しやすい特徴を模倣。
+							this.d[ ( this.p + 1) % g] //★ 環状バッファ。
+						);
+
+						u = this.d[ ( this.p + h) % g];
+
+						this.pre0 = b - this.preb + 0.99 * this.pre0;
+						this.pre1 = u - this.preu + 0.99 * this.pre1;
+						this.preb = b;
+						this.preu = u;
+
+						d0[ i] = this.pre0;
+						d1[ i] = this.pre1;
+
+						this.p = ++this.p % g;
+						this.q = ++this.q % Math.floor( 0.5 * g);
+						this.t += 1 / sampleRate;
+					}
+
+					return true;
 				}
-
-				return true;
-			}
 		}
-
 		registerProcessor( "awp_name", awp);
 
 	`)).then( function(){
@@ -479,6 +515,7 @@ function init_vocal(){
 	pbr_boin = absn.playbackRate;
 
 	//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+	//★ サ行。
 
 	n = Math.floor( r / 2); //★ 2 分の 1 秒間分。
 	ab = ac.createBuffer( 1, n, r); //★ チャンネル数、サンプル数、レート。
@@ -493,8 +530,8 @@ function init_vocal(){
 	bqf_s.type = "bandpass";
 	bqf_s.Q.value = 5;
 	bqf_s.connect( gn_s);
-	//set_value( bqf_s.frequency, 4000); //★ チ。
-	set_value( bqf_s.frequency, 8000); //★ ス。
+	set_value( bqf_s.frequency, 8000);
+	//set_value( bqf_s.frequency, 4000); //★ チの場合。
 
 	absn = ac.createBufferSource();
 	absn.buffer = ab;
@@ -528,14 +565,14 @@ function init_drums(){
 	d1 = ab_kick.getChannelData( 1);
 	for( i = 0; i < n; i++){
 		t = i / r;
-		d0[ i] = d1[ i] = Math.exp( -3 * t) *
+		d0[ i] = d1[ i] = Math.exp( -1 * t) *
 			Math.max( Math.sin( 6.28318 * (
-				50 * t - 6 * (
+				40 * t - 6 * (
 					Math.exp( -10 * t) +
 					Math.exp( -80 * t) +
 					Math.exp( -400 * t)
 				)
-			)) + Math.sin( 6.28318 * ( 155 - 60 * t) * t)
+			)) + Math.sin( 6.28318 * ( 150 - 60 * t) * t)
 		, 0);
 	}
 	gn_kick = ac.createGain();
@@ -594,7 +631,7 @@ function init_drums(){
 	gn_hihat = ac.createGain();
 	gn_hihat.connect( all);
 
-	//★ metal。(チャンチキ。)
+	//★ metal。(鉦、チャンチキ。)
 	n = Math.floor( 0.25 * 60 / BPM * r);
 	ab_metal = ac.createBuffer( 2, n, r);
 	d0 = ab_metal.getChannelData( 0);
@@ -622,21 +659,11 @@ function init_drums(){
 	d1 = ab_beam.getChannelData( 1);
 	t = 0;
 	for( i = 0; i < n; i++){
-		//t += 6.28 * 1800 * ( 1 + 0.3 * Math.floor(Math.sin( 6.28 * 20 * i / r))) / r;
-		//t += 1.28 * 2200 * ( 1 + 0.1 * Math.sin( 6.28 * 23 * i / r)) / r;
 		t += 2200 / r * ( 1 + ( 37 - 30 * i / n) * i / r % 1 * 0.2);
-		a =
-			Math.sin( 3.14159 * ( 0.5 + 0.0 * i / n)) *
-			//1 * ( 0.7 + 0.4 * Math.sin( 6.28 * 29 * i / r));
-			//( 1 - 0.1 * ( 29 * i / r % 1));
+		a = Math.sin( 3.14159 * ( 0.5 + 0.0 * i / n)) *
 			( 1 - 0.2 * ( ( 29 - 0 * i / n) * i / r % 1));
 		if( 0.1 <= i / r) a *= 0.8;
-		//a = Math.sin( 3.14159 * ( 0.4 + 0.2 * i / n)) * ( 1 + 0.5 * Math.floor( Math.sin( 6.28 * 40 * i / r)-0.5));
-		b = Math.sin( 6*t);
-		//b=4*Math.abs(t%1-0.5)-1;
-		//b=1-t%1*2;
-		//b=Math.floor( t%1*2)-1;
-		//b+=0.2*(2*Math.random()-1);
+		b = Math.sin( 6 * t);
 		d0[ i] = a * b;
 		d1[ i] = a * b;
 	}
@@ -668,8 +695,8 @@ function tic(){
 	}
 }
 function tac(){
-	let i, j;
-	let a, b, t;
+	let i, j, n;
+	let a, t;
 
 	skt.pre();
 
@@ -683,9 +710,6 @@ function tac(){
 		}
 	}
 
-	a = Math.sin( count % 40 / 40 * 3.14159);
-	b = Math.sin( count % 15 / 15 * 3.14159);
-
 	if( current_state == STATE_INIT){
 		if( count == 0){
 			init_reverb();
@@ -695,7 +719,7 @@ function tac(){
 			//★ リバーブの強さ。
 			t = 0.7;
 			set_value( gn_dry.gain, 1 - 0.8 * t);
-			set_value( gn_rev.gain, 2 * t);
+			set_value( gn_rev.gain, 1.5 * t);
 		} else{
 			if( ac.state != "suspended"){
 				vol = 0;
@@ -708,21 +732,48 @@ function tac(){
 		vol = Math.min( vol + 0.02, 1);
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
-		//★ でたらめなメロディ。
+		//★ 篠笛、メロディ。
 
-		b = count % 80;
-		if( b == 0 || b == 20 || b == 30 || b == 40){
-			//mel = Math.max( Math.min( Math.floor( mel + 0.5 + 1.7 * ( 2 * rnd( count) - 1)), 6), 0);
-			awnode.port.postMessage( 100 * Math.pow( 2, 4 + ( 7 + Math.floor( b / 20) % 2 * 3) / 12));
-			mel = 0;
+		set_value( gn_aw.gain, 0.2 * vol);
+		i = count % 5;
+		if( i == 0){
+			n = [
+				15,0,-17,-15, 12,-11,-12,0,   15,0,-17,-15, 12,-11,-12,0,
+				15,0,0,0, 17,0,-19,-17,   17,0,-19,-17, 0,0,0,0,
+
+				15,0,-16,-15, 12,0,-13,-12,   15,0,-16,-15, 12,0,-13,-12,
+				15,-17,-15,-17, 12,0,-13,-12,   19,0,99,0, 19,0, 19,0,
+
+				15,0,-16,-15, 12,0,-13,-12,   15,0,-16,-15, 12,0,-13,-12,
+				15,-17,-15,-17, 12,0,-13,-12,   19,0,99,0, 19,0, 19,0,
+
+				99,0,0,0, 19,0, 19,0,   99,0,19,0, 19,0, 19,0,
+				19,0,0,0, 22,0,0,0,   19,0,0,99, 0,0,0,0,
+
+				19,0,0,0, 22,0,0,0,   19,0,0,99, 19,0,19,0,
+				19,0,0,0, 22,0,0,0,   19,0,0,99, 0,0,0,0,
+
+				19,0,0,0, 22,0,0,0,   19,0,-20,-19, 15,0,0,0,
+				17,0,-18,-17, 15,0,0,0,   12,0,99,0, 15,0,0,0,
+
+				0,0, 17,0, 15,0,0,0, 12,0,-13,-12, 10,0,-11,-10,
+				7,0,-8,-7, 12,0,-13,-12, 12,0,-13,-12, 99,0,0,0,
+
+				12,0,-13,-12, 12,0,-13,-12,   12,0,-13,-12, 7,0,-8,-7,
+				10,0,-11,-10, 7,0,-8,-7,   7,0,-8,-7, 0,0,0,0,
+
+				10,0,-11,-10, 7,0,-8,-7,   10,0,-11,-10, 7,0,-8,-7,
+				10,0,-11,-10, 12,0,-13,-12,   12,0,-13,-12, 0,0,0,0,
+
+				12,0,-13,-12, 12,0,-13,-12,   12,-13, -15,-16, -17,-18, -15,-16,
+				14,0,-15,-14, 12,0,-13,-12,   10,0,-11,-10, 12,0,-13,-12
+			][ count / 5 % ( 20 * 16)];
+			if( n != 0){
+				if( n < 99) a = Math.sign( n) * 440 * Math.pow( 2, 0.5 + Math.abs( n) / 12);
+				else a = 0;
+				awnode.port.postMessage( a);
+			}
 		}
-		//a = count % 20;
-		//a = 0.5 * Math.max( 1 - count % 20 / 20, 0);
-
-		if( mel < 4) a = mel / 4; else a = 1 - 0.003 * ( mel - 4);
-		set_value( gn_aw.gain, 0.1 * a * vol);
-		//mel *= 0.95;
-		mel++;
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ ドラムシーケンス。
@@ -730,38 +781,32 @@ function tac(){
 		a = count % 320;
 		if( a % 10 == 0){
 			if( a == 0 || a == 20 || a == 40 || a == 50 || a == 80 || a == 90 || a == 100 || a == 160 || a == 170 || a == 200 || a == 210 || a == 240 || a == 250 || a == 260){
-				play_audio( ab_kick, gn_kick, 1.1);
-				if( rnd( Math.floor( count / 160)) < 0.5) play_audio( ab_beam, gn_beam, 0.3);
+				play_audio( ab_kick, gn_kick, 0.7);
+				if( rnd( Math.floor( count / 160)) < 0.5) play_audio( ab_beam, gn_beam, 0.25);
 			} else{
-				play_audio( ab_bass, gn_bass, 0.8);
+				play_audio( ab_bass, gn_bass, 0.6);
 			}
 		}
 
 		if( count % 5 == 0){
-			//play_audio( ab_bass, gn_bass, 0.5 * Math.min( count % 20 * 1.6 / 20, 1));
 			play_audio( ab_scratch[ Math.floor( 20 * Math.random())], gn_scratch, 0.15);
 			play_audio( ab_hihat, gn_hihat, 0.15);
 		}
-		//if( count % 20 == 10) play_audio( ab_metal, gn_metal, 0.2);
-if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor( count / 20)) < 0.2)){
-	//set_value( ab_metal.playbackRate, 1 + 1 * Math.random());
-	//play_audio( ab_metal, gn_metal, 0.4);
-	let n;
 
-	set_value( gn_metal.gain, 0.25 * vol);
-	n = ac.createBufferSource();
-	n.buffer = ab_metal;
-	set_value( n.playbackRate, 1 + 0.03 * Math.random());
-	n.connect( gn_metal);
-	n.start();
-}
-		//if( count % 40 == 20) play_audio( ab_beam, gn_beam, 0.08);
+		if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor( count / 20)) < 0.2)){
+			set_value( gn_metal.gain, 0.18 * vol);
+			n = ac.createBufferSource();
+			n.buffer = ab_metal;
+			set_value( n.playbackRate, 1 + 0.03 * Math.random());
+			n.connect( gn_metal);
+			n.start();
+		}
 
 		//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 		//★ 掛け声。
 
-		if( count % 20 < 10){ i = 3 * 4; j = 0;} //★ オr。
-		else{ i = 0; j = 3 * 2;} //★ rエ。
+		if( count % 20 < 10){ i = 3 * 4; j = 0;} //★ オ → r。
+		else{ i = 0; j = 3 * 2;} //★ r → エ。
 		t = count % 10 / 10;
 
 		a = 1.1;
@@ -775,14 +820,14 @@ if( count % 20 == 0 || count % 20 == 12 || ( count % 20 == 16 && rnd( Math.floor
 		//★ 閉塞音。
 		a = count % 160;
 		if( a < 100 + 20 * Math.floor( 2 * rnd( Math.floor( count / 160)))) a = 0;
-		//else if( a < 115) a = 1.1;
 		else if( ( 107 <= a && a < 110) || ( 127 <= a && a < 130) || ( 147 <= a && a < 150)) a = 0;
-		else if( ( 117 <= a && a < 120) || ( 137 <= a && a < 140)) a = 0; else{
+		else if( ( 117 <= a && a < 120) || ( 137 <= a && a < 140)) a = 0;
+		else{
 			a = ( a + 3) % 20;
 			if( a < 5) a = a / 5;
 			else a = Math.max( 1.35 - a / 40, 0);
 		}
-		set_value( gn_boin.gain, a * vol);
+		set_value( gn_boin.gain, 0.7 * a * vol);
 
 		a = count % 160;
 		if( ( 96 <= a && a < 105) || ( 116 <= a && a < 125) || ( 136 <= a && a < 145)){
