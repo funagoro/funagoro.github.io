@@ -845,7 +845,7 @@ function tac(){
 
 	plane.material.uniforms.t.value = count;
 
-	if( skt.on){ x = skt.x / W - 0.5; y = 0.5 - skt.y / W;}
+	if( skt.on){ x += 0.2 * ( skt.x / W - 0.5 - x); y += 0.2 * ( 0.5 - skt.y / W - y);}
 	else{ x *= 0.99; y *= 0.99;}
 	plane.material.uniforms.u.value = new THREE.Vector2( x, y);
 
