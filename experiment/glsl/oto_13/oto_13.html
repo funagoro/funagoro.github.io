@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 13">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Perry Cook's slide flute AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="orgel (music box) AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -77,36 +77,35 @@ const cam = new THREE.OrthographicCamera( -1, 1, 1, -1, -1, 1);
 
 const scene = new THREE.Scene();
 
-//★ TAP TO PLAY AUDIO の文字。
-const ld = new THREE.TextureLoader();
-const tex_touch = ld.load( "data:;base64," +
-`R0lGODlhgAAIAIAAAAAAAP///yH/C1hNUCBEYXRhWE1QPD94cGFja2V0IGJlZ2luPSLvu78iIGlk
-PSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpu
-czptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZWRhMmIzZmFjLCAy
-MDIxLzExLzE3LTE3OjIzOjE5ICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93
-d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJk
-ZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5z
-OnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0
-cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JU
-b29sPSJBZG9iZSBQaG90b3Nob3AgMjMuMSAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0i
-eG1wLmlpZDpFRUMyQzdGOUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiIgeG1wTU06RG9jdW1lbnRJ
-RD0ieG1wLmRpZDpFRUMyQzdGQUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiI+IDx4bXBNTTpEZXJp
-dmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkVFQzJDN0Y3QjJEQTExRUNCRDFEQkNE
-MzBCQ0U4RDBCIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkVFQzJDN0Y4QjJEQTExRUNCRDFE
-QkNEMzBCQ0U4RDBCIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRh
-PiA8P3hwYWNrZXQgZW5kPSJyIj8+Af/+/fz7+vn49/b19PPy8fDv7u3s6+rp6Ofm5eTj4uHg397d
-3Nva2djX1tXU09LR0M/OzczLysnIx8bFxMPCwcC/vr28u7q5uLe2tbSzsrGwr66trKuqqainpqWk
-o6KhoJ+enZybmpmYl5aVlJOSkZCPjo2Mi4qJiIeGhYSDgoGAf359fHt6eXh3dnV0c3JxcG9ubWxr
-amloZ2ZlZGNiYWBfXl1cW1pZWFdWVVRTUlFQT05NTEtKSUhHRkVEQ0JBQD8+PTw7Ojk4NzY1NDMy
-MTAvLi0sKyopKCcmJSQjIiEgHx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQAAIfkEAAAA
-AAAsAAAAAIAACAAAAoWED6Eb6A+jnLTa+9plC/GjgJ04JhqpnaJxqiYIm2r5SqHluonH9n7sm8Fy
-vRZvh0SmjkFbckJ0GJu/n9D6nDauytg0yZVWI1HmR6b7gkczBpDlBmPnYy/0JssAl+RjOLsnRtUF
-aJeBZ4NHEzio51EGF/JV1qKISINIgtOG0en5CQqa6VAAADs=`);
-tex_touch.magFilter = THREE.NearestFilter;
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
 o = new THREE.Mesh(
 	new THREE.PlaneGeometry( 128, 8),
-	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex_touch})
+	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending})
 );
+{
+	let a, i, j, p;
+	const d = new Uint8Array( 3 * 120 * 8);
+
+	for( i = 0; i < 120; i++){
+		a = parseInt( "0x" + (
+			"c0e0603f0303c3e3633f0000000002" + "027e020200781412127c00007e1212" + //★ ♫ TAP
+			"120c00000002027e02020018244242" + "24180000007e1212120c007e404040" + //★ TO PL
+			"00781412127c000608700806000000" + "781412127c00003e4040403e00007e" + //★ AY AU
+			"424224180000427e42000018244242" + "24180000000000c0e0603f02041800" //★ DIO ♪
+		).substr( 2 * i, 2));
+		for( j = 0; j < 8; j++){
+			p = 3 * ( i + 120 * j);
+			d[ p] = d[ p + 1] = d[ p + 2] = ( 0 < a % 2) ? 255 : 0;
+			a >>= 1;
+		}
+	}
+
+	const t = new THREE.DataTexture( d, 120, 8, THREE.RGBFormat);
+	t.magFilter = THREE.NearestFilter;
+	t.flipY = true;
+	o.material.map = t;
+}
 o.position.z = 0.001;
 t = 0.015;
 o.scale.set( t, t, t);
@@ -119,15 +118,15 @@ scene.add( o_tap);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-const ad = new Uint8Array( 1024);
-const tex_a = new THREE.DataTexture( ad, 16, 16, THREE.RGBAFormat);
+const d_ana = new Uint8Array( 1024);
+const tex_ana = new THREE.DataTexture( d_ana, 16, 16, THREE.RGBAFormat);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-const plane = new THREE.Mesh(
+o = new THREE.Mesh(
 	new THREE.PlaneGeometry( 2, 2),
 	new THREE.ShaderMaterial( {
-		uniforms : { s : { value : 1 / W}, tex : { value : tex_a}},
+		uniforms : { s : { value : 1 / W}, tex : { value : tex_ana}},
 		fragmentShader : `
 			uniform float s;
 			uniform sampler2D tex;
@@ -145,7 +144,8 @@ const plane = new THREE.Mesh(
 				if( 0.0 <= a && a < 1.0){
 					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
 					if( 0.0 <= b && b < 1.0){
-						b = 8.0 * floor( b * 128.0);
+						//b = 2.0 * floor( b * 128.0);
+						b *= 256.0;
 						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
 						b = 0.3 * ( d.r + d.g + d.b + d.a);
 						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.3 * a);
@@ -158,7 +158,54 @@ const plane = new THREE.Mesh(
 		glslVersion : THREE.GLSL3
 	})
 );
-scene.add( plane);
+scene.add( o);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const pos_p = new Float32Array( 3 * 150);
+const geo_p = new THREE.BufferGeometry();
+geo_p.setAttribute( "position", new THREE.BufferAttribute( pos_p, 3));
+let i, p;
+p=0;
+for( i = 0; i < 10; i++){
+pos_p[p++]=2*Math.random()-1;
+pos_p[p++]=2*Math.random()-1;
+pos_p[p++]=0;
+}
+const obj_p = new THREE.Points( geo_p, new THREE.ShaderMaterial( {
+	//uniforms: { s : { value : 0}, tex : { value: dat_tex}},
+	vertexShader: `
+		//attribute vec2 p;
+		//uniform float s;
+
+		void main(){
+			gl_PointSize = 10.0;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
+		}
+	`,
+	fragmentShader: `
+		//uniform sampler2D tex;
+
+		void main(){
+			gl_FragColor = vec4( 0.5);//texture2D( tex, gl_PointCoord);
+		}
+	`
+	//blending: THREE.AdditiveBlending
+}));
+obj_p.position.set( 0, 0, 0.001);
+//t=1;
+//o.scale.set( t, t, t);
+
+scene.add( obj_p);
+
+//geo_p.attributes.p.needsUpdate = true;
+
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 1, 0.01),
+	new THREE.MeshBasicMaterial( { color : 0xff0000})
+);
+o.position.set( 0.5, 0, 0.002);
+scene.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -269,16 +316,18 @@ function init_ac(){
 					const d0 = o[ 0];
 					const d1 = o[ 1];
 
-					for( i = 0; i < 3; i++){
-						//a = Math.max( 1 - 3 * this.t[ i], 0);
-						a = Math.exp( -5 * this.t[ i]);
+					for( i = 0; i < 6; i++){
+						//a = Math.max( 1 - 1.2 * this.t[ i], 0);
+						a = Math.exp( -3 * this.t[ i]);
+						if( 3 <= i) a *= 0.4;
 						n = d0.length;
 						for( j = 0; j < n; j++){
 							d0[ j] += a * this.sin[ Math.floor( 1000 * this.f[ i] * this.t[ i]) % 1000];
-							d1[ j] = d0[ j];
 							this.t[ i] += 1 / sampleRate;
 						}
 					}
+					//for( i = 0; i < n; i++) d1[ i] = d0[ i];
+					d1.set( d0);
 
 					return true;
 				}
@@ -371,7 +420,7 @@ function init_reverb(){
 
 	lpf = o_ac.createBiquadFilter();
 	lpf.type = "lowpass";
-	lpf.frequency.value = 4000;
+	lpf.frequency.value = 3000;
 	lpf.Q.value = 0.2;
 
 	o_ac.oncomplete = function( buf){ rev.buffer = buf.renderedBuffer;}
@@ -405,26 +454,47 @@ skt.set_mag_and_orientation( 1, 0);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
-let sn;
-let sd = new Array( 3000);
-init_score();
-function init_score(){
+let sn, st;
+let sd = new Array( 6 * 999);
+{
 	let a, b, i, j, k, n;
 	let s;
 
 	const sc = [ "b8 >e12g4f+8 e16b8 a24 f+24 e12g4f+8 d+16f8 <b40" +
-		"b8 >e12g4f+8 e16b8 d1r1>r14d-8 <c1r1r14a-8 c1r1>r10<b4a+8 <a+16>g8 e40",
+		"b8 >e12g4f+8 e16b8 r2>d14d-8 r2c14<a-8 r2>c10<b4a+8 <a+16>g8 e40" +
+		"g8 b16g8 b16g8 >c16<b8 a+16f+8 g12b4a+8 <a+16b8 >b40" +
+		"g8 b16g8 b16g8 r2>d14d-8 r2c14<a-8 r2>c10<b4a+8 <a+16>g8 r2e38",
 
 		"r8 r24 r24 r24 r24 r24 r24 r40" +
-		"r8 r24 r24 >r1g1r14r8 r1f1r14r8 r1e1r10r4r8 r24 r40",
+		"r8 r24 r24 r1>g15r8 r1f15r8 r1e11r4r8 r24 r16<g8 b16" +
+		"r8 r24 r24 r24 r24 r24 r24 r24b16" +
+		"r8 r24 r24 r1>g15r8 r1f15r8 r1e11r4r8 r24 r1<b39",
 
 		"r8 r24 r24 r24 r24 r24 r24 r40" +
-		"r8 r24 r24 >>r1r1d14r8 r1r1c14r8 r1r1c10r4r8 r24 r40"
+		"r8 r24 r24 >d16r8 c16r8 c12r4r8 r24 r40" +
+		"r8 r24 r24 r24 r24 r24 r24 r40" +
+		"r8 r24 r24 d16r8 c16r8 c16r8 r24 <e40",
+
+		"r8 e24 e24 e24 e24 e24 a+16<b8 >e16g8b16" +
+		"<b8 >e24 e24 r2b-22 r2a-22 r2a-22 r2f+22 e40" +
+		"<b8 >e16g8 b16<b8 >e16g8 >c16<<b8 >e16g8 c16g8 e16g24" +
+		"<b8 >e16g8 b16g8 b-2r22 r2a-22 r2a-22 r2f+14r8 r8b8g8r1e15",
+
+		"r8 r24 r24 r24 r24 r24 r24 r40" +
+		"r8 r24 r24 r1g23 r1f23 r1e23 r1e23 r40" +
+		"r8 r24 r24 r24 r24 r24 r24 r40" +
+		"r8 r24 r24 r1g23 r1f23 r1e23 r1e23 r24<e16",
+
+		"r8 r24 r24 r24 r24 r24 r24 r40" +
+		"r8 r24 r24 d24 c24 c24 c+24 r40" +
+		"r8 r24 r24 r24 r24 r24 r24 r40" +
+		"r8 r24 r24 d24 c24 c24 c+24 r40"
 	];
 
-	for( i = 0; i < 3; i++){
+	st = 0;
+	for( i = 0; i < 6; i++){
 		sn = 0;
-		b = 5 * 12 - 9;
+		b = 4 * 12 - 9;
 		for( j = 0; j < sc[ i].length;){
 			s = sc[ i].substr( j++, 1);
 			if( s != " "){
@@ -434,18 +504,23 @@ function init_score(){
 						s = sc[ i].substr( j, 1);
 						if( s == "-"){ a--; j++;}
 						else if( s == "+"){ a++; j++;}
-						sd[ 1000 * i + sn++] = b + a;
-					} else sd[ 1000 * i + sn++] = 0;
+						sd[ 999 * i + sn++] = b + a;
+
+						pos_p[ 3 * st] = 0.025 * ( b + a - 25) * Math.cos( -2 * 3.14159 * sn / 768);
+						pos_p[ 3 * st + 1] = 0.025 * ( b + a - 25) * Math.sin( -2 * 3.14159 * sn / 768);
+						st++;
+					} else sd[ 999 * i + sn++] = 0;
 					a = parseInt( sc[ i].substr( j, 2));
 					if( a < 10) j++; else j += 2;
-					for( k = 0; k < a - 1; k++) sd[ 1000 * i + sn++] = 0;
+					for( k = 0; k < a - 1; k++) sd[ 999 * i + sn++] = 0;
 				} else if( s == ">") b += 12;
 				else if( s == "<") b -= 12;
 			}
 		}
+		//console.log( i + " : " + sn);
 	}
-	//console.log( sn);
 }
+geo_p.setDrawRange( 0, st);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -473,7 +548,7 @@ function tic(){
 	}
 }
 function tac(){
-	let a, i, j;
+	let a, b, i, j;
 	let t;
 
 	skt.pre();
@@ -503,24 +578,28 @@ function tac(){
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
 		set_value( gn_aw.gain, 0.3);
 
-		t = x;
+		t = 0.9;
 		set_value( gn_dry.gain, ( 1 - t) * vol);
 		set_value( gn_rev.gain, t * vol);
 
-		if( count % 2 == 0){
-			j = count / 2 % sn;
-			for( i = 0; i < 3; i++){
-				a = sd[ 1000 * i + j];
+		if( count % 3 == 0){
+			b = 0;
+			j = count / 3 % sn;
+			for( i = 0; i < 6; i++){
+				a = sd[ 999 * i + j];
 				if( 0 < a){
-					awnode.port.postMessage( "" + i + 440 * Math.pow( 2, ( a - ( 4 * 12 + 9)) / 12));
-					play_audio( ab_kick, gn_kick, 0.1);
+					awnode.port.postMessage( "" + i + 440 * Math.pow( 2, ( a - ( 4 * 12 + 9) + 20) / 12));
+					b++;
 				}
+				if( 0 < b) play_audio( ab_kick, gn_kick, 0.01 + 0.03 * Math.random());
 			}
 		}
 
-		ana.getByteFrequencyData( ad);
-		tex_a.needsUpdate = true;
+		ana.getByteFrequencyData( d_ana);
+		tex_ana.needsUpdate = true;
 	}
+
+	obj_p.rotation.z = 2 * 3.14159 * count / 3/ 768;
 
 	if( skt.on){ x = skt.x / W; y = 1 - skt.y / W;}
 
