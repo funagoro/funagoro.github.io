@@ -139,7 +139,8 @@ o = new THREE.Mesh(
 				vec4 d;
 
 				v = gl_FragCoord.xy * s;
-				c = 0.2 * vec3( smoothstep( 0.493, 0.49, length( v - 0.5)));
+				a = length( v - 0.5);
+				c = 0.2 * vec3( smoothstep( 0.493, 0.49, a) * smoothstep( 0.04, 0.043, a));
 				v -= vec2( 0.5, -1.5);
 				a = 1.5 * ( length( v) - 1.65);
 				if( 0.0 <= a && a < 1.0){
@@ -187,7 +188,7 @@ for( i = 0; i < 768 / 24; i++){
 		new THREE.MeshBasicMaterial( { color : 0x333333, blending : THREE.AdditiveBlending})
 	);
 	t = 6.28318 / 768 * ( 24 * i - 9);
-	o.position.set( 0.55 * Math.cos( t), 0.55 * Math.sin( t), 0.002);
+	o.position.set( 0.54 * Math.cos( t), 0.54 * Math.sin( t), 0.002);
 	o.rotation.z = t;
 	obj_p.add( o);
 }
@@ -501,8 +502,8 @@ let sd = new Array( 6 * 999);
 						sd[ 999 * i + sn++] = b + a;
 
 						t = -6.28318 * sn / 768;
-						pos_p[ 3 * st] = 0.024 * ( b + a - 25) * Math.cos( t);
-						pos_p[ 3 * st + 1] = 0.024 * ( b + a - 25) * Math.sin( t);
+						pos_p[ 3 * st] = 0.0235 * ( b + a - 25) * Math.cos( t);
+						pos_p[ 3 * st + 1] = 0.0235 * ( b + a - 25) * Math.sin( t);
 						st++;
 					} else sd[ 999 * i + sn++] = 0;
 					a = parseInt( sc[ i].substr( j, 2));
