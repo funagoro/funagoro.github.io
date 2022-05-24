@@ -282,7 +282,8 @@ function init_ac(){
 
 					this.f = new Array( 6);
 					this.t = new Array( 6);
-					for( i = 0; i < 6; i++){ this.f[ i] = 440; this.t[ i] = 10;}
+					this.v = new Array( 6);
+					for( i = 0; i < 6; i++){ this.f[ i] = 440; this.t[ i] = this.v[ i] = 0;}
 
 					this.sin = new Float32Array( 1000);
 					for( i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 6.28318 * i / 1000);
@@ -293,6 +294,7 @@ function init_ac(){
 						i = parseInt( e.data.substr( 0, 1));
 						this.f[ i] = parseFloat( e.data.substr( 1));
 						this.t[ i] = 0;
+						this.v[ i] = [ 1, 0.7, 0.7, 0.3, 0.2, 0.2][ i];;
 					}
 
 					//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
@@ -309,13 +311,11 @@ function init_ac(){
 					const d1 = o[ 1];
 
 					for( i = 0; i < 6; i++){
-						//a = Math.max( 1 - 1.2 * this.t[ i], 0);
-						a = Math.exp( -3 * this.t[ i]);
-						if( 3 <= i) a *= 0.3;
 						n = d0.length;
 						for( j = 0; j < n; j++){
-							d0[ j] += a * this.sin[ Math.floor( 1000 * this.f[ i] * this.t[ i]) % 1000];
+							d0[ j] += this.v[ i] * this.sin[ Math.floor( 1000 * this.f[ i] * this.t[ i]) % 1000];
 							this.t[ i] += 1 / sampleRate;
+							this.v[ i] *= 0.99995;
 						}
 					}
 					//for( i = 0; i < n; i++) d1[ i] = -d0[ i];
