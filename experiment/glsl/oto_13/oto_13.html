@@ -235,6 +235,7 @@ function init_ac(){
 
 	ana = ac.createAnalyser(); ana.connect( ac.destination); o = ana;
 
+	m = new DynamicsCompressorNode( ac); m.connect( o); o = m;
 	m = make_filter( "highshelf", 3500, -20); m.connect( o); o = m;
 	m = make_filter( "peaking", 1200, 5); m.connect( o); o = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( o); o = m;
