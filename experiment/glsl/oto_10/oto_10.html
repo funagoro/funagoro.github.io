@@ -845,8 +845,6 @@ function tac(){
 
 	plane.material.uniforms.t.value = count;
 
-	//if( skt.on){ x += 0.2 * ( skt.x / W - 0.5 - x); y += 0.2 * ( 0.5 - skt.y / W - y);}
-	//else{ x *= 0.99; y *= 0.99;}
 	for( i = 0; i < MAXTOUCH; i++) if( skt.ids[ i] != skt.NOID){
 		x += 0.2 * ( skt.xs[ i] / W - 0.5 - x);
 		y += 0.2 * ( 0.5 - skt.ys[ i] / W - y);
