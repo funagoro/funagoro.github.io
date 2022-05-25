@@ -166,9 +166,16 @@ const pos_p = new Float32Array( 3 * 150);
 const geo_p = new THREE.BufferGeometry();
 geo_p.setAttribute( "position", new THREE.BufferAttribute( pos_p, 3));
 const obj_p = new THREE.Points( geo_p, new THREE.ShaderMaterial( {
+	uniforms : { r : {}},
 	vertexShader: `
+		uniform float r;
+
 		void main(){
-			gl_PointSize = 7.0;
+			float a;
+
+			a = atan( position.y, position.x) + r;
+			a = float( 0.0 < cos( a)) * float( 0.0 <= sin( a)) * max( min( 1.0 - 2.0 * tan( a), 1.0), 0.0);
+			gl_PointSize = 7.0 + 20.0 * a;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
 		}
 	`,
@@ -595,6 +602,7 @@ function tac(){
 	}
 
 	obj_p.rotation.z = 6.28318 * count / 3/ 768;
+	obj_p.material.uniforms.r.value = 6.28318 * count / 3/ 768;
 
 	ren.render( scene, cam);
 
