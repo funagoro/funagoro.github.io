@@ -347,7 +347,7 @@ function tic(){
 	requestAnimationFrame( tic);
 
 	t = Date.now();
-	date_fragment = Math.min( date_fragment + t - latest_date, 2.5 * 1000 / 60);
+	date_fragment = Math.min( date_fragment + t - latest_date, 1.9 * 1000 / 60);
 	latest_date = t;
 
 	while( 1000 / 60 <= date_fragment){
