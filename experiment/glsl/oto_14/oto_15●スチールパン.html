@@ -1,0 +1,408 @@
+
+<!DOCTYPE html>
+
+<html lang="ja" style="-webkit-user-select : none; user-select : none;">
+
+<head>
+
+<meta charset="utf-8">
+
+<title>oto 14 - MONKEY CIRCUS おさるサーカス</title>
+<meta property="og:title" content="oto 14 - MONKEY CIRCUS おさるサーカス">
+<meta property="og:url" content="https://funagoro.github.io/experiment/glsl/oto_14/oto_14.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://funagoro.github.io/experiment/glsl/oto_14/oto_14_t.jpg">
+<link rel="apple-touch-icon" href="https://funagoro.github.io/experiment/glsl/oto_14/oto_14_t.jpg">
+<meta name="apple-mobile-web-app-title" content="oto 14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Perry Cook's slide flute AudioWorklet experiment with GLSL WebGL">
+
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="stylesheet" type="text/css" href="glsl.css" />
+
+<meta name="viewport" content="width=600">
+<style> @viewport { width : 600px;} </style>
+
+</head>
+
+<body>
+
+
+
+<div class="t"></div>
+
+
+
+<canvas id="canvas_1" style="
+	width : 512px; height : 512px;
+	user-select : none;
+	-webkit-tap-highlight-color : rgba( 0, 0, 0, 0);
+	touch-action : none;
+"></canvas><br>
+<span id="span_1">- - - - -</span><br>
+<span class="title">"oto 14" 実験中。</span><br>
+&copy;2022 Maeda Mameo<br>
+
+
+
+<div class="b"></div>
+
+
+
+<script src="skeleton_touch_2.js"></script>
+
+<script src="three_130_min.js"></script>
+
+<script>
+
+'use strict';
+
+const W = 512;
+let t;
+let o;
+
+const STATE_DEFAULT = 0, STATE_INIT = 1, STATE_WORKING = 2, STATE_MUTED = 3;
+let current_state = STATE_DEFAULT, next_state = STATE_DEFAULT;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const can = document.getElementById( "canvas_1");
+can.width = can.height = W;
+
+const ren = new THREE.WebGLRenderer( { canvas : can});
+//ren.setPixelRatio( window.devicePixelRatio);
+
+const cam = new THREE.OrthographicCamera( -1, 1, 1, -1, -1, 1);
+
+const scene = new THREE.Scene();
+
+//★ TAP TO PLAY AUDIO の文字。
+const ld = new THREE.TextureLoader();
+const tex_touch = ld.load( "data:;base64," +
+`R0lGODlhgAAIAIAAAAAAAP///yH/C1hNUCBEYXRhWE1QPD94cGFja2V0IGJlZ2luPSLvu78iIGlk
+PSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpu
+czptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZWRhMmIzZmFjLCAy
+MDIxLzExLzE3LTE3OjIzOjE5ICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93
+d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJk
+ZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5z
+OnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0
+cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JU
+b29sPSJBZG9iZSBQaG90b3Nob3AgMjMuMSAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0i
+eG1wLmlpZDpFRUMyQzdGOUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiIgeG1wTU06RG9jdW1lbnRJ
+RD0ieG1wLmRpZDpFRUMyQzdGQUIyREExMUVDQkQxREJDRDMwQkNFOEQwQiI+IDx4bXBNTTpEZXJp
+dmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkVFQzJDN0Y3QjJEQTExRUNCRDFEQkNE
+MzBCQ0U4RDBCIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkVFQzJDN0Y4QjJEQTExRUNCRDFE
+QkNEMzBCQ0U4RDBCIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRh
+PiA8P3hwYWNrZXQgZW5kPSJyIj8+Af/+/fz7+vn49/b19PPy8fDv7u3s6+rp6Ofm5eTj4uHg397d
+3Nva2djX1tXU09LR0M/OzczLysnIx8bFxMPCwcC/vr28u7q5uLe2tbSzsrGwr66trKuqqainpqWk
+o6KhoJ+enZybmpmYl5aVlJOSkZCPjo2Mi4qJiIeGhYSDgoGAf359fHt6eXh3dnV0c3JxcG9ubWxr
+amloZ2ZlZGNiYWBfXl1cW1pZWFdWVVRTUlFQT05NTEtKSUhHRkVEQ0JBQD8+PTw7Ojk4NzY1NDMy
+MTAvLi0sKyopKCcmJSQjIiEgHx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQAAIfkEAAAA
+AAAsAAAAAIAACAAAAoWED6Eb6A+jnLTa+9plC/GjgJ04JhqpnaJxqiYIm2r5SqHluonH9n7sm8Fy
+vRZvh0SmjkFbckJ0GJu/n9D6nDauytg0yZVWI1HmR6b7gkczBpDlBmPnYy/0JssAl+RjOLsnRtUF
+aJeBZ4NHEzio51EGF/JV1qKISINIgtOG0en5CQqa6VAAADs=`);
+tex_touch.magFilter = THREE.NearestFilter;
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 128, 8),
+	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending, map : tex_touch})
+);
+o.position.z = 0.001;
+t = 0.015;
+o.scale.set( t, t, t);
+const o_tap = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2, 2),
+	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
+);
+o_tap.add( o);
+scene.add( o_tap);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const ad = new Uint8Array( 1024);
+const tex_a = new THREE.DataTexture( ad, 16, 16, THREE.RGBAFormat);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const plane = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2, 2),
+	new THREE.ShaderMaterial( {
+		uniforms : { s : { value : 1 / W}, tex : { value : tex_a}},
+		fragmentShader : `
+			uniform float s;
+			uniform sampler2D tex;
+
+			out vec4 e;
+			void main(){
+				float a, b;
+				vec2 v;
+				vec3 c;
+				vec4 d;
+
+				c = vec3( 0.95);
+				v = gl_FragCoord.xy * s - vec2( 0.5, -1.5);
+				a = 1.5 * ( length( v) - 1.65);
+				if( 0.0 <= a && a < 1.0){
+					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
+					if( 0.0 <= b && b < 1.0){
+						b = 8.0 * floor( b * 128.0);
+						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
+						b = 0.3 * ( d.r + d.g + d.b + d.a);
+						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.3 * a);
+						else c = vec3( 0.9);
+					}
+				}
+				e = vec4( c, 1);
+			}
+		`,
+		glslVersion : THREE.GLSL3
+	})
+);
+scene.add( plane);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let is_visibility_listener = false;
+let ac;
+let ana, gn_aw, awnode;
+
+let vol;
+
+function init_ac(){
+	let i;
+	let m, n;
+
+	ac = new window.AudioContext();
+	ac.createBufferSource().start(); //★ こんなダミーでもいいので、再生する必要がある。
+
+	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
+
+	m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
+	//m = make_filter( "highshelf", 3500, -10); m.connect( n); n = m;
+	//m = make_filter( "peaking", 2200, 5); m.connect( n); n = m;
+	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
+
+	//m = make_filter( "peaking", 400, 5); m.connect( n); n = m;
+	//m = make_filter( "lowpass", 3000, 5); m.connect( n); n = m;
+
+	gn_aw = ac.createGain();
+	gn_aw.connect( n);
+
+	perry_cook_flute();
+
+	function make_filter( t, f, g){
+		const bqf = ac.createBiquadFilter();
+		bqf.type = t;
+		bqf.frequency.value = f;
+		bqf.gain.value = g;
+		return bqf;
+	}
+
+	//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+	if( !is_visibility_listener){ //★ 何重にもリスナを登録してはいけない。
+		document.addEventListener( "visibilitychange", function(){
+			let s;
+
+			s = document.visibilityState;
+			if( s == "hidden"){
+				if( ac.state != "closed"){ //★ すでに closed の時には、close() してはいけない。
+					//ac.suspend(); //★ ac.suspend() ではなく、ac.close()
+					ac.close();
+
+					o_tap.visible = true;
+					current_state = next_state = STATE_MUTED;
+					count = 0;
+				}
+			} else if( s == "visible"){
+				//★ タッチで再開するので、ここでは何もしない。
+			}
+		}, false);
+
+		is_visibility_listener = true;
+	}
+}
+
+function perry_cook_flute(){
+	ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+
+		'use strict';
+
+		class awp extends AudioWorkletProcessor{
+			constructor(){
+
+				super();
+
+				this.f = 440;
+				this.t = 10;
+
+				this.d = new Float32Array( Math.floor( sampleRate / 10)); //★ 対応可能な最低周波数。
+				this.p = 0;
+
+				this.preb = 0;
+
+				this.port.onmessage = ( e) => {
+					//let i;
+
+					//for( i = 0; i < this.d.length; i++) this.d[ i] = 2 * Math.random() - 1;
+					this.f = parseFloat( e.data);
+					this.t = 0;
+				}
+
+				//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
+				this.port.postMessage( "Tobago!");
+			}
+
+			process( inputs, outputs, parameters){
+				let g, i, m, n;
+//if(this.t==0)this.port.postMessage(this.d[0]);
+
+				const o = outputs[ 0];
+				//const channel_num = o.length;
+				const d0 = o[ 0];
+				const d1 = o[ 1];
+
+				m = this.d.length;
+				n = d0.length;
+				g = Math.floor( sampleRate / this.f);
+				for( i = 0; i < n; i++){
+					let b;
+
+					b = this.d[ ( this.p + m - g) % m];
+					b += Math.max( 1 - 20 * this.t, 0) * ( 2 * Math.random() - 1);
+
+					this.d[ this.p] = b = Math.max( Math.min( 0.5 * (
+						b +
+						this.d[ ( this.p + m - g + 1) % m]
+					), 1) , -1);
+
+					b = 0.1 * this.preb + 0.9 * ( b - this.preb);
+
+					d0[ i] = d1[ i] = b;
+					this.preb = b;
+
+					this.p = ++this.p % m;
+					this.t += 1 / sampleRate;
+				}
+
+				return true;
+			}
+		}
+		registerProcessor( "awp_name", awp);
+
+	`)).then( function(){
+		awnode = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオ。
+		awnode.connect( gn_aw);
+
+		awnode.port.onmessage = function( e){ console.log( e.data);}
+
+		o_tap.visible = false;
+		current_state = next_state = STATE_INIT;
+		count = 0;
+	}).catch();
+}
+
+//★ skeleton_touch_2.js のための設定。
+const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
+function touch_event_hook(){
+	if( skt.can_ios_audio_start){
+		if( current_state == STATE_DEFAULT){
+			init_ac();
+		} else if( current_state == STATE_MUTED){
+			//ac.resume();
+			//★ ac.suspend() して、他のアプリで遊んだ後、ac.resume() しても、
+			//★ 音が出ない場合があるので、止める時は ac.close() して、次回は new する。
+			init_ac();
+		}
+	}
+}
+const skt = new skeleton_touch( can);
+skt.set_mag_and_orientation( 1, 0);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+function set_value( p, v){
+	p.cancelScheduledValues( 0);
+	p.value = v;
+}
+
+let count = 0;
+let latest_date, date_fragment;
+
+latest_date = Date.now() - 1000 / 60;
+date_fragment = 0;
+tic();
+
+function tic(){
+	let t;
+
+	requestAnimationFrame( tic);
+
+	t = Date.now();
+	date_fragment = Math.min( date_fragment + t - latest_date, 1.9 * 1000 / 60);
+	latest_date = t;
+
+	while( 1000 / 60 <= date_fragment){
+		tac();
+		date_fragment -= 1000 / 60;
+	}
+}
+function tac(){
+	let i, n;
+	let t;
+
+	skt.pre();
+
+	if( ac){
+		if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
+		if( current_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
+			//★ 電話の着信などで、visibility が hidden になることなく、中断された後、戻ってきた時。
+			ac.close();
+			o_tap.visible = true;
+			next_state = STATE_MUTED;
+		}
+	}
+
+	if( current_state == STATE_INIT){
+		if( count == 0){
+			//★ 初期化。
+		} else{
+			if( ac.state != "suspended"){
+				vol = 0;
+				next_state = STATE_WORKING;
+			}
+		}
+	} else if( current_state == STATE_WORKING){
+
+		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
+		set_value( gn_aw.gain, 0.6 * vol);
+
+		i = count % ( 56 * 15);
+		n = [
+			12, 15, 12, 0, 12, 15, 12, 0, 12, 15, 12, 7, 12, 15, 12, 0,
+			19, 19, 19, 0, 19, 19, 19, 0,
+			19, 22, 19, 0, 19, 22, 19, 0, 19, 22, 19, 15, 19, 22, 19, 0,
+			7, 5, 7, 0, 7, 5, 7, 0, 7, 10, 7, 5, 7, 10, 7, 0
+		][ Math.floor( i / 15)];
+		if( ( i % 15 == 0) && 0 < n){
+			awnode.port.postMessage( 440 * Math.pow( 2, -2 + n / 12) * ( 1 + 0 * Math.random()));
+		}
+
+		ana.getByteFrequencyData( ad);
+		tex_a.needsUpdate = true;
+	}
+
+	ren.render( scene, cam);
+
+	skt.post();
+
+	if( current_state != next_state){
+		current_state = next_state;
+		count = 0;
+	} else count++;
+}
+</script>
+
+</body>
+
+</html>

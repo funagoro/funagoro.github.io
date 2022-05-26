@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+
+<html lang="ja" style="-webkit-user-select : none; user-select : none;">
+
+<head>
+
+<meta charset="utf-8">
+
+<title>oto 14 - MONKEY CIRCUS おさるサーカス</title>
+<meta property="og:title" content="oto 14 - MONKEY CIRCUS おさるサーカス">
+<meta property="og:url" content="https://funagoro.github.io/experiment/glsl/oto_14/oto_14.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://funagoro.github.io/experiment/glsl/oto_14/oto_14_t.jpg">
+<link rel="apple-touch-icon" href="https://funagoro.github.io/experiment/glsl/oto_14/oto_14_t.jpg">
+<meta name="apple-mobile-web-app-title" content="oto 14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="generating ocarina sound AudioWorklet experiment with GLSL WebGL">
+
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="stylesheet" type="text/css" href="glsl.css" />
+
+<meta name="viewport" content="width=600">
+<style> @viewport { width : 600px;} </style>
+
+</head>
+
+<body>
+
+
+
+<div class="t"></div>
+
+
+
+<canvas id="canvas_1" style="
+	width : 512px; height : 512px;
+	user-select : none;
+	-webkit-tap-highlight-color : rgba( 0, 0, 0, 0);
+	touch-action : none;
+"></canvas><br>
+<span id="span_1">- - - - -</span><br>
+<span class="title">"oto 14" 実験中。</span><br>
+&copy;2022 Maeda Mameo<br>
+
+
+
+<div class="b"></div>
+
+
+
+<script src="skeleton_touch_2.js"></script>
+
+<script src="three_130_min.js"></script>
+
+<script>
+
+'use strict';
+
+const W = 512;
+let t;
+let o;
+
+const STATE_DEFAULT = 0, STATE_INIT = 1, STATE_WORKING = 2, STATE_MUTED = 3;
+let current_state = STATE_DEFAULT, next_state = STATE_DEFAULT;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const can = document.getElementById( "canvas_1");
+can.width = can.height = W;
+
+const ren = new THREE.WebGLRenderer( { canvas : can});
+ren.shadowMap.enabled = true;
+//ren.shadowMap.type = THREE.VSMShadowMap;
+ren.shadowMap.type = THREE.PCFSoftShadowMap;
+//ren.setPixelRatio( window.devicePixelRatio);
+
+//const cam = new THREE.OrthographicCamera( -1, 1, 1, -1, -1, 1);
+const cam = new THREE.PerspectiveCamera( 30, 1 / 1, 0.1, 1000);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color( "darkgray");
+
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2, 2),
+	new THREE.MeshPhongMaterial( { color : 0xccddff})
+);
+o.rotation.x = -1.57;
+//o.material.receiveShadow = true;
+o.receiveShadow = true;
+scene.add( o);
+
+o = new THREE.DirectionalLight( 0xffffff, 1);
+o.castShadow = true;
+o.shadow.camera.top = 1;
+o.shadow.camera.bottom = -1;
+o.shadow.camera.left = -1;
+o.shadow.camera.right = 1;
+o.shadow.camera.near = 0.1;
+o.shadow.camera.far = 10;
+o.shadow.mapSize.width = o.shadow.mapSize.height = 512;
+o.shadow.radius = 4;
+o.shadow.bias = -0.001;
+o.position.set( 1, 3, 2);
+scene.add( o);
+
+o = new THREE.AmbientLight( 0xffffff, 0.3);
+scene.add( o);
+
+o = new THREE.Mesh(
+	new THREE.BoxGeometry( 0.3, 0.3, 0.3),
+	new THREE.MeshPhongMaterial( { color : 0xffffcc})
+);
+//o.material.castShadow = true;
+o.castShadow = true;
+o.position.set( 0.5, 0.15, 0.5);
+scene.add( o);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const pos = new Uint8Array( 100 * 16);
+{
+	let i, p;
+
+	p = 0;
+	for( i = 0; i < 100; i++){
+		//★ 回転・拡大なしの、位置指定だけの Matrix4。
+		pos[ p++] = 1; pos[ p++] = 0; pos[ p++] = 0; pos[ p++] = 0;
+		pos[ p++] = 0; pos[ p++] = 1; pos[ p++] = 0; pos[ p++] = 0;
+		pos[ p++] = 0; pos[ p++] = 0; pos[ p++] = 1; pos[ p++] = 0;
+		pos[ p++] = i;
+		pos[ p++] = 0.1; //★ y 座標？
+		pos[ p++] = 0; //★ z 座標？
+		pos[ p++] = 1;
+	}
+}
+
+const bits = new THREE.InstancedMesh(
+	new THREE.BoxGeometry( 0.5, 0.5, 0.5),
+	new THREE.MeshPhongMaterial( { color : 0x666666}),
+	100
+);
+t = 0.02;
+bits.scale.set( t, t, t);
+bits.position.set( -1, 0.1, 0);
+//bits.material.castShadow = true;
+bits.castShadow = true;
+scene.add( bits);
+bits.instanceMatrix.array.set( pos);
+bits.instanceMatrix.needsUpdate = true;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 128, 8),
+	new THREE.MeshBasicMaterial( { color : 0x999999, transparent : true, blending : THREE.SubtractiveBlending})
+);
+{
+	let a, i, j, p;
+	const d = new Uint8Array( 3 * 120 * 8);
+
+	for( i = 0; i < 120; i++){
+		a = parseInt( "0x" + (
+			"c0e0603f0303c3e3633f0000000002" + "027e020200781412127c00007e1212" + //★ ♫ TAP
+			"120c00000002027e02020018244242" + "24180000007e1212120c007e404040" + //★ TO PL
+			"00781412127c000608700806000000" + "781412127c00003e4040403e00007e" + //★ AY AU
+			"424224180000427e42000018244242" + "24180000000000c0e0603f02041800" //★ DIO ♪
+		).substr( 2 * i, 2));
+		for( j = 0; j < 8; j++){
+			p = 3 * ( i + 120 * j);
+			d[ p] = d[ p + 1] = d[ p + 2] = ( 0 < a % 2) ? 255 : 0;
+			a >>= 1;
+		}
+	}
+
+	const t = new THREE.DataTexture( d, 120, 8, THREE.RGBFormat);
+	t.magFilter = THREE.NearestFilter;
+	t.flipY = true;
+	o.material.map = t;
+}
+o.position.z = 0.001;
+t = 0.015;
+o.scale.set( t, t, t);
+const o_tap = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2, 2),
+	new THREE.MeshBasicMaterial( { color : 0xffffff, transparent : true, opacity : 0.7})
+);
+o_tap.add( o);
+o_tap.position.set( 0, 1, 1);
+scene.add( o_tap);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const d_ana = new Uint8Array( 1024);
+const tex_ana = new THREE.DataTexture( d_ana, 16, 16, THREE.RGBAFormat);
+
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2, 2),
+	new THREE.ShaderMaterial( {
+		uniforms : { s : { value : 1 / W}, tex : { value : tex_ana}},
+		vertexShader : `
+			varying vec2 v_uv;
+
+			void main(){
+				v_uv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1);
+			}
+		`,
+		fragmentShader : `
+			uniform float s;
+			uniform sampler2D tex;
+
+			varying vec2 v_uv;
+
+			out vec4 e;
+			void main(){
+				float a, b;
+				vec2 v;
+				vec3 c;
+				vec4 d;
+
+				c = vec3( 0.95);
+				//v = gl_FragCoord.xy * s - vec2( 0.5, -1.5);
+				v = v_uv - vec2( 0.5, -1.5);
+				a = 1.5 * ( length( v) - 1.65);
+				if( 0.0 <= a && a < 1.0){
+					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
+					if( 0.0 <= b && b < 1.0){
+						//b = 8.0 * floor( b * 128.0);
+						//d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
+						//b = 0.3 * ( d.r + d.g + d.b + d.a);
+						b = 4.0 * floor( b * 256.0);
+						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
+						b = 0.3 * ( d.r + d.g + d.b + d.a);
+						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.3 * a);
+						else c = vec3( 0.9);
+					}
+				}
+				e = vec4( c, 1);
+			}
+		`,
+		glslVersion : THREE.GLSL3
+	})
+);
+o.position.set( 0, 1, -1);
+scene.add( o);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let is_visibility_listener = false;
+let ac;
+let ana, gn_aw, awnode;
+
+let vol;
+
+function init_ac(){
+	let i;
+	let m, n;
+
+	ac = new window.AudioContext();
+	ac.createBufferSource().start(); //★ こんなダミーでもいいので、再生する必要がある。
+
+	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
+
+	m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
+	m = make_filter( "peaking", 1200, 5); m.connect( n); n = m;
+	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
+
+	gn_aw = ac.createGain();
+	gn_aw.connect( n);
+
+	perry_cook_flute();
+
+	function make_filter( t, f, g){
+		const bqf = ac.createBiquadFilter();
+		bqf.type = t;
+		bqf.frequency.value = f;
+		bqf.gain.value = g;
+		return bqf;
+	}
+
+	//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+	if( !is_visibility_listener){ //★ 何重にもリスナを登録してはいけない。
+		document.addEventListener( "visibilitychange", function(){
+			let s;
+
+			s = document.visibilityState;
+			if( s == "hidden"){
+				if( ac.state != "closed"){ //★ すでに closed の時には、close() してはいけない。
+					//ac.suspend(); //★ ac.suspend() ではなく、ac.close()
+					ac.close();
+
+					o_tap.visible = true;
+					current_state = next_state = STATE_MUTED;
+					count = 0;
+				}
+			} else if( s == "visible"){
+				//★ タッチで再開するので、ここでは何もしない。
+			}
+		}, false);
+
+		is_visibility_listener = true;
+	}
+}
+
+function perry_cook_flute(){
+	ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
+
+		'use strict';
+
+		class awp extends AudioWorkletProcessor{
+			constructor(){
+
+				super();
+
+				this.spkf = this.f = 440;
+				this.t = 10;
+
+				this.d = new Float32Array( Math.floor( sampleRate / 100)); //★ 対応可能な最低周波数。
+				this.p = 0;
+				this.e = new Float32Array( Math.floor( 0.5 * sampleRate / 100));
+				this.q = 0;
+
+				this.preb = 0;
+				this.preu = 0;
+				this.pre0 = this.pre1 = 0;
+
+				this.port.onmessage = ( e) => {
+					let a;
+
+					a = parseFloat( e.data);
+					if( a == 0) this.t += 3 * ( this.t - 0.1);
+					else{
+						this.f = a;
+						this.t = 0;
+					}
+				}
+
+				//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
+				this.port.postMessage( "ocarina!");
+			}
+
+			process( inputs, outputs, parameters){
+				let g, h, i, n;
+
+				const o = outputs[ 0];
+				const d0 = o[ 0];
+				const d1 = o[ 1];
+
+				n = d0.length;
+				this.spkf += ( 65 * n / sampleRate) * ( this.f - this.spkf);
+				g = Math.floor( sampleRate / this.spkf);
+				h = Math.floor( 0.25 * g);
+				for( i = 0; i < n; i++){
+					let a, b, c, u;
+
+					a = this.e[ this.q];
+					b = this.d[ this.p];
+
+					if( this.t < 0.05){ c = 1 - this.t / 0.05; c = 1 - c * c;}
+					else if( this.t < 0.1) c = 1 - 3 * ( this.t - 0.05);
+					else{
+						c = Math.max( 0.85 - 0.2 * ( this.t - 0.1), 0);
+						c += 0.03 * Math.sin( 5 * 2 * 3.14159 * this.t);
+					}
+
+					this.e[ this.q] = c + 0.15 * c * ( 2 * Math.random() - 1) + 0.95 * b;
+
+					a -= a * a * a;
+					this.d[ this.p] = b = Math.max( Math.min( 0.5 * (
+						0.7 * ( a + 0.55 * b) - 0.3 * this.preb +
+						this.d[ ( this.p + 1) % g]
+					), 1) , -1);
+
+					u = this.d[ ( this.p + h) % g];
+
+					this.pre0 = d0[ i] = b - this.preb + 0.995 * this.pre0;
+					this.pre1 = d1[ i] = u - this.preu + 0.995 * this.pre1;
+					this.preb = b;
+					this.preu = u;
+
+					this.p = ++this.p % g;
+					this.q = ++this.q % Math.floor( 0.5 * g);
+					this.t += 1 / sampleRate;
+				}
+
+				return true;
+			}
+		}
+		registerProcessor( "awp_name", awp);
+
+	`)).then( function(){
+		awnode = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオ。
+		awnode.connect( gn_aw);
+
+		awnode.port.onmessage = function( e){ console.log( e.data);}
+
+		o_tap.visible = false;
+		current_state = next_state = STATE_INIT;
+		count = 0;
+	}).catch();
+}
+
+//★ skeleton_touch_2.js のための設定。
+const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
+function touch_event_hook(){
+	if( skt.can_ios_audio_start){
+		if( current_state == STATE_DEFAULT){
+			init_ac();
+		} else if( current_state == STATE_MUTED){
+			//ac.resume();
+			//★ ac.suspend() して、他のアプリで遊んだ後、ac.resume() しても、
+			//★ 音が出ない場合があるので、止める時は ac.close() して、次回は new する。
+			init_ac();
+		}
+	}
+}
+const skt = new skeleton_touch( can);
+skt.set_mag_and_orientation( 1, 0);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+function set_value( p, v){
+	p.cancelScheduledValues( 0);
+	p.value = v;
+}
+
+let count = 0;
+let latest_date, date_fragment;
+
+latest_date = Date.now() - 1000 / 60;
+date_fragment = 0;
+tic();
+
+function tic(){
+	let t;
+
+	requestAnimationFrame( tic);
+
+	t = Date.now();
+	date_fragment = Math.min( date_fragment + t - latest_date, 1.9 * 1000 / 60);
+	latest_date = t;
+
+	while( 1000 / 60 <= date_fragment){
+		tac();
+		date_fragment -= 1000 / 60;
+	}
+}
+function tac(){
+	let i, n;
+	let t;
+
+	skt.pre();
+
+	if( ac){
+		if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
+		if( current_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
+			//★ 電話の着信などで、visibility が hidden になることなく、中断された後、戻ってきた時。
+			ac.close();
+			o_tap.visible = true;
+			next_state = STATE_MUTED;
+		}
+	}
+
+	if( current_state == STATE_INIT){
+		if( count == 0){
+			//★ 初期化。
+		} else{
+			if( ac.state != "suspended"){
+				vol = 0;
+				next_state = STATE_WORKING;
+			}
+		}
+	} else if( current_state == STATE_WORKING){
+
+		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
+		set_value( gn_aw.gain, 0.6 * vol);
+
+		if( count % 7 == 0){
+			n = count / 7 % 336;
+			n = "2    G A Bc1d ef3g4a bC D E.".indexOf( (
+				"e---e--dcdefg-e-C-g-E--- d---d--edcBAG-B-d-B-g--- " +
+				"c---c---dcBcd-e-f-g-a--- d---d---e1dec----------- " +
+				"e---e--dcdefgegeCgCgE--- d---d--edcBAG2GBdBdBg--- " +
+				"c---c---dcBcdefga----gfe d.d.d.d.e1dec----------- " +
+				"d-e-f-----d-e-f-g-----e- f-g-a-----b-g-C-a-g-e-c- " +
+				"d.def-----d-e.efg-----e- 3.3ga-----3-b-a-4-g-3-f- " +
+				"e.e.e.e.fedefgfga----gfe d.d.d.d.d1dec-----------"
+			).substr( n + Math.floor( n / 24), 1));
+			if( 0 <= n){
+				if( n == 27) t = 0; //★ スタッカート。
+				else t = 440 * Math.pow( 2, 0.25 + n / 12);
+				awnode.port.postMessage( t);
+			}
+		}
+
+		ana.getByteFrequencyData( d_ana);
+		tex_ana.needsUpdate = true;
+
+		for( i = 0; i < 100; i++){
+			pos[ i * 16 + 13] = 0.1 * d_ana[ i];
+		}
+		bits.instanceMatrix.array.set( pos);
+		bits.instanceMatrix.needsUpdate = true;
+	}
+
+	t = 0.01 * count;
+	cam.position.set( 3 * Math.sin( t), 1.5, 5 + 3 * Math.cos( t));
+	cam.lookAt( 0, 0.5, -1);
+
+	ren.render( scene, cam);
+
+	skt.post();
+
+	if( current_state != next_state){
+		current_state = next_state;
+		count = 0;
+	} else count++;
+}
+</script>
+
+</body>
+
+</html>
