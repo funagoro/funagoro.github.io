@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="generating ocarina sound AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="generating ocarina sound : an AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -157,13 +157,13 @@ o.rotation.x = -1.57079;
 o.receiveShadow = true;
 dai.add( o);
 
-//★ 向かって左の壁。
+//★ 向かって左の (影を受ける) 壁。
 o = o.clone();
 o.rotation.x = 0;
 o.position.set( 0, 1, -1);
 dai.add( o);
 
-//★ 向かって右の壁。
+//★ 向かって右の (影を受ける) 壁。
 o = o.clone();
 o.rotation.y = -1.57079;
 o.position.set( 1, 1, 0);
@@ -172,8 +172,7 @@ dai.add( o);
 //★ 床の箱。
 o = new THREE.Mesh(
 	new THREE.BoxGeometry( 0.2, 0.2, 0.2),
-	//new THREE.MeshPhongMaterial( { color : 0x444444})
-	new THREE.MeshPhongMaterial( { color : 0xff445c})
+	new THREE.MeshPhongMaterial( { color : 0xff445c}) //★ 赤い方。
 );
 o.castShadow = true;
 o.position.set( -0.7, 0.15, 0.7);
@@ -181,7 +180,7 @@ dai.add( o);
 
 o = o.clone();
 o.material = o.material.clone();
-o.material.color.set( 0x22bbaa);
+o.material.color.set( 0x22bbaa); //★ 緑の方。
 o.position.x = -0.4;
 dai.add( o);
 
@@ -210,6 +209,7 @@ notes[ 0].position.set( 0, -0.1, 0);
 }
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+//★ 空中でブルブルしている黒いバー。
 
 const bm = new Uint8Array( 100 * 16);
 {
@@ -246,7 +246,7 @@ dai.add( bits);
 const d_ana = new Uint8Array( 1024);
 const tex_ana = new THREE.DataTexture( d_ana, 16, 16, THREE.RGBAFormat);
 
-//★ 向かって左の壁。
+//★ 向かって左の壁の柄。
 o = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2));
 const mat_1 = o.material = new THREE.ShaderMaterial( {
 	uniforms : { t : {}, tex : { value : tex_ana}},
@@ -302,7 +302,7 @@ const mat_1 = o.material = new THREE.ShaderMaterial( {
 o.position.set( 0, 1, -0.9);
 dai.add( o);
 
-//★ 向かって右の壁。
+//★ 向かって右の壁の柄。
 o = o.clone();
 const mat_2 = o.material = new THREE.ShaderMaterial( {
 	uniforms : { t : {}},
@@ -352,7 +352,7 @@ function init_ac(){
 
 	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
 
-	m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
+	m = make_filter( "highshelf", 3500, -30); m.connect( n); n = m;
 	m = make_filter( "peaking", 1200, 5); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
 
@@ -547,7 +547,7 @@ function tac(){
 	if( ac){
 		if( count % 20 == 0) document.getElementById( "span_1").innerHTML = ac.state;
 		if( current_state == STATE_WORKING && ( ac.state == "suspended" || ac.state == "interrupted")){
-			//★ 電話の着信などで、visibility が hidden になることなく、中断された後、戻ってきた時。
+			//★ 電話の着信などで、visibility が hidden になることなく中断された後、戻ってきた時。
 			ac.close();
 			o_tap.visible = true;
 			next_state = STATE_MUTED;
@@ -595,6 +595,7 @@ function tac(){
 			}
 		}
 
+		//★ 音符を表す箱を動かす。
 		for( i = 0; i < 20; i++){
 			if( -0.05 <= notes[ i].position.y){
 				notes[ i].position.y += 0.02;
@@ -622,6 +623,7 @@ function tac(){
 	o = new THREE.Vector3( 1, 0, -1);
 	cam.lookAt( o);
 	if( o_tap.visible){
+		//★ カメラの位置に応じて、カメラのすぐ前に張り付き。
 		o_tap.position.copy( cam.position);
 		o_tap.position.lerp( o, 0.01 / cam.position.distanceTo( o));
 		o_tap.lookAt( cam.position);
