@@ -82,6 +82,9 @@ const cam = new THREE.PerspectiveCamera( 60, 1 / 1, 0.001, 1000);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0x888888);
 
+const dai = new THREE.Group();
+scene.add( dai);
+
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 //★ 床。
@@ -92,27 +95,36 @@ o = new THREE.Mesh(
 o.rotation.x = -1.57079;
 //o.material.receiveShadow = true;
 o.receiveShadow = true;
-scene.add( o);
+dai.add( o);
 
 //★ 壁。
 o = o.clone();
 o.rotation.x = 0;
+//o.material.receiveShadow = true;
+o.position.y = 1;
+o.position.z = -1;
+o.receiveShadow = true;
+dai.add( o);
+
+//★ 壁。
+o = o.clone();
 o.rotation.y = -1.57079;
 //o.material.receiveShadow = true;
-o.position.x = 1.003;
-o.position.y = 1;
+o.position.x = 1;
+//o.position.y = 1;
+o.position.z = 0;
 o.receiveShadow = true;
-scene.add( o);
+dai.add( o);
 
 //★ ライト。
 o = new THREE.DirectionalLight( 0xffffff, 0.7);
 o.castShadow = true;
-o.shadow.camera.top = 1;
-o.shadow.camera.bottom = -1;
+o.shadow.camera.top = 2;
+o.shadow.camera.bottom = -2;
 o.shadow.camera.left = -2;
 o.shadow.camera.right = 2;
 o.shadow.camera.near = 0.1;
-o.shadow.camera.far = 10;
+o.shadow.camera.far = 5;
 o.shadow.mapSize.width = o.shadow.mapSize.height = 256;
 o.shadow.radius = 4;
 o.shadow.bias = -0.0001;
@@ -130,14 +142,14 @@ o = new THREE.Mesh(
 );
 o.castShadow = true;
 o.position.set( 0.5, 0.15, 0.5);
-scene.add( o);
+dai.add( o);
 
 //★ 仮、箱。
 o = o.clone();
 o.material = o.material.clone();
 o.material.color.set( 0x66aaaa);
 o.position.set( 0.85, 1.7, 0.7);
-scene.add( o);
+dai.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -169,7 +181,7 @@ bits.scale.set( t, t, t);
 bits.position.set( -1, 0.1, 0);
 //bits.material.castShadow = true;
 bits.castShadow = true;
-scene.add( bits);
+dai.add( bits);
 bits.instanceMatrix.array.set( pos);
 bits.instanceMatrix.needsUpdate = true;
 
@@ -203,7 +215,7 @@ o = new THREE.Mesh(
 	o.material.map = t;
 }
 o.position.z = 0.001;
-t = 0.002*0.015;
+t = 0.0045 * 0.015;
 o.scale.set( t, t, t);
 const o_tap = new THREE.Mesh(
 	new THREE.PlaneGeometry( 2, 2),
@@ -219,7 +231,7 @@ const tex_ana = new THREE.DataTexture( d_ana, 16, 16, THREE.RGBAFormat);
 
 o = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2));
 const mat_1 = o.material = new THREE.ShaderMaterial( {
-	uniforms : { s : { value : 1 / W}, t : {}, tex : { value : tex_ana}},
+	uniforms : { t : {}, tex : { value : tex_ana}},
 	vertexShader : `
 		varying vec2 v_uv;
 
@@ -229,7 +241,7 @@ const mat_1 = o.material = new THREE.ShaderMaterial( {
 		}
 	`,
 	fragmentShader : `
-		uniform float s, t;
+		uniform float t;
 		uniform sampler2D tex;
 
 		varying vec2 v_uv;
@@ -257,10 +269,10 @@ const mat_1 = o.material = new THREE.ShaderMaterial( {
 						//b = 0.3 * ( d.r + d.g + d.b + d.a);
 						b = 8.0 * floor( b * 128.0);
 						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
-						b = 0.3 * ( d.r + d.g + d.b + d.a);
+						b = 0.1 + 0.25 * ( d.r + d.g + d.b + d.a);
 						if( b + 0.05 <= a) c = vec3( 1);
 						else if( a < b) c = vec3( 0.8, 1, 0.95);
-						else c = vec3( 0, 1, 0.9);
+						else c = vec3( 0, 0.9, 0.8);
 					}
 				}
 			}
@@ -271,14 +283,15 @@ const mat_1 = o.material = new THREE.ShaderMaterial( {
 			e = vec4( c, 1);
 		}
 	`,
+	blending : THREE.MultiplyBlending,
 	glslVersion : THREE.GLSL3
 });
-o.position.set( 0, 1, -1);
-scene.add( o);
+o.position.set( 0, 1, -0.9);
+dai.add( o);
 
 o = o.clone();
 const mat_2 = o.material = new THREE.ShaderMaterial( {
-	uniforms : { s : { value : 1 / W}, t : {}},
+	uniforms : { t : {}},
 	vertexShader : `
 		varying vec2 v_uv;
 
@@ -288,24 +301,25 @@ const mat_2 = o.material = new THREE.ShaderMaterial( {
 		}
 	`,
 	fragmentShader : `
-		uniform float s, t;
+		uniform float t;
 
 		varying vec2 v_uv;
 
 		out vec4 e;
 		void main(){
-			if( 0.5 <= v_uv.y) discard;
-			e = vec4( 1, 1, mod( floor( 30.0 * ( v_uv.x + v_uv.y) + 0.07 * t), 2.0), 1);
+			float a;
+
+			a = mod( floor( 30.0 * ( v_uv.x + v_uv.y) + 0.07 * t), 2.0);
+			if( v_uv.y < 0.7) e = vec4( 1, 1, 0, 1) + a;
+			else e = vec4( 0.2, 0.95, 1, 1) + a;
 		}
 	`,
-	transparent : true,
-	opaque : 0.5,
+	blending : THREE.MultiplyBlending,
 	glslVersion : THREE.GLSL3
 });
-//o.castShadow = true;
-o.position.set( 1, 1, 0);
+o.position.set( 0.99, 1, 0.1);
 o.rotation.y = -1.57079;
-scene.add( o);
+dai.add( o);
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
@@ -567,11 +581,10 @@ function tac(){
 		bits.instanceMatrix.needsUpdate = true;
 	}
 
-	t = 3.14159 * ( 1.25 + 0.1 * Math.sin( 0.03 * count));
-	cam.position.set( 1 + 4 * Math.cos( t), 1.5, -1 - 4 * Math.sin( t));
+	dai.rotation.y = 0.5 * Math.sin( 0.03 * count);
+	cam.position.set( -1.8, 1.5, 1.8);
 	o = new THREE.Vector3( 1, 0, -1);
 	cam.lookAt( o);
-
 	if( o_tap.visible){
 		t = cam.position.distanceTo( o);
 		o_tap.position.copy( cam.position);
