@@ -34,6 +34,16 @@
 
 
 
+むーかーし　あひるーは　からだーがー　おおきくて<br>
+うーみーも　わたれーば　さかなーもー　たーべたよ<br>
+ラーンラララ　ランラララン<br>
+ラーンラララ　ランラララン<br>
+ラーンラララ　ランラララン<br>
+ララララララ　ランラン<br>
+<br>
+
+
+
 <canvas id="canvas_1" style="
 	width : 512px; height : 512px;
 	user-select : none;
@@ -249,7 +259,7 @@ function init_ac(){
 						else c = Math.max( 1 - 0.5 * ( this.t - 0.1), 0);
 						c += 0.05 * Math.sin( 5 * 2 * 3.14159 * this.t);
 
-						this.de[ this.pe] = c + 0.3 * c * ( 2 * Math.random() - 1) + ( 0.95 * b);
+						this.de[ this.pe] = c + 0.3 * c * ( 2 * Math.random() - 1) + 0.95 * b;
 
 						a -= a * a * a;
 						this.db[ this.pb] = b = Math.max( Math.min( 0.5 * (
@@ -391,7 +401,7 @@ function tac(){
 				"ceg-g-gagfe- efg-efg-fef- def-f-fgfed- def-def-ede- " +
 				"c--egee-dxd- d--faff-ede- c--egee-dxd- agfdBdc-c---"
 			).substr( n + Math.floor( n / 12), 1));
-			if( 0 <= n) awnode.port.postMessage( 440 * Math.pow( 2, 1 + n / 12) * ( 1 + 0.05 * Math.random()));
+			if( 0 <= n) awnode.port.postMessage( 440 * Math.pow( 2, 1 + n / 12) * ( 1 + 0.04 * Math.random()));
 		}
 
 		ana.getByteFrequencyData( ad);
