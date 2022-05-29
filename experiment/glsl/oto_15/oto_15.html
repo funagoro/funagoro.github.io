@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Perry Cook's slide flute AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="generating chinese gong sound : an AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -61,7 +61,7 @@
 	touch-action : none;
 "></canvas><br>
 <span id="span_1">- - - - -</span><br>
-<span class="title">"oto 15" 実験中。</span><br>
+<span class="title">"oto 15"</span><br>
 &copy;2022 Maeda Mameo<br>
 
 
@@ -157,18 +157,25 @@ const plane = new THREE.Mesh(
 				vec3 c;
 				vec4 d;
 
-				c = vec3( 0.95);
 				v = gl_FragCoord.xy * s - vec2( 0.5, -1.5);
 				a = 1.5 * ( length( v) - 1.65);
-				if( 0.0 <= a && a < 1.0){
+				if( a < 0.0 || 1.0 <= a) a = 2.0;
+				else if( a < 1.0){
 					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
 					if( 0.0 <= b && b < 1.0){
 						b = 8.0 * floor( b * 128.0);
 						d = texelFetch( tex, ivec2( mod( b / 4.0, 16.0), b / 64.0), 0);
-						b = 0.3 * ( d.r + d.g + d.b + d.a);
-						if( a <= b) c = ( 2.0 - b + a) * vec3( 0.2, 0.5, 0.7 - 0.3 * a);
-						else c = vec3( 0.9);
-					}
+						b = 0.2 + 0.2 * ( d.r + d.g + d.b + d.a);
+						if( a < b || b + 0.01 <= a){
+							a = smoothstep( 0.2, 0.8, a);
+							c = vec3( 0.7 - 0.6 * a, 0.5 + 0.5 * a, 0.85 + 0.05 * a);
+						} else c = vec3( 0);
+					} else a = 2.0;
+				}
+
+				if( a == 2.0){
+					a = smoothstep( 0.2, 0.8, gl_FragCoord.y * s);
+					c = vec3( 1, 1.0 - 0.5 * a, 0.7 + 0.0 * a);
 				}
 				e = vec4( c, 1);
 			}
@@ -184,8 +191,8 @@ let is_visibility_listener = false;
 let ac;
 let ana, gn_aw, awnode;
 
-let no_bqf, bqf_1, bqf_2;
-let hsn;
+let bpf_dry, bpf_1, bpf_2;
+let hsf;
 
 let vol;
 
@@ -199,28 +206,28 @@ function init_ac(){
 	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
 
 	m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
-	hsn = m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
-	//m = make_filter( "peaking", 100, 5); m.connect( n); n = m;
+	hsf = m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
+	m = make_filter( "peaking", 440, 3); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
 	//m = make_filter( "lowpass", 3000, 5); m.connect( n); n = m;
 
-	no_bqf = ac.createGain();
-	no_bqf.connect( n);
+	bpf_dry = ac.createGain();
+	bpf_dry.connect( n);
 
-	bqf_1 = ac.createBiquadFilter();
-	bqf_1.type = "bandpass";
-	bqf_1.Q.value = 7;
-	bqf_1.connect( n);
+	bpf_1 = ac.createBiquadFilter();
+	bpf_1.type = "bandpass";
+	bpf_1.Q.value = 7;
+	bpf_1.connect( n);
 
-	bqf_2 = ac.createBiquadFilter();
-	bqf_2.type = "bandpass";
-	bqf_2.Q.value = 7;
-	bqf_2.connect( n);
+	bpf_2 = ac.createBiquadFilter();
+	bpf_2.type = "bandpass";
+	bpf_2.Q.value = 7;
+	bpf_2.connect( n);
 
 	gn_aw = ac.createGain();
-	gn_aw.connect( no_bqf);
-	gn_aw.connect( bqf_1);
-	gn_aw.connect( bqf_2);
+	gn_aw.connect( bpf_dry);
+	gn_aw.connect( bpf_1);
+	gn_aw.connect( bpf_2);
 
 	gong();
 
@@ -290,36 +297,37 @@ function gong(){
 
 			process( inputs, outputs, parameters){
 				let g1, g2, g3, i, m, n;
+				let v;
 
 				const o = outputs[ 0];
 
 				m = this.d1.length;
 				n = o[ 0].length;
 				g1 = Math.floor( sampleRate / this.f);
-				g2 = Math.floor( 0.7 * g1);
-				g3 = Math.floor( 0.3 * g1);
+				g2 = Math.floor( 0.77 * g1);
+				g3 = Math.floor( 0.29 * g1);
+				//v = Math.max( 1 - 50 * this.t, 0);
+				v = Math.exp( -20 * this.t);
 				for( i = 0; i < n; i++){
-					let a, b, v;
-
-					v = Math.max( 1 - 50 * this.t, 0);
+					let a, b;
 
 					b = this.d1[ ( this.p1 + m - g1) % m];
 					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.5 * ( b + this.d1[ ( this.p1 + m - g1 + 1) % m]), 1) , -1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d1[ ( this.p1 + m - g1 + 1) % m]), 1) , -1);
 					this.d1[ this.p1] = b;
 					a = b;
 					this.p1 = ++this.p1 % m;
 
 					b = this.d2[ ( this.p2 + m - g2) % m];
 					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.5 * ( b + this.d2[ ( this.p2 + m - g2 + 1) % m]), 1) , -1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d2[ ( this.p2 + m - g2 + 1) % m]), 1) , -1);
 					this.d2[ this.p2] = b;
 					a += b;
 					this.p2 = ++this.p2 % m;
 
 					b = this.d3[ ( this.p3 + m - g3) % m];
 					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.5 * ( b + this.d3[ ( this.p3 + m - g3 + 1) % m]), 1) , -1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d3[ ( this.p3 + m - g3 + 1) % m]), 1) , -1);
 					this.d3[ this.p3] = b;
 					a += b;
 					this.p3 = ++this.p3 % m;
@@ -370,9 +378,10 @@ function set_value( p, v){
 	p.value = v;
 }
 
+let dur = 0;
+
 let count = 0;
 let latest_date, date_fragment;
-let dur;
 
 latest_date = Date.now() - 1000 / 60;
 date_fragment = 0;
@@ -434,16 +443,14 @@ function tac(){
 				dur = 0;
 			}
 		}
-set_value( hsn.gain, Math.min( -10 + 40.0 * dur, 0));
-//set_value( hsn.gain, 0);
-set_value( no_bqf.gain, Math.min( 0.1 + 0.5 * dur, vol));
-//set_value( bqf_1.gain, Math.max( 1 - 0.5 * dur, 0));
-//set_value( bqf_2.gain, Math.max( 1 - 0.5 * dur, 0));
-if( dur < 0.5){
-	set_value( bqf_1.frequency, 900 + 400 * 1.5 * dur);
-	set_value( bqf_2.frequency, 500 + 300 * 1.5 * dur);
-}
-dur += 1 / 60;
+
+		set_value( hsf.gain, Math.min( -10 + 40.0 * dur, 0));
+		set_value( bpf_dry.gain, Math.min( 0.1 + 0.5 * dur, vol));
+		if( dur < 0.5){
+			set_value( bpf_1.frequency, 0.7 * ( 450 + 350 * 2 * dur));
+			set_value( bpf_2.frequency, 0.7 * ( 900 + 400 * 2 * dur));
+		}
+		dur += 1 / 60;
 
 		ana.getByteFrequencyData( ad);
 		tex_a.needsUpdate = true;
