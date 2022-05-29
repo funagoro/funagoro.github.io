@@ -52,7 +52,7 @@
 てんじょうかげは　かわらねど<br>
 えいこはうつる　よのすがた<br>
 うつさんとてか　いまもなお<br>
-ああこうじょうの　よはのつき<br>
+ああこうじょうの　よわのつき<br>
 <br>
 <canvas id="canvas_1" style="
 	width : 512px; height : 512px;
@@ -207,7 +207,7 @@ function init_ac(){
 
 	m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
 	hsf = m = make_filter( "highshelf", 3500, -20); m.connect( n); n = m;
-	m = make_filter( "peaking", 440, 3); m.connect( n); n = m;
+	m = make_filter( "peaking", 660, 3); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
 	//m = make_filter( "lowpass", 3000, 5); m.connect( n); n = m;
 
@@ -444,11 +444,11 @@ function tac(){
 			}
 		}
 
-		set_value( hsf.gain, Math.min( -10 + 40.0 * dur, 0));
+		set_value( hsf.gain, Math.min( -20 + 50.0 * dur, 0));
 		set_value( bpf_dry.gain, Math.min( 0.1 + 0.5 * dur, vol));
 		if( dur < 0.5){
-			set_value( bpf_1.frequency, 0.7 * ( 450 + 350 * 2 * dur));
-			set_value( bpf_2.frequency, 0.7 * ( 900 + 400 * 2 * dur));
+			set_value( bpf_1.frequency, 450 + 350 * 2 * dur);
+			set_value( bpf_2.frequency, 900 + 400 * 2 * dur);
 		}
 		dur += 1 / 60;
 
