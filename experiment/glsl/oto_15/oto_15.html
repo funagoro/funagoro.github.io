@@ -431,13 +431,13 @@ function tac(){
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
 		set_value( gn_aw.gain, 2.5 * vol);
 
-		if( count % 30 == 0){
+		if( count % 35 == 0){
 			n = " A Bc d ef g a bC".indexOf( (
 				"e e a b C b a   f f e d e       " +
 				"e e a b C b a   f d e  eA       " +
-				"c  cB A f f e   d e f  fe       " +
+				"c c B A f  fe   d e f  fe       " +
 				"e e a b C b a   f d e  eA       "
-			).substr( count / 30 % 128, 1));
+			).substr( count / 35 % 128, 1));
 			if( 0 < n){
 				awnode.port.postMessage( 440 * Math.pow( 2, -4.4 + n / 12) * ( 1 + 0 * Math.random()));
 				dur = 0;
