@@ -280,11 +280,9 @@ function gong(){
 				this.t = 10;
 
 				this.d1 = new Float32Array( Math.floor( sampleRate / 10)); //★ 対応可能な最低周波数。
-				this.p1 = 0;
 				this.d2 = new Float32Array( Math.floor( sampleRate / 10));
-				this.p2 = 0;
 				this.d3 = new Float32Array( Math.floor( sampleRate / 10));
-				this.p3 = 0;
+				this.p = 0;
 
 				this.port.onmessage = ( e) => {
 					this.f = parseFloat( e.data);
@@ -307,33 +305,29 @@ function gong(){
 				g2 = Math.floor( 0.77 * g1);
 				g3 = Math.floor( 0.29 * g1);
 				//v = Math.max( 1 - 50 * this.t, 0);
-				v = Math.exp( -20 * this.t);
+				v = Math.exp( -5 * this.t);
 				for( i = 0; i < n; i++){
-					let a, b;
+					let a, b, q;
 
-					b = this.d1[ ( this.p1 + m - g1) % m];
-					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d1[ ( this.p1 + m - g1 + 1) % m]), 1) , -1);
-					this.d1[ this.p1] = b;
+					q = this.p + m;
+
+					b = this.d1[ ( q - g1) % m]+ v * ( 2 * Math.random() - 1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d1[ ( q - g1 + 1) % m]), 1) , -1);
+					this.d1[ this.p] = b;
 					a = b;
-					this.p1 = ++this.p1 % m;
 
-					b = this.d2[ ( this.p2 + m - g2) % m];
-					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d2[ ( this.p2 + m - g2 + 1) % m]), 1) , -1);
-					this.d2[ this.p2] = b;
+					b = this.d2[ ( q - g2) % m] + v * ( 2 * Math.random() - 1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d2[ ( q - g2 + 1) % m]), 1) , -1);
+					this.d2[ this.p] = b;
 					a += b;
-					this.p2 = ++this.p2 % m;
 
-					b = this.d3[ ( this.p3 + m - g3) % m];
-					b += v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d3[ ( this.p3 + m - g3 + 1) % m]), 1) , -1);
-					this.d3[ this.p3] = b;
+					b = this.d3[ ( q - g3) % m] + v * ( 2 * Math.random() - 1);
+					b = Math.max( Math.min( 0.499 * ( b + this.d3[ ( q - g3 + 1) % m]), 1) , -1);
+					this.d3[ this.p] = b;
 					a += b;
-					this.p3 = ++this.p3 % m;
 
 					o[ 0][ i] = o[ 1][ i] = a;
-
+					this.p = ++this.p % m;
 					this.t += 1 / sampleRate;
 				}
 
@@ -444,7 +438,6 @@ function tac(){
 			}
 		}
 
-		set_value( hsf.gain, Math.min( -20 + 50.0 * dur, 0));
 		set_value( bpf_dry.gain, Math.min( 0.1 + 0.5 * dur, vol));
 		if( dur < 0.5){
 			set_value( bpf_1.frequency, 450 + 350 * 2 * dur);
