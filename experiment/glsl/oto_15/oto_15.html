@@ -34,6 +34,9 @@
 
 
 
+<span style="font-size : 24px; font-weight : 600;">「荒城の月」</span><br>
+作詞 : 土井晩翠 / 作曲 : 滝廉太郎<br>
+<br>
 はるこうろうの　はなのえん<br>
 めぐるさかづき　かげさして<br>
 ちよのまつがえ　わけいでし<br>
@@ -160,7 +163,7 @@ const plane = new THREE.Mesh(
 				v = gl_FragCoord.xy * s - vec2( 0.5, -1.5);
 				a = 1.5 * ( length( v) - 1.65);
 				if( a < 0.0 || 1.0 <= a) a = 2.0;
-				else if( a < 1.0){
+				else{
 					b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
 					if( 0.0 <= b && b < 1.0){
 						b = 8.0 * floor( b * 128.0);
@@ -294,35 +297,35 @@ function gong(){
 			}
 
 			process( inputs, outputs, parameters){
-				let g1, g2, g3, i, m, n;
-				let v;
+				let i;
 
+				const m = this.d1.length;
 				const o = outputs[ 0];
+				const n = o[ 0].length;
 
-				m = this.d1.length;
-				n = o[ 0].length;
-				g1 = Math.floor( sampleRate / this.f);
-				g2 = Math.floor( 0.77 * g1);
-				g3 = Math.floor( 0.29 * g1);
-				//v = Math.max( 1 - 50 * this.t, 0);
-				v = Math.exp( -5 * this.t);
+				const g1 = Math.floor( sampleRate / this.f);
+				const g2 = Math.floor( 0.77 * g1);
+				const g3 = Math.floor( 0.29 * g1);
+				const v = Math.exp( -5 * this.t);
+				const t = 0.5 * Math.pow( 0.9, 1 / this.f);
+
 				for( i = 0; i < n; i++){
 					let a, b, q;
 
 					q = this.p + m;
 
-					b = this.d1[ ( q - g1) % m]+ v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d1[ ( q - g1 + 1) % m]), 1) , -1);
+					b = this.d1[ ( q - g1) % m] + v * ( 2 * Math.random() - 1);
+					b = Math.max( Math.min( t * ( b + this.d1[ ( q - g1 + 1) % m]), 1) , -1);
 					this.d1[ this.p] = b;
 					a = b;
 
 					b = this.d2[ ( q - g2) % m] + v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d2[ ( q - g2 + 1) % m]), 1) , -1);
+					b = Math.max( Math.min( t * ( b + this.d2[ ( q - g2 + 1) % m]), 1) , -1);
 					this.d2[ this.p] = b;
 					a += b;
 
 					b = this.d3[ ( q - g3) % m] + v * ( 2 * Math.random() - 1);
-					b = Math.max( Math.min( 0.499 * ( b + this.d3[ ( q - g3 + 1) % m]), 1) , -1);
+					b = Math.max( Math.min( t * ( b + this.d3[ ( q - g3 + 1) % m]), 1) , -1);
 					this.d3[ this.p] = b;
 					a += b;
 
