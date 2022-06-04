@@ -228,7 +228,7 @@ function neon(){
 	}
 
 	//★ ぼかしながら、8→16、16→32、32→64、64→128、128→256。
-	for( i = 4; 0 <= i; i--){
+	for( i = 4; 1 <= i; i--){
 		mat_neon.uniforms.s.value = Math.pow( 2, i - 8);
 		mat_neon.uniforms.tex.value = rt_neon[ i + 1].texture;
 		ren.setRenderTarget( rt_neon[ i]);
@@ -242,19 +242,29 @@ const mat_0 = new THREE.ShaderMaterial( {
 	uniforms : {
 		s : { value : 1 / W},
 		dry : { value : rt_dry.texture},
-		neon : { value : rt_neon[ 0].texture}
+		neon0 : { value : rt_neon[ 0].texture},
+		neon : { value : rt_neon[ 1].texture}
 	},
 	fragmentShader : `
 		uniform float s;
-		uniform sampler2D dry, neon;
+		uniform sampler2D dry, neon0, neon;
 
 		void main(){
+			float a;
 			vec2 v;
 			vec4 c;
 
 			v = gl_FragCoord.xy * s;
+
+			c = texture( dry, v);
+			a = c.r + c.g + c.b;
+
 			c = texture( neon, v);
-			gl_FragColor = texture( dry, v) + 9.0 * c * pow( 2.0, 5.0 * ( c.r + c.g + c.b - 0.3));
+			gl_FragColor =
+				//texture( dry, v) +
+				//0.2 * a +
+				texture( neon0, v) +
+				9.0 * c * pow( 2.0, 5.0 * ( c.r + c.g + c.b - 0.3));
 		}
 	`
 });
@@ -278,7 +288,7 @@ function init_ac(){
 
 	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
 
-	m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
+	//m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
 	m = make_filter( "highshelf", 4000, -15); m.connect( n); n = m;
 	//m = make_filter( "peaking", 440, 5); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
@@ -377,8 +387,8 @@ function steelpan(){
 
 				u = 1000 * this.f;
 				for( i = 0; i < n; i++){
-					w = u * this.t;
-					d0[ i] = d1[ i] = 0.8 * (
+					w = u * ( 1 + this.t);
+					d0[ i] = d1[ i] = 0.4 * (
 						v1 * this.sin[ Math.floor( w) % 1000]
 						+ 0.8 * v2 * this.sin[ Math.floor( 1.95 * w) % 1000]
 						+ 0.65 * v2 * this.sin[ Math.floor( 2.98 * w) % 1000]
