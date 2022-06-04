@@ -34,7 +34,7 @@
 
 
 
-2<br>
+3<br>
 <br>
 <canvas id="canvas_1" style="
 	width : 512px; height : 512px;
@@ -383,7 +383,7 @@ function steelpan(){
 
 			process( inputs, outputs, parameters){
 				let i;
-				let u, w;
+				let u, w, a1, a2, a3;
 
 				const e = 0.03, h = 0.02;
 
@@ -394,24 +394,28 @@ function steelpan(){
 				u = this.t;
 				if( u < h) w = this.sin[ Math.floor( 250 * u / h)];
 				else w = Math.exp( -2 * ( u - h));
-				this.v1 += 0.05 * ( w - this.v1);
+				a1 = ( w - this.v1) / n;
 
 				u = this.t - e;
 				if( u < 0) w = 0;
 				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
 				else w = Math.exp( -2.8 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 7 * 1000 * u) % 1000]);
-				this.v2 += 0.05 * ( w - this.v2);
+				a2 = ( w - this.v2) / n;
 
 				u = this.t - 2 * e;
 				if( u < 0) w = 0;
 				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
 				else w = Math.exp( -3.5 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 9 * 1000 * u) % 1000]);
-				this.v3 += 0.05 * ( w - this.v3);
+				a3 = ( w - this.v3) / n;
 
 				u = 1000 * this.f / sampleRate;
 				for( i = 0; i < n; i++){
+					this.v1 += a1;
+					this.v2 += a2;
+					this.v3 += a3;
+
 					d0[ i] = d1[ i] = 0.4 * (
 						this.v1 * this.sin[ Math.floor( this.p1)]
 						+ 0.8 * this.v2 * this.sin[ Math.floor( this.p2)]
@@ -419,6 +423,7 @@ function steelpan(){
 						+ 0.5 * this.v3 * this.sin[ Math.floor( this.p4)]
 						+ 0.4 * this.v3 * this.sin[ Math.floor( this.p5)]
 					);
+
 					this.p1 = ( this.p1 + u) % 1000;
 					this.p2 = ( this.p2 + 1.95 * u) % 1000;
 					this.p3 = ( this.p3 + 2.98 * u) % 1000;
