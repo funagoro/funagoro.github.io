@@ -169,7 +169,7 @@ const mat_a = new THREE.ShaderMaterial( {
 			b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
 			if( b < 0.0 || 1.0 <= b) c = vec4( 0);
 			else{
-				e = 2.0 * floor( b * 80.0);
+				e = 1.6 * floor( b * 90.0);
 				d = texelFetch( tex, ivec2( mod( e / 4.0, 16.0), e / 64.0), 0);
 				e = 0.2 + 0.2 * ( d.r + d.g + d.b + d.a);
 				if( a < e || e + 0.09 <= a) c = vec4( 0);
@@ -331,14 +331,17 @@ function steelpan(){
 
 		class awp extends AudioWorkletProcessor{
 			constructor(){
+				let i;
 
 				super();
 
 				this.f = 440;
 				this.t = 10;
+				this.v1 = 0, this.v2 = 0, this.v3 = 0;
+				this.p1 = 0, this.p2 = 0, this.p3 = 0, this.p4 = 0, this.p5 = 0;
 
 				this.sin = new Float32Array( 1000);
-				for( let i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
+				for( i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
 
 				this.port.onmessage = ( e) => {
 					this.f = parseFloat( e.data);
@@ -351,7 +354,7 @@ function steelpan(){
 
 			process( inputs, outputs, parameters){
 				let i;
-				let u, v1, v2, v3, w;
+				let a1, a2, a3, u, w;
 
 				const e = 0.03, h = 0.02;
 
@@ -360,34 +363,45 @@ function steelpan(){
 				const n = d0.length;
 
 				u = this.t;
-				if( u < h) v1 = this.sin[ Math.floor( 250 * u / h)];
-				else v1 = Math.exp( -2 * ( u - h));
+				if( u < h) w = this.sin[ Math.floor( 250 * u / h)];
+				else w = Math.exp( -2 * ( u - h));
+				a1 = ( w - this.v1) / n;
 
 				u = this.t - e;
-				if( u < 0) v2 = 0;
-				else if( u < h) v2 = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
-				else v2 = Math.exp( -2.8 * ( u - h)) *
+				if( u < 0) w = 0;
+				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
+				else w = Math.exp( -2.8 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 7 * 1000 * u) % 1000]);
+				a2 = ( w - this.v2) / n;
 
 				u = this.t - 2 * e;
-				if( u < 0) v3 = 0;
-				else if( u < h) v3 = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
-				else v3 = Math.exp( -3.5 * ( u - h)) *
+				if( u < 0) w = 0;
+				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
+				else w = Math.exp( -3.5 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 9 * 1000 * u) % 1000]);
+				a3 = ( w - this.v3) / n;
 
-				u = 1000 * this.f;
+				u = 1000 * this.f / sampleRate;
 				for( i = 0; i < n; i++){
-					w = u * this.t;
-					d0[ i] = d1[ i] = 0.8 * (
-						v1 * this.sin[ Math.floor( w) % 1000]
-						+ 0.8 * v2 * this.sin[ Math.floor( 1.95 * w) % 1000]
-						+ 0.65 * v2 * this.sin[ Math.floor( 2.98 * w) % 1000]
-						+ 0.5 * v3 * this.sin[ Math.floor( 3.93 * w) % 1000]
-						+ 0.4 * v3 * this.sin[ Math.floor( 4.67 * w) % 1000]
-						//+ 0.3 * v3 * this.sin[ Math.floor( 4.95 * w) % 1000]
+					this.v1 += a1;
+					this.v2 += a2;
+					this.v3 += a3;
+
+					d0[ i] = d1[ i] = 0.4 * (
+						this.v1 * this.sin[ Math.floor( this.p1)]
+						+ 0.8 * this.v2 * this.sin[ Math.floor( this.p2)]
+						+ 0.65 * this.v2 * this.sin[ Math.floor( this.p3)]
+						+ 0.5 * this.v3 * this.sin[ Math.floor( this.p4)]
+						+ 0.4 * this.v3 * this.sin[ Math.floor( this.p5)]
 					);
-					this.t += 1 / sampleRate;
+
+					this.p1 = ( this.p1 + u) % 1000;
+					this.p2 = ( this.p2 + 1.95 * u) % 1000;
+					this.p3 = ( this.p3 + 2.98 * u) % 1000;
+					this.p4 = ( this.p4 + 3.93 * u) % 1000;
+					this.p5 = ( this.p5 + 4.67 * u) % 1000;
 				}
+				this.t += n / sampleRate;
 
 				return true;
 			}
@@ -488,7 +502,7 @@ function tac(){
 
 		if( count % 9 == 0){
 			n = " A Bc d ef g1a bC D E".indexOf( (
-				"E E C   a1abC a D  ED C b a g..." +
+				"E E C   a1abC a D  ED C b a g   " +
 				"E E C   a1abC a D  ED b C       " +
 				"cdefg C a gfg   f ede c ddded   " +
 				"cdefg C a gfg   f ede c d  gc   " +
