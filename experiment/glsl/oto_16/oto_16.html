@@ -227,7 +227,7 @@ function neon(){
 		ren.render( scene, cam);
 	}
 
-	//★ ぼかしながら、8→16、16→32、32→64、64→128、128→256。
+	//★ ぼかしながら、8→16、16→32、32→64、64→128。
 	for( i = 4; 1 <= i; i--){
 		mat_neon.uniforms.s.value = Math.pow( 2, i - 8);
 		mat_neon.uniforms.tex.value = rt_neon[ i + 1].texture;
@@ -241,13 +241,12 @@ function neon(){
 const mat_0 = new THREE.ShaderMaterial( {
 	uniforms : {
 		s : { value : 1 / W},
-		dry : { value : rt_dry.texture},
 		neon0 : { value : rt_neon[ 0].texture},
 		neon : { value : rt_neon[ 1].texture}
 	},
 	fragmentShader : `
 		uniform float s;
-		uniform sampler2D dry, neon0, neon;
+		uniform sampler2D neon0, neon;
 
 		void main(){
 			float a;
@@ -255,14 +254,8 @@ const mat_0 = new THREE.ShaderMaterial( {
 			vec4 c;
 
 			v = gl_FragCoord.xy * s;
-
-			c = texture( dry, v);
-			a = c.r + c.g + c.b;
-
 			c = texture( neon, v);
 			gl_FragColor =
-				//texture( dry, v) +
-				//0.2 * a +
 				texture( neon0, v) +
 				9.0 * c * pow( 2.0, 5.0 * ( c.r + c.g + c.b - 0.3));
 		}
@@ -346,6 +339,7 @@ function steelpan(){
 
 				this.f = 440;
 				this.t = 10;
+				this.v1 = 0, this.v2 = 0, this.v3 = 0;
 
 				this.sin = new Float32Array( 1000);
 				for( let i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
@@ -370,31 +364,34 @@ function steelpan(){
 				const n = d0.length;
 
 				u = this.t;
-				if( u < h) v1 = this.sin[ Math.floor( 250 * u / h)];
-				else v1 = Math.exp( -2 * ( u - h));
+				if( u < h) w = this.sin[ Math.floor( 250 * u / h)];
+				else w = Math.exp( -2 * ( u - h));
+				this.v1 += 0.1 * ( w - this.v1);
 
 				u = this.t - e;
-				if( u < 0) v2 = 0;
-				else if( u < h) v2 = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
-				else v2 = Math.exp( -2.8 * ( u - h)) *
+				if( u < 0) w = 0;
+				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
+				else w = Math.exp( -2.8 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 7 * 1000 * u) % 1000]);
+				this.v2 += 0.1 * ( w - this.v2);
 
 				u = this.t - 2 * e;
-				if( u < 0) v3 = 0;
-				else if( u < h) v3 = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
-				else v3 = Math.exp( -3.5 * ( u - h)) *
+				if( u < 0) w = 0;
+				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
+				else w = Math.exp( -3.5 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 9 * 1000 * u) % 1000]);
+				this.v3 += 0.1 * ( w - this.v3);
 
 				u = 1000 * this.f;
 				for( i = 0; i < n; i++){
-					w = u * ( 1 + this.t);
+					w = u * this.t;
 					d0[ i] = d1[ i] = 0.4 * (
-						v1 * this.sin[ Math.floor( w) % 1000]
-						+ 0.8 * v2 * this.sin[ Math.floor( 1.95 * w) % 1000]
-						+ 0.65 * v2 * this.sin[ Math.floor( 2.98 * w) % 1000]
-						+ 0.5 * v3 * this.sin[ Math.floor( 3.93 * w) % 1000]
-						+ 0.4 * v3 * this.sin[ Math.floor( 4.67 * w) % 1000]
-						//+ 0.3 * v3 * this.sin[ Math.floor( 4.95 * w) % 1000]
+						this.v1 * this.sin[ Math.floor( w) % 1000]
+						+ 0.8 * this.v2 * this.sin[ Math.floor( 1.95 * w) % 1000]
+						+ 0.65 * this.v2 * this.sin[ Math.floor( 2.98 * w) % 1000]
+						+ 0.5 * this.v3 * this.sin[ Math.floor( 3.93 * w) % 1000]
+						+ 0.4 * this.v3 * this.sin[ Math.floor( 4.67 * w) % 1000]
+						//+ 0.3 * this.v3 * this.sin[ Math.floor( 4.95 * w) % 1000]
 					);
 					this.t += 1 / sampleRate;
 				}
