@@ -417,21 +417,21 @@ function steelpan(){
 				u = this.t;
 				if( u < h) w = this.sin[ Math.floor( 250 * u / h)];
 				else w = Math.exp( -2 * ( u - h));
-				this.v1 += 0.05 * ( w - this.v1);
+				this.v1 += 0.2 * ( w - this.v1);
 
 				u = this.t - e;
 				if( u < 0) w = 0;
 				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
 				else w = Math.exp( -2.8 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 7 * 1000 * u) % 1000]);
-				this.v2 += 0.05 * ( w - this.v2);
+				this.v2 += 0.2 * ( w - this.v2);
 
 				u = this.t - 2 * e;
 				if( u < 0) w = 0;
 				else if( u < h) w = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / h)];
 				else w = Math.exp( -3.5 * ( u - h)) *
 					( 0.7 + 0.3 * this.sin[ Math.floor( 9 * 1000 * u) % 1000]);
-				this.v3 += 0.05 * ( w - this.v3);
+				this.v3 += 0.2 * ( w - this.v3);
 
 				u = 1000 * this.f / sampleRate;
 				for( i = 0; i < n; i++){
