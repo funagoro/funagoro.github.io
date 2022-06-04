@@ -334,15 +334,17 @@ function steelpan(){
 
 		class awp extends AudioWorkletProcessor{
 			constructor(){
+				let i;
 
 				super();
 
 				this.f = 440;
 				this.t = 10;
 				this.v1 = 0, this.v2 = 0, this.v3 = 0;
+				this.p1 = 0, this.p2 = 0, this.p3 = 0, this.p4 = 0, this.p5 = 0;
 
 				this.sin = new Float32Array( 1000);
-				for( let i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
+				for( i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
 
 				this.port.onmessage = ( e) => {
 					this.f = parseFloat( e.data);
@@ -355,7 +357,7 @@ function steelpan(){
 
 			process( inputs, outputs, parameters){
 				let i;
-				let u, v1, v2, v3, w;
+				let u, w;
 
 				const e = 0.03, h = 0.02;
 
@@ -382,19 +384,22 @@ function steelpan(){
 					( 0.7 + 0.3 * this.sin[ Math.floor( 9 * 1000 * u) % 1000]);
 				this.v3 += 0.1 * ( w - this.v3);
 
-				u = 1000 * this.f;
+				u = 1000 * this.f / sampleRate;
 				for( i = 0; i < n; i++){
-					w = u * this.t;
 					d0[ i] = d1[ i] = 0.4 * (
-						this.v1 * this.sin[ Math.floor( w) % 1000]
-						+ 0.8 * this.v2 * this.sin[ Math.floor( 1.95 * w) % 1000]
-						+ 0.65 * this.v2 * this.sin[ Math.floor( 2.98 * w) % 1000]
-						+ 0.5 * this.v3 * this.sin[ Math.floor( 3.93 * w) % 1000]
-						+ 0.4 * this.v3 * this.sin[ Math.floor( 4.67 * w) % 1000]
-						//+ 0.3 * this.v3 * this.sin[ Math.floor( 4.95 * w) % 1000]
+						this.v1 * this.sin[ Math.floor( this.p1)]
+						+ 0.8 * this.v2 * this.sin[ Math.floor( this.p2)]
+						+ 0.65 * this.v2 * this.sin[ Math.floor( this.p3)]
+						+ 0.5 * this.v3 * this.sin[ Math.floor( this.p4)]
+						+ 0.4 * this.v3 * this.sin[ Math.floor( this.p5)]
 					);
-					this.t += 1 / sampleRate;
+					this.p1 = ( this.p1 + u) % 1000;
+					this.p2 = ( this.p2 + 1.95 * u) % 1000;
+					this.p3 = ( this.p3 + 2.98 * u) % 1000;
+					this.p4 = ( this.p4 + 3.93 * u) % 1000;
+					this.p5 = ( this.p5 + 4.67 * u) % 1000;
 				}
+				this.t += n / sampleRate;
 
 				return true;
 			}
