@@ -547,8 +547,8 @@ function tic(){
 	}
 }
 function tac(){
-	let i, n;
-	let t;
+	let n;
+	let t, u;
 
 	skt.pre();
 
@@ -579,7 +579,7 @@ function tac(){
 		if( count % 36 == 0) play_audio( ab_kick, gn_kick, 2);
 
 		const SC =
-			"E E C2   a1abC a D  ED C b a g2..." +
+			"E E C2   a1abC a D  ED C b a g2   " +
 			"E E C2   a1abC a D  ED b C2       " +
 			"cdefg C a gfg2   f ede c ddded2   " +
 			"cdefg C a gfg2   f ede c d  gc2   " +
@@ -587,17 +587,19 @@ function tac(){
 			"gag gag g C g E D a b  ag2       ";
 		if( count % 9 == 0){
 			t = 0.17;
-			n = " A Bc d ef g1a bC D E".indexOf( ( SC
-			).substr( scp, 1));
+			u = 1500;
+			n = " A Bc d ef g1a bC D E".indexOf( SC.substr( scp, 1));
 			scp = ++scp % SC.length;
 			if( SC.substr( scp, 1) == "2"){
 				t = 0.4;
+				if( 14 <= n + 12 * ( Math.floor( count / 9 / 16) % 4 - 1)) u = -1500;
 				scp = ++scp % SC.length;
 			}
 			if( 0 < n){
+				n += 12 * ( Math.floor( count / 9 / 16) % 4 - 1);
 				awnode[ aw_n].port.postMessage(
-					440 * Math.pow( 2, Math.floor( count / 9 / 16) % 4 - 1 + ( n - 1) / 12) * ( 1 + 0.02 * Math.random()) + " " +
-					( 1500 / ac.sampleRate) + " " +
+					440 * Math.pow( 2, ( n - 1) / 12) * ( 1 + 0.02 * Math.random()) + " " +
+					u / ac.sampleRate + " " +
 					t
 				);
 				aw_n = ++aw_n % 6;
