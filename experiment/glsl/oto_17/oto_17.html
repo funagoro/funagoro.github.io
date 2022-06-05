@@ -148,7 +148,7 @@ const mat_a = new THREE.ShaderMaterial( {
 			if( b < 0.0 || 1.0 <= b) c = vec4( 0);
 			else{
 				//e = floor( 1024.0 * b);
-				e = floor( 340.0 * b);
+				e = floor( 200.0 * b);
 				d = texelFetch( tex, ivec2( mod( e / 4.0, 16.0), e / 64.0), 0);
 				//e = 0.2 + 0.2 * ( d.r + d.g + d.b + d.a);
 				e = mod( e, 4.0);
