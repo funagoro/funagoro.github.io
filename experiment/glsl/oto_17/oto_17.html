@@ -306,6 +306,11 @@ let ab_kick, gn_kick;
 
 let vol;
 
+function rnd( a){
+	let b = Math.sin( 12.9898 * a) * 43758.5453;
+	return b - Math.floor( b);
+}
+
 function set_value( p, v){
 	p.cancelScheduledValues( 0);
 	p.value = v;
@@ -414,15 +419,32 @@ function steelpan(){
 				super();
 
 				this.f = 440;
+				this.vf = 0;
 				this.t = 10;
 				this.v = 0;
+				this.dur = 0;
 				this.p = 0;
 
 				this.sin = new Float32Array( 1000);
 				for( i = 0; i < 1000; i++) this.sin[ i] = Math.sin( 0.00628318 * i);
 
 				this.port.onmessage = ( e) => {
-					this.f = parseFloat( e.data);
+					let i;
+					let s;
+
+					s = e.data;
+
+					i = s.indexOf( " ");
+					this.f = parseFloat( s.substr( 0, i));
+					s = s.substr( i + 1);
+//this.port.postMessage( s);
+
+					i = s.indexOf( " ");
+					this.vf = parseFloat( s.substr( 0, i));
+
+					this.dur = parseFloat( s.substr( i + 1));
+
+					this.v = 1;
 					this.t = 0;
 				}
 
@@ -441,12 +463,14 @@ function steelpan(){
 				//if( this.t < 0.01) this.v = this.sin[ Math.floor( 250 * this.t / 0.01)];
 				//else this.v = Math.exp( -10 * ( this.t - 0.01));
 
-				if( this.t < 0.11) this.v = 1; else this.v = 0;
+				//if( this.t < 0.11) this.v = 1; else this.v = 0;
 				//if( this.t < 0.05 || ( 0.07 < this.t && this.t < 0.12)) this.v = 1; else this.v = 0;
+
+				if( this.dur <= this.t) this.v = 0;
 
 				for( i = 0; i < n; i++){
 					//u = 1000 * ( this.f * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
-					u = 1000 * ( 1.0 * ( this.f + 1500 * this.t) * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
+					u = 1000 * ( 1.0 * this.f * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
 					d0[ i] = d1[ i] = 0.7 * this.v * (
 						//this.sin[ Math.floor( this.p)]
 						2 * Math.floor( this.sin[ Math.floor( this.p)]) + 1
@@ -454,6 +478,7 @@ function steelpan(){
 					);
 
 					this.p = ( this.p + u) % 1000;
+					this.f = Math.max( this.f + this.vf, 50);
 				}
 				this.t += n / sampleRate;
 
@@ -500,6 +525,8 @@ skt.set_mag_and_orientation( 1, 0);
 
 let count = 0;
 let latest_date, date_fragment;
+
+let scp = 0;
 
 latest_date = Date.now() - 1000 / 60;
 date_fragment = 0;
@@ -551,18 +578,28 @@ function tac(){
 
 		if( count % 36 == 0) play_audio( ab_kick, gn_kick, 2);
 
+		const SC =
+			"E E C2   a1abC a D  ED C b a g2..." +
+			"E E C2   a1abC a D  ED b C2       " +
+			"cdefg C a gfg2   f ede c ddded2   " +
+			"cdefg C a gfg2   f ede c d  gc2   " +
+			"ded ded d g d2   efe efe e a e2   " +
+			"gag gag g C g E D a b  ag2       ";
 		if( count % 9 == 0){
-			n = " A Bc d ef g1a bC D E".indexOf( (
-				"E E C   a1abC a D  ED C b a g..." +
-				"E E C   a1abC a D  ED b C       " +
-				"cdefg C a gfg   f ede c ddded   " +
-				"cdefg C a gfg   f ede c d  gc   " +
-				"ded ded d g d   efe efe e a e   " +
-				"gag gag g C g E D a b  ag       "
-
-			).substr( count / 9 % 192, 1));
+			t = 0.17;
+			n = " A Bc d ef g1a bC D E".indexOf( ( SC
+			).substr( scp, 1));
+			scp = ++scp % SC.length;
+			if( SC.substr( scp, 1) == "2"){
+				t = 0.4;
+				scp = ++scp % SC.length;
+			}
 			if( 0 < n){
-				awnode[ aw_n].port.postMessage( 440 * Math.pow( 2, Math.floor( count / 9 / 16) % 4 - 1 + ( n - 1) / 12) * ( 1 + 0.02 * Math.random()));
+				awnode[ aw_n].port.postMessage(
+					440 * Math.pow( 2, Math.floor( count / 9 / 16) % 4 - 1 + ( n - 1) / 12) * ( 1 + 0.02 * Math.random()) + " " +
+					( 1500 / ac.sampleRate) + " " +
+					t
+				);
 				aw_n = ++aw_n % 6;
 			}
 		}
