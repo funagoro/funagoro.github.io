@@ -290,7 +290,7 @@ const mat_0 = new THREE.ShaderMaterial( {
 			gl_FragColor =
 				0.3 * ( c.r + c.g + c.b) +
 				2.0 * texture( neon0, v) +
-				3.0 * pow( texture( neon1, v), vec4( 0.7));
+				8.0 * texture( neon1, v);
 		}
 	`
 });
@@ -434,18 +434,14 @@ function steelpan(){
 				let i;
 				let u, w;
 
-				const e = 0.01;
-
 				const d0 = outputs[ 0][ 0];
 				const d1 = outputs[ 0][ 1];
 				const n = d0.length;
 
-				u = this.t;
-				//if( u < e) this.v = 0.5 - 0.5 * this.sin[ Math.floor( 250 + 500 * u / e)];
-				if( u < e) this.v = this.sin[ Math.floor( 250 * u / e)];
-				//else this.v = Math.exp( -5 * ( u - e));
-				else if( u < 0.05) this.v = 1;
-				else this.v = Math.max( 1.0 - 3 * ( u - 0.05), 0.0);
+				//if( this.t < 0.01) this.v = this.sin[ Math.floor( 250 * this.t / 0.01)];
+				//else this.v = Math.exp( -10 * ( this.t - 0.01));
+
+				if( this.t < 0.1) this.v = 1; else this.v = 0;
 
 				for( i = 0; i < n; i++){
 					//u = 1000 * ( this.f * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
