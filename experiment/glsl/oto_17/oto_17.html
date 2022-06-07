@@ -112,7 +112,7 @@ t = 0.015;
 o.scale.set( t, t, t);
 const o_tap = new THREE.Mesh(
 	new THREE.PlaneGeometry( 2, 2),
-	new THREE.MeshBasicMaterial( { color : 0x222222, transparent : true, opacity : 0.1})
+	new THREE.MeshBasicMaterial( { color : 0x222222, transparent : true, opacity : 0.05})
 );
 o_tap.add( o);
 scene.add( o_tap);
@@ -553,11 +553,11 @@ function tac(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, 0.7 * vol);
+		set_value( gn_aw.gain, 0.3 * vol);
 
 		const s = 8;
 
-		if( count % ( 4 * s) == 0) play_audio( ab_kick, gn_kick, 2);
+		if( count % ( 4 * s) == 0) play_audio( ab_kick, gn_kick, 1);
 
 		if( count % s == 0){
 			m = Math.floor( 1000 * rnd( Math.floor( count / s / 16)));
