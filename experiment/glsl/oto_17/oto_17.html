@@ -526,7 +526,7 @@ skt.set_mag_and_orientation( 1, 0);
 let count = 0;
 let latest_date, date_fragment;
 
-let scp = 0;
+let note;
 
 latest_date = Date.now() - 1000 / 60;
 date_fragment = 0;
@@ -576,31 +576,34 @@ function tac(){
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
 		set_value( gn_aw.gain, vol);
 
-		if( count % 36 == 0) play_audio( ab_kick, gn_kick, 2);
+		if( count % 32 == 0) play_audio( ab_kick, gn_kick, 2);
 
-		const SC =
-			"E E C2   a1abC a D  ED C b a g2   " +
-			"E E C2   a1abC a D  ED b C2       " +
-			"cdefg C a gfg2   f ede c ddded2   " +
-			"cdefg C a gfg2   f ede c d  gc2   " +
-			"ded ded d g d2   efe efe e a e2   " +
-			"gag gag g C g E D a b  ag2       ";
-		if( count % 9 == 0){
-			t = 0.17;
-			u = 1500;
-			n = " A Bc d ef g1a bC D E".indexOf( SC.substr( scp, 1));
-			scp = ++scp % SC.length;
-			if( SC.substr( scp, 1) == "2"){
-				t = 0.4;
-				if( 14 <= n + 12 * ( Math.floor( count / 9 / 16) % 4 - 1)) u = -1500;
-				scp = ++scp % SC.length;
-			}
-			if( 0 < n){
-				n += 12 * ( Math.floor( count / 9 / 16) % 4 - 1);
+		if( count % 8 == 0){
+			n = count / 8 % 16;
+			if( n == 0){
+				n = 15 + Math.floor( 15 * Math.random());
 				awnode[ aw_n].port.postMessage(
-					440 * Math.pow( 2, ( n - 1) / 12) * ( 1 + 0.02 * Math.random()) + " " +
-					u / ac.sampleRate + " " +
-					t
+					440 * Math.pow( 2, n / 12) + " " +
+					(
+						440 * Math.pow( 2, -7 / 12) -
+						440 * Math.pow( 2, n / 12)
+					) / ( 5 * 8 / 60)
+					/ ac.sampleRate + " " +
+					5 * 8 / 60
+				);
+			} else if( n ==6){
+				n = -7;
+				awnode[ aw_n].port.postMessage(
+					440 * Math.pow( 2, n / 12) + " " +
+					0 / ac.sampleRate + " " +
+					3 * 8 / 60
+				);
+			} else if( 12 <= n && ( n % 2 == 0 || Math.random() < 0.5)){
+				if( n == 12) note = 20 + Math.floor( 10 * Math.random());
+				awnode[ aw_n].port.postMessage(
+					440 * Math.pow( 2, note / 12) + " " +
+					0 / ac.sampleRate + " " +
+					0.7 * 8 / 60
 				);
 				aw_n = ++aw_n % 6;
 			}
