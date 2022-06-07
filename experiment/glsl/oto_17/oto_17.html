@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="oto 17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="generating steelpan sound : an AudioWorklet experiment with GLSL WebGL">
+<meta name="description" content="generating buzzer sound : an AudioWorklet experiment with GLSL WebGL">
 
 <link rel="shortcut icon" href="favicon.ico" />
 <link rel="stylesheet" type="text/css" href="glsl.css" />
@@ -34,8 +34,6 @@
 
 
 
-3<br>
-<br>
 <canvas id="canvas_1" style="
 	width : 512px; height : 512px;
 	user-select : none;
@@ -43,7 +41,7 @@
 	touch-action : none;
 "></canvas><br>
 <span id="span_1">- - - - -</span><br>
-<span class="title">"oto 17" 実験中。</span><br>
+<span class="title">"oto 17"</span><br>
 &copy;2022 Maeda Mameo<br>
 
 
@@ -154,7 +152,7 @@ const mat_a = new THREE.ShaderMaterial( {
 				e = mod( e, 4.0);
 				e = ( e == 0.0 ? d.r : e == 1.0 ? d.g : e == 2.0 ? d.b : d.a);
 				e *= 1.0 + 1.0 * b;
-				e = 0.2 + 0.8 * e;
+				e = 0.2 + 1.0 * e;
 				if( a < e || e + 0.07 <= a) c = vec4( 0);
 				else c = vec4( 0.6 + 0.4 * cos( vec3( 0, 2, 4) - 6.28 * b - 1.5), 1);
 			}
@@ -232,7 +230,8 @@ const mat_neon_3 = new THREE.ShaderMaterial( {
 function neon(){
 	let i;
 
-	//★ ぼかしながら、元絵→256、256→128、128→64、64→32、32→16、16→8。
+	//★ 元絵→256、256→128、128→64、64→32、32→16、16→8。
+	//★ 拡散しながら。
 	for( i = 0; i <= 5; i++){
 		plane.material = mat_neon;
 		mat_neon.uniforms.s.value = Math.pow( 2, i - 8);
@@ -300,8 +299,7 @@ const mat_0 = new THREE.ShaderMaterial( {
 let is_visibility_listener = false;
 let ac;
 let ana, gn_aw;
-let awnode = new Array( 6);
-let aw_n;
+let awnode;
 let ab_kick, gn_kick;
 
 let vol;
@@ -336,8 +334,8 @@ function init_ac(){
 	ana = ac.createAnalyser(); ana.connect( ac.destination); n = ana;
 
 	m = new DynamicsCompressorNode( ac); m.connect( n); n = m;
-	m = make_filter( "highshelf", 4000, -15); m.connect( n); n = m;
-	//m = make_filter( "peaking", 440, 5); m.connect( n); n = m;
+	m = make_filter( "highshelf", 4000, -10); m.connect( n); n = m;
+	//m = make_filter( "peaking", 220, 5); m.connect( n); n = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( n); n = m;
 	//m = make_filter( "lowpass", 3000, 5); m.connect( n); n = m;
 
@@ -370,7 +368,7 @@ function init_ac(){
 	gn_kick = ac.createGain();
 	gn_kick.connect( n);
 
-	steelpan();
+	buzzer();
 
 	function make_filter( t, f, g){
 		let n;
@@ -407,7 +405,7 @@ function init_ac(){
 	}
 }
 
-function steelpan(){
+function buzzer(){
 	ac.audioWorklet.addModule( "data:text/javascript," + encodeURI( `
 
 		'use strict';
@@ -437,7 +435,6 @@ function steelpan(){
 					i = s.indexOf( " ");
 					this.f = parseFloat( s.substr( 0, i));
 					s = s.substr( i + 1);
-//this.port.postMessage( s);
 
 					i = s.indexOf( " ");
 					this.vf = parseFloat( s.substr( 0, i));
@@ -449,7 +446,7 @@ function steelpan(){
 				}
 
 				//★ こちらのスレッドでは console.log() ができないので、何でも知らせたいことは、文字列の形でメインスレッドに送る。
-				this.port.postMessage( "Caribbean!");
+				this.port.postMessage( "Buzzzzz!");
 			}
 
 			process( inputs, outputs, parameters){
@@ -460,24 +457,13 @@ function steelpan(){
 				const d1 = outputs[ 0][ 1];
 				const n = d0.length;
 
-				//if( this.t < 0.01) this.v = this.sin[ Math.floor( 250 * this.t / 0.01)];
-				//else this.v = Math.exp( -10 * ( this.t - 0.01));
-
-				//if( this.t < 0.11) this.v = 1; else this.v = 0;
-				//if( this.t < 0.05 || ( 0.07 < this.t && this.t < 0.12)) this.v = 1; else this.v = 0;
-
 				if( this.dur <= this.t) this.v = 0;
 
 				for( i = 0; i < n; i++){
-					//u = 1000 * ( this.f * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
-					u = 1000 * ( 1.0 * this.f * ( 1 + 0.99 * this.sin[ Math.floor( this.p)])) / sampleRate;
-					d0[ i] = d1[ i] = 0.7 * this.v * (
-						//this.sin[ Math.floor( this.p)]
-						2 * Math.floor( this.sin[ Math.floor( this.p)]) + 1
-						//Math.abs( this.p / 250 - 2) - 1
-					);
+					u = this.f * ( 1 + 0.99 * this.sin[ Math.floor( 1000 * this.p)]) / sampleRate;
+					d0[ i] = d1[ i] = 0.7 * this.v * ( 2 * Math.floor( this.p - 0.5) + 1);
 
-					this.p = ( this.p + u) % 1000;
+					this.p = ( this.p + u) % 1;
 					this.f = Math.max( this.f + this.vf, 50);
 				}
 				this.t += n / sampleRate;
@@ -488,14 +474,9 @@ function steelpan(){
 		registerProcessor( "awp_name", awp);
 
 	`)).then( function(){
-		let i;
-
-		for( i = 0; i < 6; i++){
-			awnode[ i] = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオ。
-			awnode[ i].connect( gn_aw);
-			awnode[ i].port.onmessage = function( e){ console.log( e.data);}
-		}
-		aw_n = 0;
+		awnode = new AudioWorkletNode( ac, "awp_name", { outputChannelCount : [ 2]}); //★ ステレオ。
+		awnode.connect( gn_aw);
+		awnode.port.onmessage = function( e){ console.log( e.data);}
 
 		o_tap.visible = false;
 		current_state = next_state = STATE_INIT;
@@ -526,8 +507,6 @@ skt.set_mag_and_orientation( 1, 0);
 let count = 0;
 let latest_date, date_fragment;
 
-let note;
-
 latest_date = Date.now() - 1000 / 60;
 date_fragment = 0;
 tic();
@@ -547,7 +526,7 @@ function tic(){
 	}
 }
 function tac(){
-	let n;
+	let m, n;
 	let t, u;
 
 	skt.pre();
@@ -574,38 +553,55 @@ function tac(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.02, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, vol);
+		set_value( gn_aw.gain, 0.7 * vol);
 
-		if( count % 32 == 0) play_audio( ab_kick, gn_kick, 2);
+		const s = 8;
 
-		if( count % 8 == 0){
-			n = count / 8 % 16;
-			if( n == 0){
-				n = 15 + Math.floor( 15 * Math.random());
-				awnode[ aw_n].port.postMessage(
-					440 * Math.pow( 2, n / 12) + " " +
-					(
-						440 * Math.pow( 2, -7 / 12) -
-						440 * Math.pow( 2, n / 12)
-					) / ( 5 * 8 / 60)
-					/ ac.sampleRate + " " +
-					5 * 8 / 60
+		if( count % ( 4 * s) == 0) play_audio( ab_kick, gn_kick, 2);
+
+		if( count % s == 0){
+			m = Math.floor( 1000 * rnd( Math.floor( count / s / 16)));
+			n = count / s % 16;
+
+			if( n == 0 || ( n == 6 && m < 200)){
+				//★ ポルタメント。
+				t = 15 + 18 * rnd( m);
+				u = 14 - 4 * rnd( m);
+				if( m % 3 < 1) [ t, u] = [ u, t];
+				awnode.port.postMessage(
+					440 * Math.pow( 2, t / 12) + " " +
+					440 * ( Math.pow( 2, u / 12) - Math.pow( 2, t / 12)) / ( 5 * s / 60) / ac.sampleRate + " " +
+					5 * s / 60
 				);
-			} else if( n ==6){
-				n = -7;
-				awnode[ aw_n].port.postMessage(
-					440 * Math.pow( 2, n / 12) + " " +
-					0 / ac.sampleRate + " " +
-					3 * 8 / 60
+			} else if( ( n == 12 && m < 200) || ( n == 6 && 200 <= m)){
+				//★ 低音。
+				awnode.port.postMessage(
+					440 * Math.pow( 2, -15 * rnd( m) / 12) + " 0 " +
+					3 * s / 60
 				);
-			} else if( 12 <= n && ( n % 2 == 0 || Math.random() < 0.5)){
-				if( n == 12) note = 20 + Math.floor( 10 * Math.random());
-				awnode[ aw_n].port.postMessage(
-					440 * Math.pow( 2, note / 12) + " " +
-					0 / ac.sampleRate + " " +
-					0.7 * 8 / 60
-				);
-				aw_n = ++aw_n % 6;
+			} else if( 8 <= n && 200 <= m){
+				if( m < 400){
+					//★ タラタラ。
+					if( n == 8 || n == 12){
+						awnode.port.postMessage(
+							440 * Math.pow( 2, 10 * rnd( m) / 12) + " 0 " +
+							1.7 * s / 60
+						);
+					} else if( n == 10 || n == 14){
+						awnode.port.postMessage(
+							440 * Math.pow( 2, 10 * rnd( m + 1) / 12) + " 0 " +
+							1.7 * s / 60
+						);
+					}
+				} else{
+					//★ モールス。
+					if( 12 <= n && ( n % 2 == 0 || rnd( count) < 0.5)){
+						awnode.port.postMessage(
+							440 * Math.pow( 2, ( 20 + 10 * rnd( m)) / 12) + " 0 " +
+							0.7 * s / 60
+						);
+					}
+				}
 			}
 		}
 
