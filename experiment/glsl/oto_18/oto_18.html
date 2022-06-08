@@ -462,10 +462,11 @@ function buzzer(){
 
 				if( this.dur <= this.t) this.v = 0;
 
-				g = Math.floor( sampleRate / this.f);
-				h = Math.floor( 0.7 * g);
 				for( i = 0; i < n; i++){
 					let a, b, c, u;
+
+					g = Math.floor( sampleRate / this.f);
+					h = Math.floor( 0.7 * g);
 
 					if( this.t < 0.01) a = 2 * Math.random() - 1; else a = 0;
 					b = this.d[ ( this.p + m - g) % m];
@@ -494,7 +495,7 @@ function buzzer(){
 					//d0[ i] = d1[ i] = 5*b;
 					//d0[ i] = d1[ i] = 0.7 * Math.sign( b) * Math.pow( Math.abs( b), 0.7);
 					//d0[ i] = d1[ i] = 0.6 * Math.atan( 10 * b);
-					d0[ i] = d1[ i] = 0.6 * Math.sign( b) * ( 1 - Math.exp( -30 * Math.abs( b)));
+					d0[ i] = d1[ i] = 0.4 * Math.sign( b) * ( 1 - Math.exp( -30 * Math.abs( b)));
 
 					this.p = ++this.p % m;
 					this.t += 1 / sampleRate;
@@ -596,12 +597,13 @@ function tac(){
 		if( count % s == Math.floor( count / s) % 2 * 3){
 			n = Math.floor( count / s) % (
 				32 + 32 + 16 +
-				//★ 1
+
 				32 + 32 + 32 + 32 +
-				16 + 32 +
-				32 + 8 +
-				//★ 2
+
+				16 + 32 + 8 + 32 +
+
 				32 + 32 + 32 + 32 +
+
 				16 + 32 + 8
 			);
 			n = " A Bc1d ef2g a bC3D E".indexOf( (
@@ -631,7 +633,7 @@ function tac(){
 			if( 0 < n){
 				awnode.port.postMessage(
 					440 * Math.pow( 2, ( n - 13) / 12) + " " +
-					0 / ( 5 * s / 60) / ac.sampleRate + " " +
+					30 / ( 5 * s / 60) / ac.sampleRate + " " +
 					5 * s / 60
 				);
 			}
