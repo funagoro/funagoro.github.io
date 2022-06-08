@@ -492,7 +492,7 @@ function buzzer(){
 					//d0[ i] = d1[ i] = 5*b;
 					//d0[ i] = d1[ i] = 0.7 * Math.sign( b) * Math.pow( Math.abs( b), 0.7);
 					//d0[ i] = d1[ i] = 0.6 * Math.atan( 10 * b);
-					d0[ i] = d1[ i] = Math.sign( b) * ( 1 - Math.exp( -30 * Math.abs( b)));
+					d0[ i] = d1[ i] = 0.6 * Math.sign( b) * ( 1 - Math.exp( -30 * Math.abs( b)));
 
 					this.p = ++this.p % m;
 					this.t += 1 / sampleRate;
