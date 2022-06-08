@@ -143,7 +143,7 @@ const mat_a = new THREE.ShaderMaterial( {
 			v = 8.0 / 5.5 * ( gl_FragCoord.xy * s - 0.5) - vec2( 0, -2);
 			a = 1.0 * ( length( v) - 1.4);
 			b = 7.4 * atan( v.x, v.y) / 3.14159 + 0.5;
-			if( b < 0.0 || 1.0 <= b) c = vec4( 1);
+			if( b < 0.0 || 1.0 <= b) c = vec4( 0);
 			else{
 				//e = floor( 1024.0 * b);
 				e = 24.0 + 20.0 * floor( 50.0 * b);
@@ -152,8 +152,8 @@ const mat_a = new THREE.ShaderMaterial( {
 				e = mod( e, 4.0);
 				e = ( e == 0.0 ? d.r : e == 1.0 ? d.g : e == 2.0 ? d.b : d.a);
 				e *= 1.0 + 1.0 * b;
-				e = 0.2 + 1.0 * e;
-				if( a < e || e + 0.07 <= a) c = vec4( 1);
+				e = 0.3 + 0.5 * e;
+				if( a < e || e + 0.2 <= a) c = vec4( 0);
 				else c = vec4( 0.6 + 0.4 * cos( vec3( 0, 2, 4) - 6.28 * b - 1.5), 1);
 			}
 		}
@@ -285,11 +285,13 @@ const mat_0 = new THREE.ShaderMaterial( {
 			vec4 c;
 
 			v = 6.0 / 8.0 * ( gl_FragCoord.xy * s - 0.5) + 0.5;
-			c = texture( dry, v);
+			c = 0.8 * texture( neon0, v) + texture( neon1, v);
 			gl_FragColor =
-				//0.3 * ( c.r + c.g + c.b) *
-				1.0 * texture( neon0, v) *
-				1.0 * texture( neon1, v);
+				mix(
+					vec4( 1, 0.55, 0.75, 1),
+					vec4( 1),
+					smoothstep( 0.0, 0.5, c.r + c.g + c.b)
+				) - 0.5 * pow( texture( dry, v), vec4( 2));
 		}
 	`
 });
@@ -591,41 +593,41 @@ function tac(){
 
 		if( count % ( 4 * s) == 0) play_audio( ab_kick, gn_kick, 1);
 
-		if( count % s == 0){
-			n = " A Bc1d ef2g a bC3D E".indexOf( (
-				"d d dBc1dBc1dbb  d1d2 gCb       " +
-				"d d dBc1dBc1dbb  a2dcd2 g d C b " +
-				" a2dcd2 g       " +
-
-				"  d B c dedb    " + "a C 2 ag    b   " +
-				"  d B c dedb    " + "a C 2 ag        " +
-				"  g 2 f e ce    " + "a a g a g ed    " +
-				"bbbb    CCCC    " + "E E E Ca        " +
-
-				"D  3D  3D3D3D3D " +
-				"  d B c dedb    " + " a Cag2ag       " +
-
-				"     Bc1dbd1cd2 " + "g d C b  bdbcd2 " +
-				"g g     " +
-
-				"  d B c dedb    " + "a C 2 ag    b   " +
-				"  d B c dedb    " + "a C 2 ag        " +
-				"  g 2 f e ce    " + "a a g a g ed    " +
-				"bbbb    CCCC    " + "E E E Ca        " +
-
-				"D  3D  3D3D3D3D " +
-				"  d B c dedb    " + " a Cag2ag       " +
-
-				"     Bc1"
-			).substr( count / s % (
+		if( count % s == Math.floor( count / s) % 2 * 3){
+			n = Math.floor( count / s) % (
 				32 + 32 + 16 +
+				//★ 1
 				32 + 32 + 32 + 32 +
 				16 + 32 +
 				32 + 8 +
+				//★ 2
 				32 + 32 + 32 + 32 +
-				16 + 32 +
-				8
-			), 1));
+				16 + 32 + 8
+			);
+			n = " A Bc1d ef2g a bC3D E".indexOf( (
+				"d d dBc1dBc1dbb  d1d2 gCb       " +
+				"d d dBc1dBc1dbb  a2dcd2 g d C b " +
+				" adacd2 g       " +
+
+				"  d B c dedb    a C 2 ag    b   " +
+				"  d B c dedb    a C 2 ag        " +
+				"  g 2 f e ce    a a g a g ed    " +
+				"bbbb    CCCC    E E E Ca        " +
+
+				"D  3D  3D3D3D3D " +
+				"  d B c dedb     a Cag2ag       " +
+				"     Bc1" +
+				"dbd1cd2 g d C b  bdbcd2 g g     " +
+
+				"  d B c dedb    a C 2 ag    b   " +
+				"  d B c dedb    a C 2 ag        " +
+				"  g 2 f e ce    a a g a g ed    " +
+				"bbbb    CCCC    E E E Ca        " +
+
+				"D  3D  3D3D3D3D " +
+				"  d B c dedb     a Cag2ag       " +
+				"     Bc1"
+			).substr( n, 1));
 			if( 0 < n){
 				awnode.port.postMessage(
 					440 * Math.pow( 2, ( n - 13) / 12) + " " +
