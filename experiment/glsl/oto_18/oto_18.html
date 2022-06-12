@@ -467,7 +467,6 @@ function aloha(){
 
 				this.d = new Float32Array( Math.floor( sampleRate / 100)); //★ 対応可能な最低周波数。
 				this.p = 0;
-				this.preb = 0;
 
 				this.port.onmessage = ( e) => {
 					let i;
@@ -500,17 +499,19 @@ function aloha(){
 				const n = d0.length;
 				const m = this.d.length;
 
-				if( this.dur <= this.t) this.v = 0;
+				if( this.dur + 0.02 <= this.t) this.v = 0;
 
 				for( i = 0; i < n; i++){
 					let g;
 					let a, b, c, h;
 
 					h = this.t / this.dur;
-					if( this.pref){
+					if( 0 < this.pref){
+						//★ ポルタメント、または高さ一定。
 						h = ( 1 - Math.exp( -5 * h)) / ( 1 - Math.exp( -5));
 						h = ( 1 - h) * this.pref + h * this.f;
 					} else{
+						//★ ゆっくり 1 オクターブ上がる。
 						h *= h;
 						h = ( 1 + h) * this.f;
 					}
@@ -523,11 +524,12 @@ function aloha(){
 						b +
 						this.d[ ( this.p + m - g + 1) % m]
 					), 1), -1);
-					b = 0.999 * b + 0.002 * Math.sin( 6.28318 * h * this.t);
-					this.d[ this.p] = this.preb = b;
+					b = 0.999 * b + 0.0005 * ( 2 * Math.floor( h * this.t % 1 - 0.5) + 1);
 
-					d0[ i] = 0.4 * Math.sign( b) * ( 1 - Math.exp( -30 * Math.abs( b)));
-					d1[ i] = this.d[ ( this.p + m - Math.floor( 0.7 * g)) % m];
+					this.d[ this.p] = b;
+					d0[ i] = 0.3 * this.v * Math.sign( b) * ( 1 - Math.exp( -50 * Math.abs( b)));
+					b = this.d[ ( this.p + m - Math.floor( 0.7 * g)) % m];
+					d1[ i] = 0.3 * this.v * Math.sign( b) * ( 1 - Math.exp( -50 * Math.abs( b)));
 
 					this.p = ++this.p % m;
 					this.t += 1 / sampleRate;
@@ -595,7 +597,7 @@ function tic(){
 }
 function tac(){
 	let a, n;
-	let u, w;
+	let d, u, w;
 
 	skt.pre();
 
@@ -629,9 +631,9 @@ function tac(){
 		if( count % ( 4 * e) == 0) play_audio( ab_kick, gn_kick, 1);
 
 		if( count % e == Math.floor( count / e) % 2 * 3){
-			const s = "d d dBc1dBc1dbb  d1-d-2 gCb       " +
-				"d d dBc1dBc1dbb  a2dc-d-2 g d -C -b " +
-				" adacd2 g+       " +
+			const s = "d d dBc1dBc1dbb  d-1-d-2 gxCb       " +
+				"d d dBc1dBc1dbb  a-2xdc-d-2 g -d -C -b " +
+				" adxacd2 g+       " +
 
 				"  d B c dedb    a C 2 ag    b   " +
 				"  d B c dedb    a C 2 ag        " +
@@ -641,7 +643,7 @@ function tac(){
 				"D  -3D  -3D-3D-3D-3D " +
 				"  d B c dedb     a Cag2ag       " +
 				"     Bc1" +
-				"d-b-d-1c-d-2 g -d -C -b  b-d-bc-d-2 g g+     " +
+				"dbd1c-d-2 g -d -C -b  bdbc-d-2 gx g+     " +
 
 				"  d B c dedb    a C 2 ag    b   " +
 				"  d B c dedb    a C 2 ag        " +
@@ -653,6 +655,7 @@ function tac(){
 				"     Bc1";
 
 			if( s.substr( sp, 1) == "-"){
+				//★ ポルタメント。
 				sp = ++sp % s.length;
 				a = 1;
 			} else a = 0;
@@ -661,21 +664,29 @@ function tac(){
 			sp = ++sp % s.length;
 			if( 0 < n){
 				w = 440 * Math.pow( 2, ( n - 13) / 12);
-				if( s.substr( sp, 1) == "+"){
+				if( s.substr( sp, 1) == "x"){
+					//★ スタッカート。
 					sp = ++sp % s.length;
-					u = 0;
+					u = w;
+					d = 0.8;
 				} else{
-					if( a) u = latest_f;
-					else u = w;
-				}
+					if( s.substr( sp, 1) == "+"){
+						sp = ++sp % s.length;
+						u = 0;
+					} else{
+						if( a) u = latest_f; //★ ポルタメント。
+						else u = w; //★ 高さ一定。
+					}
 
-				n = 1;
-				while( true){
-					if( s.substr( ( sp - 1 + n) % s.length, 1) != " ") break;
-					n++;
+					d = 1;
+					while( true){
+						if( s.substr( ( sp - 1 + d) % s.length, 1) != " ") break;
+						d++;
+					}
 				}
+				d += ( 3 - 6 * Math.floor( count / e) % 2) / e;
 
-				awnode.port.postMessage( w + " " + u + " " + n * e / 60);
+				awnode.port.postMessage( w + " " + u + " " + d * e / 60);
 				latest_f = w;
 			}
 		}
@@ -708,7 +719,7 @@ function tac(){
 
 	o_mkb.visible = true;
 	o_mkb.rotation.x += 0.01;
-	o_mkb.rotation.y += 0.03;
+	o_mkb.rotation.y += 0.02+ 0.03 * Math.cos( 6.28318 * count / 30);
 
 	plane.material = mat_0;
 	ren.setRenderTarget( null);
