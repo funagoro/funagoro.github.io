@@ -96,10 +96,9 @@ const tex_telephone = ld.load( "data:;base64," + oto_19_png_b64);
 const plane = new THREE.Mesh(
 	new THREE.PlaneBufferGeometry( 2, 2),
 	new THREE.ShaderMaterial( {
-		uniforms : { n : {}, s : { value : 1 / W}, t : {}, o : {}, tex : { value : tex_telephone}},
+		uniforms : { n : {}, s : { value : 1 / W}, tex : { value : tex_telephone}},
 		fragmentShader : `
-			uniform float n, s, t;
-			uniform vec2 o;
+			uniform float n, s;
 			uniform sampler2D tex;
 
 			mat2 rot( float a){ return mat2( cos( a), sin( a), -sin( a), cos( a));}
@@ -111,10 +110,13 @@ const plane = new THREE.Mesh(
 
 				v = gl_FragCoord.xy * s;
 				c = texture( tex, v);
-				if( 0.0 <= n){
-					x = 0.2 + 0.2 * mod( n, 3.0);
-					y = 0.7 - 0.2 * floor( n / 3.0);
-					if( x <= v.x && v.x < x + 0.2 && y <= v.y && v.y < y + 0.2) c -= vec4( 0.5, 0.5, 1, 0);
+
+				if( 0.287 <= v.y && v.y < 0.615){
+					y = float( v.y < 0.563) + float( v.y < 0.494) + float( v.y < 0.400);
+					if( floor( n / 3.0) == y){
+						x = 0.123 * pow( 1.23, y);
+						if( mod( n, 3.0) == floor( ( v.x - 0.5 + 1.5 * x) / x)) c -= max( c.g - 0.3, 0.0) * vec4( 0, 0.3, 1, 0);
+					}
 				}
 
 				gl_FragColor = c;
@@ -339,7 +341,7 @@ let sd = new Array( 64);
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
 
 let count = 0;
-let peony, peony_count = 0;
+let peony, peony_t = 0;
 
 let latest_date, date_fragment;
 
@@ -402,22 +404,15 @@ function tac(){
 					[ 697, 770, 852, 941][ Math.floor( n / 3)]
 				);
 				peony = n;
-				peony_count = 0.1;
+				peony_t = 0.1;
 			}
 		}
 	}
 
-	t = 0.015 * count;
-	plane.material.uniforms.t.value = t;
-
-	if( 0 < peony_count){
+	if( 0 < peony_t){
 		plane.material.uniforms.n.value = peony;
-		peony_count = Math.max( peony_count - 1 / 60, 0);
-	} else
-		plane.material.uniforms.n.value = -1;
-
-
-	plane.material.uniforms.o.value = new THREE.Vector2( -1.3, 0);
+		peony_t = Math.max( peony_t - 1 / 60, 0);
+	} else plane.material.uniforms.n.value = -1;
 
 	ren.render( scene, cam);
 
