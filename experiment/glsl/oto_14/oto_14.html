@@ -565,11 +565,13 @@ function tac(){
 	if( current_state == STATE_INIT){
 		if( count == 0){
 			//★ 初期化。
-		} else{
-			if( ac.state != "suspended"){
-				vol = 0;
-				next_state = STATE_WORKING;
-			}
+		} else if( ac.state != "suspended"){
+			vol = 0;
+			next_state = STATE_WORKING;
+		} else if( count == 120){
+			ac.close();
+			o_tap.visible = true;
+			next_state = STATE_MUTED;
 		}
 	} else if( current_state == STATE_WORKING){
 
