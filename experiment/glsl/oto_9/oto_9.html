@@ -629,11 +629,15 @@ function tac(){
 			t = 0.5;
 			set_value( gn_dry.gain, 1 - 0.8 * t);
 			set_value( gn_rev.gain, 2 * t);
-		} else{
-			if( ac.state != "suspended"){
-				vol = 0;
-				next_state = STATE_WORKING;
-			}
+		} else if( ac.state != "suspended"){
+			vol = 0;
+			next_state = STATE_WORKING;
+		} else if( count == 120){
+			//★ 長押しの後の pointerup で作った AudioContext は、いつまでたっても suspended のまま。
+			//★ 2 秒間待っても suspended のままだったら、close() して、タッチ要求をやりなおす。
+			ac.close();
+			o_tap.visible = true;
+			next_state = STATE_MUTED;
 		}
 	} else if( current_state == STATE_WORKING){
 
