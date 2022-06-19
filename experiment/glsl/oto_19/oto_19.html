@@ -407,9 +407,10 @@ function tac(){
 		p = Math.floor( count / 12) % 128 * 2;
 		a = sd[ p + 1];
 		if( n == 0 || ( n == 4 && a == 1)){
-			if( n == 0 && a == 1) n = 1; else n = 0;
+			if( n == 0 && a == 1) n = 2; else n = 0;
 			n += sd[ p];
 			if( 0 <= n){
+				n += Math.floor( n / 6); //★ 7 のボタンをとばす。
 				awnode.port.postMessage( "" +
 					[ 1209, 1336, 1477][ n % 3] + " " +
 					[ 697, 770, 852, 941][ Math.floor( n / 3)] + " " + a
