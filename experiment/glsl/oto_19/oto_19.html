@@ -188,7 +188,8 @@ function init_ac(){
 	ac = new window.AudioContext();
 	ac.createBufferSource().start(); //★ こんなダミーでもいいので、再生する必要がある。
 
-	m = new DynamicsCompressorNode( ac); m.connect( ac.destination); o = m;
+	o = ac.destination;
+	m = new DynamicsCompressorNode( ac); m.connect( o); o = m;
 	//m = make_filter( "highshelf", 3500, -20); m.connect( o); o = m;
 	//m = make_filter( "peaking", 1200, 5); m.connect( o); o = m;
 	//m = make_filter( "lowshelf", 440, 5); m.connect( o); o = m;
@@ -219,10 +220,11 @@ function init_ac(){
 
 					let i;
 
-					this.f = new Array( 2);
-					this.f[ 0] = this.f[ 1] = 440;
+					this.f_0 = this.f_1 = 440;
+					this.pred_0 = this.pred_1 = 0;
 					this.t = 0;
 					this.v = 0;
+					this.p
 
 					this.cos = new Float32Array( 1000);
 					for( i = 0; i < 1000; i++) this.cos[ i] = Math.cos( 6.28318 * i / 1000);
@@ -232,10 +234,10 @@ function init_ac(){
 						let s;
 
 						i = e.data.indexOf( " ");
-						this.f[ 0] = parseFloat( e.data.substr( 0, i));
+						this.f_0 = parseFloat( e.data.substr( 0, i));
 						s = e.data.substr( i + 1);
 						i = s.indexOf( " ");
-						this.f[ 1] = parseFloat( s.substr( 0, i));
+						this.f_1 = parseFloat( s.substr( 0, i));
 						this.t = 0.12 + 0.2 * parseFloat( s.substr( i));
 						this.v = 1;
 					}
@@ -254,14 +256,17 @@ function init_ac(){
 
 					n = d0.length;
 					for( i = 0; i < n; i++){
-						d0[ i] = this.v * (
-							this.cos[ Math.floor( 1000 * this.f[ 0] * Math.abs( this.t)) % 1000] +
-							this.cos[ Math.floor( 1000 * this.f[ 1] * Math.abs( this.t)) % 1000]
-						);
+						a = 1000 * Math.abs( this.t);
+						//★ ローパスでポップノイズ除去。
+						this.pred_0 = 0.9 * this.pred_0 +
+							0.1 * this.v * this.cos[ Math.floor( this.f_0 * a) % 1000];
+						this.pred_1 = 0.9 * this.pred_1 +
+							0.1 * this.v * this.cos[ Math.floor( this.f_1 * a) % 1000];
+						d0[ i] = this.pred_0 + this.pred_1
 						this.t -= 1 / sampleRate;
 					}
-					d1.set( d0);
 					if( this.t < 0) this.v = 0;
+					d1.set( d0);
 
 					return true;
 				}
@@ -331,7 +336,7 @@ let sd = new Array( 256);
 	let i, p;
 
 	const s =
-		"Gdded-ccefaCaagg " + "aBBagccee-de-de-de-d" +
+		"GddedccefaCaagg " + "aBBagccee-de-de-de-d" +
 		"Gdded-ccefaCaagg " + "aBBagccee-de-ddcG " +
 		"c+   dfedg g gaef" + "d d dfedcCbagfed" +
 		"c+   dfedg g gaef" + "d d dfedcgdec   ";
@@ -401,7 +406,7 @@ function tac(){
 	} else if( current_state == STATE_WORKING){
 
 		vol = Math.min( vol + 0.01, 1); //★ 始めのフェードイン。
-		set_value( gn_aw.gain, 0.3 * vol);
+		set_value( gn_aw.gain, 0.4 * vol);
 
 		n = count % 12;
 		p = Math.floor( count / 12) % 128 * 2;
