@@ -1,0 +1,724 @@
+
+<!DOCTYPE html>
+
+<html lang="ja" style="user-select : none; -webkit-user-select : none;">
+
+<head>
+
+<meta charset="utf-8">
+
+<title>nez 4 - MONKEY CIRCUS おさるサーカス</title>
+<meta property="og:title" content="nez 4 - MONKEY CIRCUS おさるサーカス">
+<meta property="og:url" content="http://www.mameson.com/experiment/glsl/nez_4.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="http://www.mameson.com/experiment/glsl/nez_4_t.jpg">
+<link rel="apple-touch-icon" href="http://www.mameson.com/experiment/glsl/nez_4_t.jpg">
+<meta name="apple-mobile-web-app-title" content="nez 4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="boids experiment on GLSL WebGL">
+
+<link rel="shortcut icon" href="favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="glsl.css" />
+
+<meta name="viewport" content="width=600">
+<style> @viewport { width : 600px;} </style>
+
+<script>
+const sw = navigator.serviceWorker;
+if( sw) sw.register( "nez_4_service_worker.js", { scope : "./"});
+</script>
+
+</head>
+
+<body style="background-image : none; margin : 0;">
+
+<div style="
+	position : fixed;
+	width : 100%; height : 100%;
+	background : url( 'bg.png');
+	pointer-events : none;
+"></div>
+
+<div style="position : relative;">
+
+
+
+<div class="t"></div>
+
+
+
+<canvas id="canvas_1" style="
+	width : 512px; height : 512px;
+	-webkit-tap-highlight-color : rgba( 0, 0, 0, 0);
+	touch-action : none;
+"></canvas><br>
+touch and turn<br>
+<img src="rotate.png"><br>
+<span class="title">"nez 4"</span><br>
+&copy;2021, 2022 Maeda Mameo<br>
+
+
+
+<div class="b"></div>
+
+
+
+<script src="nez_4_1_glb_b64.js"></script>
+<script src="nez_4_2_glb_b64.js"></script>
+<script src="skeleton_touch_3.js"></script>
+
+<script src="three_130_min.js"></script>
+<script src="three_gltf_loader.js"></script>
+
+<script src="liquidfun_min.js"></script>
+
+<script>
+
+"use strict";
+
+const W = 512; //★ 画面サイズ。
+
+const D = 32; //★ 核の座標・速度・角度を格納するテクスチャのサイズ。
+
+const M = 64; //★ InstancedMesh の Matrix4 を格納するテクスチャのサイズ。
+
+const can = document.getElementById( "canvas_1");
+can.width = can.height = W;
+
+const ren = new THREE.WebGLRenderer( { canvas : can});
+ren.autoClear = false;
+ren.shadowMap.enabled = true;
+//ren.shadowMap.type = THREE.VSMShadowMap;
+ren.shadowMap.type = THREE.PCFSoftShadowMap;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+//★ skeleton_touch.js のための設定。
+const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
+const skt = new skeleton_touch( can);
+skt.set_mag_and_orientation( 1, 0);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const WW = 10;
+
+let world, mill_b, ps;
+
+let mill;
+
+const MAX_PARTICLE_NUM = 256;
+let particle_num;
+
+init_world();
+pour();
+
+const f32_pos = new Float32Array(
+	ps.GetPositionBuffer().buffer,
+	ps.GetPositionBuffer().byteOffset,
+	D * D
+);
+const ui8_pos = new Uint8Array(
+	f32_pos.buffer,
+	f32_pos.byteOffset,
+	4 * D * D
+);
+const dtex_pos = new THREE.DataTexture( ui8_pos, D, D, THREE.RGBAFormat);
+dtex_pos.wrapS = dtex_pos.wrapT = THREE.RepeatWrapping;
+dtex_pos.magFilter = dtex_pos.minFilter = THREE.NearestFilter;
+
+const f32_vel = new Float32Array(
+	ps.GetVelocityBuffer().buffer,
+	ps.GetVelocityBuffer().byteOffset,
+	D * D
+);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const VS = `
+	varying vec2 v;
+
+	void main(){
+		v = uv;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, 0.0, 1.0);
+	}
+`;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let i, j;
+let t, u;
+let o;
+
+const G = 255;
+const ui8_c = new Uint8Array( 4 * D * D);
+for( i = 0; i < particle_num; i++){
+	t = 0.15 + 0.03 * Math.random();
+	u = 2 * i * Math.PI / particle_num;
+	ui8_c[ 4 * i] = ( 0.5 + t * Math.cos( u)) * G;
+	ui8_c[ 4 * i + 2] = ( 0.5 + t * Math.sin( u)) * G;
+
+	ui8_c[ 4 * ( 256 + i)] = ( 1 - 0.3 * Math.sin( u)) % 1 * G;
+	ui8_c[ 4 * ( 256 + i) + 2] = ( 1 + 0.3 * Math.cos( u)) % 1 * G;
+
+	ui8_c[ 4 * ( 512 + i)] = ( i / particle_num + 0.25) % 1 * G;
+}
+const dtex_c = new THREE.DataTexture( ui8_c, D, D, THREE.RGBAFormat);
+
+const rt_c = new Array( 2);
+let n_rt_c;
+rt_c[ 0] = new THREE.WebGLRenderTarget( D, D, {
+	wrapS : THREE.RepeatWrapping,
+	wrapT : THREE.RepeatWrapping,
+	magFilter : THREE.NearestFilter,
+	minFilter : THREE.NearestFilter
+});
+rt_c[ 1] = rt_c[ 0].clone();
+
+const mat_c = new THREE.ShaderMaterial( {
+	uniforms : {
+		n : { value : particle_num}, s : { value : 1 / D}, ss : { value : 1 / D / D}, f : { value : 1}, 
+		tex_c : { value : dtex_c}, tex_pos : { value : dtex_pos},
+	},
+	vertexShader : VS,
+	fragmentShader : `
+		uniform float n, s, ss, f;
+		uniform sampler2D tex_c, tex_pos;
+
+		varying vec2 v;
+
+		const float G = 255.0, M = 0.5, H = 0.25;
+
+		float tof( vec4 c){
+			float a, b, n;
+			float t;
+
+			a = floor( c.a * G + 0.5);
+			b = floor( c.b * G + 0.5);
+			n = 2.0 * mod( a, 128.0) + floor( b / 128.0);
+			if( n == 0.0) t = 0.0;
+			else{
+				t = 1.0 + mod( b, 128.0) / 128.0
+					+ floor( c.g * G + 0.5) / 128.0 / 256.0
+					+ floor( c.r * G + 0.5) / 128.0 / 256.0 / 256.0;
+				t *= pow( 2.0, n - 127.0);
+				t = ( a < 128.0) ? t : -t;
+			}
+
+			return t;
+		}
+
+		void main(){
+			float j;
+			float a, b, d, e;
+			vec4 c;
+			vec2 o, p, q, t, u, w;
+
+			c = texture2D( tex_c, v);
+
+			if( v.y < 3.0 * H){
+				if( v.x + floor( mod( v.y, H) / s) < n * s){ //★ n 以上のインデックスについては処理しない。
+					w = vec2( c.r + c.g / G, c.b + c.a / G);
+
+					if( v.y < H){
+						//★ 座標。LiquidFun からコピー。
+						j = 2.0 * ( floor( v.x / s) + floor( floor( v.y / s) / s));
+						w = vec2(
+							0.1 * tof( texture2D( tex_pos, vec2( j * s, j * ss))),
+							0.1 * tof( texture2D( tex_pos, vec2( j * s + s, j * ss)))
+						);
+
+					} else if( v.y < 2.0 * H){
+						//★ ベロシティを更新。
+
+						w = fract( w + M) - M;
+
+						c = texture2D( tex_c, vec2( v.x, v.y - H)); //★ -H で、座標も取得。
+						u = vec2( c.r + c.g / G, c.b + c.a / G);
+
+						if( w.x == 0.0){
+							if( w.y < 0.0) d = -1.57079; else d = 1.57079;
+						} else d = atan( w.y, w.x);
+						e = length( w);
+
+						//★ 柱 1 を避ける。
+						o = vec2( 0.75, 0.75) - u;
+						a = length( o) - 0.5 * 0.05; //★ 柱の表面からの距離。
+						if( 0.0 < a && 0.0 < dot( w, o)){
+							d -= 0.0001 / ( w.x * o.y - w.y * o.x) / a; //★ 外積。
+							w = e * vec2( cos( d), sin(d));
+						}
+
+						//★ 柱 2 を避ける。
+						o = vec2( 0.25, 0.25) - u;
+						a = length( o) - 0.5 * 0.2; //★ 柱の表面からの距離。
+						if( 0.0 < a && 0.0 < dot( w, o)){
+							d -= 0.0003 / ( w.x * o.y - w.y * o.x) / a; //★ 外積。
+							w = e * vec2( cos( d), sin(d));
+						}
+
+						//★ 周囲の壁から離れる。
+						a = u.x; w.x += 0.002 / a;
+						a = 1.0 - u.x; w.x -= 0.002 / a;
+						a = u.y; w.y += 0.002 / a;
+						a = 1.0 - u.y; w.y -= 0.002 / a;
+
+						w = e * normalize( w);
+
+						b = 0.0;
+						p = q = vec2( 0.0);
+						for( float i = 0.0; i < 256.0; i++){
+							if( n <= i) break;
+
+							c = texture2D( tex_c, vec2( i * s, i * ss)); //★ 相手の座標。
+							o = vec2( c.r + c.g / G, c.b + c.a / G) - u;
+							a = length( o);
+
+							if( 0.001 < a && a < 0.1){
+								//★ 個体によって、相手と距離をとりたがる。
+								w -= ( 0.0001 + 0.0001 * mod( floor( v.x / s), 2.0)) * o / a / a;
+
+								p += o / a; //★ 近い集団の相対座標を重み加算。
+
+								//★ 近い集団の向きを重み加算。
+								c = texture2D( tex_c, vec2( i * s, i * ss + H)); //★ ベロシティ。
+								q += normalize( fract( vec2( c.r + c.g / G, c.b + c.a / G) + M) - M) / a;
+
+								b += 1.0 / a; //★ 重みの合計。
+							}
+						}
+						if( b != 0.0){ p /= b; q /= b;}
+
+						w += 0.02 * ( 0.5 - u) //★ 画面の中心へ向かおうとする。
+							+ 0.04 * q; //★ みんなと同じ方向を向こうとする。
+
+						if( 0.0 < dot( w, p)){
+							//★ 近い集団を追いかける時。
+							e *= 1.015;
+						} else{
+							//★ 追いかけない時。
+							e *= 1.005;
+							//★ 回遊。
+							w.x += 0.05 * ( u.y - 0.5) * f;
+							w.y -= 0.05 * ( u.x - 0.5) * f;
+						}
+						w = e * normalize( w);
+						w += 0.09 * p; //★ 集まろうとする。
+
+						a = length( w);
+						w = fract( w * clamp( a, 0.15, 0.45) / a);
+
+					} else{
+						//★ 角度を更新。(w.y は使用しない。)
+						c = texture2D( tex_c, vec2( v.x, v.y - H)); //★ -H で、ベロシティも取得。
+						t = fract( vec2( c.r + c.g / G, c.b + c.a / G) + M) - M;
+						if( t.x == 0.0){
+							if( t.y < 0.0) a = 0.75; else a = 0.25;
+						} else a = fract( atan( t.y, t.x) / 6.28318);
+						b = min( 0.01, abs( a - w.x));
+						if( fract( a - w.x) < 0.5) w.x += b; else w.x -= b;
+						w.x = fract( w.x);
+					}
+
+					u = mod( w, 1.0 / G);
+					c = vec4( w.x - u.x, u.x * G, w.y - u.y, u.y * G);
+				}
+			}
+			gl_FragColor = c;
+		}
+	`
+});
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color( 0xcccccc);
+const cam = new THREE.PerspectiveCamera( 60, 1 / 1, 0.01, 1000);
+cam.up.set( -1, 0, 0);
+
+const ui8_m4 = new Uint8Array( 4 * M * M);
+const f32_m4 = new Float32Array( ui8_m4.buffer); //★ ここ大事。
+
+//★ ペンギン。黒いところ。
+const nez_1 = new THREE.InstancedMesh(
+	new THREE.PlaneGeometry(), //★ 仮。
+	new THREE.MeshPhongMaterial( { color : 0xffffff, specular : 0xffffff, shininess : 100}),
+	particle_num
+);
+//★ ペンギン。白いところ。
+const nez_2 = nez_1.clone();
+nez_1.count = particle_num;
+nez_2.count = particle_num;
+nez_1.instanceMatrix.array = f32_m4;
+nez_2.instanceMatrix.array = f32_m4;
+for( i = 0; i < particle_num; i++){
+	nez_1.setColorAt( i, new THREE.Color( 0x222222 + 2 * (
+		Math.floor( i / 4) % 2 * 0x110000 +
+		Math.floor( i / 2) % 2 * 0x001100 +
+		i % 2 * 0x000011
+	)));
+	nez_2.setColorAt( i, new THREE.Color( 0xcccccc));
+}
+nez_1.castShadow = true;
+nez_2.castShadow = true;
+scene.add( nez_1);
+scene.add( nez_2);
+
+//★ 地面。
+o = new THREE.Mesh(
+	new THREE.PlaneGeometry( 2.2, 2.2),
+	new THREE.MeshPhongMaterial( { color : 0xeeeeee})
+);
+o.rotation.y = -1.57079;
+o.receiveShadow = true;
+scene.add( o);
+
+//★ 風車。
+mill = new THREE.Group();
+o = new THREE.Mesh(
+	new THREE.BoxGeometry( 0.05, 0.6, 0.02),
+	new THREE.MeshPhongMaterial( { color : 0xbbccdd})
+);
+o.castShadow = true;
+o.material.shadowSide = THREE.FrontSide;
+mill.add( o.clone());
+o.rotation.x = 1.57079;
+mill.add( o);
+scene.add( mill);
+
+//★ 柱。
+pill( 0.5, 0.5, 0.4, 0.05, 0);
+pill( -0.5, -0.5, 0.2, 0.2, 1);
+
+function pill( x, y, z, r, n){
+	o = new THREE.Mesh(
+		new THREE.CircleGeometry( r, 8),
+		new THREE.MeshPhongMaterial( { color : 0xbbccdd})
+	);
+	o.position.set( -z, y, x);
+	o.rotation.y = -1.57079;
+	o.castShadow = true;
+	o.material.shadowSide = THREE.FrontSide;
+	scene.add( o);
+
+	o = new THREE.Mesh(
+		new THREE.PlaneGeometry( z, 2 * r * Math.sin( 6.28318 / 8 / 2)),
+		o.material
+	);
+	t = r * Math.cos( 6.28318 / 8 / 2);
+	for( i = 0; i < 8; i++){
+		u = 6.28318 * ( ( i + 0.5) / 8);
+		o.position.set( -z / 2, y + t * Math.cos( u), x + t * Math.sin( u));
+		o.rotation.x = u - 1.57079;
+		o.castShadow = true;
+		scene.add( o);
+		if( i < 7) o = o.clone();
+	}
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+o = new THREE.DirectionalLight( 0xffffff, 1);
+o.position.set( -4, 6, 2);
+o.castShadow = true;
+o.shadow.mapSize.width = o.shadow.mapSize.height = 512;
+o.shadow.camera.top = o.shadow.camera.right = 1;
+o.shadow.camera.bottom = o.shadow.camera.left = -1;
+o.shadow.camera.near = 5;
+o.shadow.camera.far = 10;
+o.shadow.radius = 4;
+o.shadow.bias = -0.001; //★ 壁の輪郭やモアレを調整。
+scene.add( o);
+
+//★ 影を薄くする。
+scene.add( new THREE.AmbientLight( 0xffffff, 0.4));
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const rt_tom4 = new THREE.WebGLRenderTarget( M, M, {
+	magFilter : THREE.NearestFilter,
+	minFilter : THREE.NearestFilter
+});
+
+const mat_tom4 = new THREE.ShaderMaterial( {
+	uniforms : {
+		n : { value : particle_num},
+		mw : { value : M}, s : { value : 1 / D}, ss : { value : 1 / D / D},
+		tex_c : { value : 0}
+	},
+	vertexShader : VS,
+	fragmentShader : `
+		uniform float n, mw, s, ss;
+		uniform sampler2D tex_c;
+
+		varying vec2 v;
+
+		const float G = 255.0, M = 0.5, H = 0.25;
+
+		vec4 tov4( float f){
+			float n;
+			float t, u;
+			vec4 c;
+
+			if( f < 0.0){
+				t = -f;
+				c = vec4( 0.0, 0.0, 0.0, 128.0 / G);
+			} else{
+				t = f;
+				c = vec4( 0.0);
+			}
+
+			if( t != 0.0){
+				if( t < 1.0){
+					n = 126.0;
+					for( int i = 0; i <= 126; i++){
+						t *= 2.0;
+						if( 1.0 <= t) break;
+						n--;
+					}
+				} else{
+					n = 127.0;
+					for( int i = 127; i <= 255; i++){
+						if( t < 2.0) break;
+						t *= 0.5;
+						n++;
+					}
+				}
+				c.a += floor( n / 2.0) / G;
+				c.b = 128.0 * mod( n, 2.0) / G;
+
+				t -= 1.0;
+				u = 0.0;
+				for( int i = 0; i < 23; i++){
+					u *= 2.0;
+					t *= 2.0;
+					if( 1.0 <= t){ t--; u++;}
+				}
+				c.r = mod( u, 256.0) / G;
+				u = floor( u / 256.0);
+				c.g = mod( u, 256.0) / G;
+				u = floor( u / 256.0);
+				c.b += mod( u, 256.0) / G;
+			}
+			return c;
+		}
+
+		void main(){
+			float a, i;
+			float t, w, x, z;
+			vec4 c;
+
+			a = floor( mw * v.x) + mw * floor( mw * v.y);
+			i = floor( a / 16.0);
+			a = mod( a, 16.0);
+
+			//★ ピッチ。
+			z = 3.14159;
+
+			//★ ヨー。
+			c = texture2D( tex_c, vec2( i * s, 2.0 * H + i * ss)); //★ 角度を取得。
+			x = 1.57079 - 6.28318 * ( c.r + c.g / G);
+
+			w = 1.3 + 0.5 * sin( i); //★ サイズ倍率。
+
+			if( a < 4.0){
+				if( a == 0.0) t = w * cos( z);
+				else t = w * sin( z) * ( float( a == 1.0) * cos( x) + float( a == 2.0) * sin(x));
+			} else if( a < 8.0){
+				if( a == 4.0) t = w * -sin( z);
+				else t = w * cos( z) * ( float( a == 5.0) * cos( x) + float( a == 6.0) * sin(x));
+			} else if( a < 12.0){
+				t = w * ( float( a == 9.0) * -sin( x) + float( a == 10.0) * cos( x));
+			} else{
+				if( a == 12.0){ //★ x 座標。
+					t = 0.0;
+				} else if( a == 13.0){ //★ y 座標。
+					c = texture2D( tex_c, vec2( i * s, i * ss));
+					t = 2.0 * ( c.b + c.a / G) - 1.0;
+				} else if( a == 14.0){ //★ z 座標。
+					c = texture2D( tex_c, vec2( i * s, i * ss));
+					t = 2.0 * ( c.r + c.g / G) - 1.0;
+				} else t = 1.0;
+			}
+
+			gl_FragColor = tov4( t);
+		}
+	`
+});
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const scene_c = new THREE.Scene();
+const cam_c = new THREE.OrthographicCamera( -1, 1, 1, -1, -1, 1);
+
+const plane = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2), mat_c);
+scene_c.add( plane);
+
+n_rt_c = 0;
+ren.setRenderTarget( rt_c[ n_rt_c]);
+ren.render( scene_c, cam_c);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let count = 0;
+let cam_r = 0, cam_vr = 0, cam_h = 0.5;
+
+var ld = new THREE.GLTFLoader();
+//ld.load( "nez_4_1.glb?1", function( s){
+ld.load( "data:;base64," + MODEL_DATA_1, function( s){
+	t = 0.02;
+	nez_1.geometry = s.scene.children[ 0].geometry.rotateX( 1.57079).scale( t, t, t);
+	nez_1.geometry.computeVertexNormals();
+
+	//ld.load( "nez_4_2.glb?1", function( s){
+	ld.load( "data:;base64," + MODEL_DATA_2, function( s){
+		t = 0.02;
+		nez_2.geometry = s.scene.children[ 0].geometry.rotateX( 1.57079).scale( t, t, t);
+		nez_2.geometry.computeVertexNormals();
+
+		tic();
+	});
+});
+
+function tic(){
+	//★ i はグローバル。
+	let t;
+
+	requestAnimationFrame( tic);
+
+	skt.pre();
+
+	if( skt.on){
+		cam_vr = -0.01 * skt.vx;
+		cam_h = Math.max( -0.45, Math.min( 1, cam_h + 0.01 * skt.vy));
+	} else cam_vr = 0.97 * ( cam_vr - 0.004) + 0.004;
+	cam_r += cam_vr;
+
+	world.Step( 1 / 60, 6, 2);
+
+	//★ LiquidFun のパーティクルの座標をテクスチャ化。
+	dtex_pos.needsUpdate = true;
+
+	//★ rt_c を更新。
+	mat_c.uniforms.f.value = 2 * Math.sin( 0.007 * count);
+	mat_c.uniforms.tex_c.value = rt_c[ n_rt_c].texture;
+	plane.material = mat_c;
+	n_rt_c = 1 - n_rt_c;
+	ren.setRenderTarget( rt_c[ n_rt_c]);
+	ren.render( scene_c, cam_c);
+
+	//★ rt_c のベロシティを LiquidFun にコピー。
+	//★ シェーダーでやろうと思っていたけど、今回はやめた。
+	ren.readRenderTargetPixels( rt_c[ n_rt_c], 0, 0, D, D, ui8_c);
+	for( i = 0; i < 0.7 * particle_num; i++){ //★ 3 割のペンギンは傍観。
+		f32_vel[ 2 * i] = 0.025 * ( ( ui8_c[ 4 * ( 256 + i)] + 128) % 256 - 128);
+		f32_vel[ 2 * i + 1] = 0.025 * ( ( ui8_c[ 4 * ( 256 + i) + 2] + 128) % 256 - 128);
+	}
+
+	//★ rt_c から rt_tom4 へ変換。(独自表現から Matrix4 へ。)
+	mat_tom4.uniforms.tex_c.value = rt_c[ n_rt_c].texture;
+	plane.material = mat_tom4;
+	ren.setRenderTarget( rt_tom4);
+	ren.render( scene_c, cam_c);
+
+	//★ ここ大事。ui8_m4 に読み込んだら、すなわち f32_m4 に読み込んだ
+	//★ ということになるので、転送する必要がない。
+	ren.readRenderTargetPixels( rt_tom4, 0, 0, M, M, ui8_m4);
+	nez_1.instanceMatrix.needsUpdate = true;
+	nez_2.instanceMatrix.needsUpdate = true;
+
+	cam.position.set( -0.5 - cam_h, -1.2 * Math.cos( cam_r), 1.2 * Math.sin( cam_r));
+	cam.lookAt( 0.5, 0, 0);
+	ren.setRenderTarget( null);
+	ren.render( scene, cam);
+
+	t = mill_b.GetTransform();
+	mill.position.set( -0.05, 2 / WW * t.p.y - 1, 2 / WW * t.p.x - 1);
+	mill.rotation.x = -mill_b.GetAngle();
+
+	skt.post();
+
+	count++;
+}
+
+function init_world(){
+	var r, v, w;
+	var v2, bd, gb, jd, psd;
+
+	world = new b2World( new b2Vec2( 0, 0));
+
+	w = WW;
+	v = w / 2;
+	r = 0.02 * w;
+
+	bd = new b2BodyDef;
+	gb = world.CreateBody( bd);
+
+	box( gb, v, -r, v + r, r, 0);
+	box( gb, v, w + r, v + r, r, 0);
+	box( gb, -r, v - r, r, v + r, 0);
+	box( gb, w + r, v - r, r, v + r, 0);
+
+	circle( gb, 0.75 * w, 0.75 * w, 0.05 * w / 2);
+	circle( gb, 0.25 * w, 0.25 * w, 0.2 * w / 2);
+
+	bd.type = b2_dynamicBody;
+	jd = new b2RevoluteJointDef;
+	v2 = new b2Vec2( 0.7 * w, 0.3 * w);
+	mill_b = world.CreateBody( bd);
+	box( mill_b, 0, 0, 0.01 * w, 0.3 * w, 1);
+	box( mill_b, 0, 0, 0.3 * w, 0.01 * w, 1);
+	mill_b.SetTransform( v2, 0);
+	jd.InitializeAndCreate( gb, mill_b, v2);
+
+	psd = new b2ParticleSystemDef();
+	psd.radius = 0.02 * WW;
+	psd.maxCount = MAX_PARTICLE_NUM;
+	psd.dampingStrength = 1;
+	psd.density = 0.1;
+	ps = world.CreateParticleSystem( psd);
+
+	function box( b, x, y, w, h, d){
+		var s;
+
+		s = new b2PolygonShape();
+		s.SetAsBoxXYCenterAngle( w, h, new b2Vec2( x, y), 0);
+		b.CreateFixtureFromShape( s, d);
+	}
+
+	function circle( b, x, y, r){
+		var s;
+
+		s = new b2CircleShape;
+		s.position = new b2Vec2( x, y);
+		s.radius = r;
+		b.CreateFixtureFromShape( s, 0);
+	}
+}
+
+function pour(){
+	var s;
+	var pgd;
+
+	s = new b2CircleShape;
+	s.position = new b2Vec2( WW / 2, WW / 2);
+	s.radius = 0.24 * WW;
+
+	pgd = new b2ParticleGroupDef;
+	pgd.shape = s;
+	//pgd.flags |= b2_staticPressureParticle;
+	//pgd.flags |= b2_tensileParticle;
+	ps.CreateParticleGroup( pgd);
+	particle_num = ps.GetParticleCount() / 2;
+	console.log( "penguins num : " + particle_num);
+}
+
+</script>
+
+
+
+</div>
+
+</body>
+
+</html>

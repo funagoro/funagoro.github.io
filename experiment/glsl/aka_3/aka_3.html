@@ -1,0 +1,415 @@
+
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="utf-8">
+
+<script>
+const sw = navigator.serviceWorker;
+if( sw) sw.register( "aka_3_service_worker.js?1", { scope : "./"});
+</script>
+
+<title>aka 3 - MONKEY CIRCUS おさるサーカス</title>
+<meta property="og:title" content="aka 3 - MONKEY CIRCUS おさるサーカス">
+<meta property="og:url" content="http://www.mameson.com/experiment/glsl/aka_3.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="http://www.mameson.com/experiment/glsl/aka_3_t.jpg">
+<link rel="apple-touch-icon" href="http://www.mameson.com/experiment/glsl/aka_3_t.jpg">
+<meta name="apple-mobile-web-app-title" content="aka 3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="liquid experiment on GLSL WebGL">
+
+<link rel="shortcut icon" href="favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="glsl.css" />
+
+<meta name="viewport" content="width=600">
+<style> @viewport { width : 600px;} </style>
+
+</head>
+
+<body>
+
+
+
+<div class="t"></div>
+
+
+
+<canvas id="canvas_1" style="width : 512px; height : 512px;"></canvas><br>
+<span class="title">"aka 3"</span><br>
+&copy;2021, 2022 Maeda Mameo<br>
+
+
+
+<div class="b"></div>
+
+
+
+<script src="three_130_min.js"></script>
+<script src="liquidfun_min.js"></script>
+
+<script>
+
+"use strict";
+
+const W = 512; //★ 画面サイズ。
+
+const PW = 64; //★ パーティクルのテクスチャのサイズ。
+
+const WW = 10; //★ ワールドのサイズ。
+
+const can = document.getElementById( "canvas_1");
+can.width = can.height = W;
+
+const ren = new THREE.WebGLRenderer( { canvas : can});
+//ren.autoClear = false;
+
+const cam = new THREE.OrthographicCamera( 0, W, W, 0, -1, 1);
+
+const scene = new THREE.Scene();
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let i, j, p;
+let t;
+
+const PR = PW / 2;
+const PC = PR * PW + PR;
+const PA = 1 / PR / PR;
+const M = 255 / ( 1 / Math.pow( PR / 4, 2) - PA);
+const dat = new Uint8Array( 3 * PW * PW);
+p = 0;
+for( i = 0; i < PR; i++){
+	for( j = 0; j < PR; j++){
+		t = Math.max( 0, Math.min( 255,
+			M * ( 1 / ( Math.pow( 1 + j, 2) + Math.pow( 1 + i, 2)) - PA)
+		));
+		dat[ 3 * ( PC - PW - 1 - j - p)] = t;
+		dat[ 3 * ( PC - PW + j - p)] = t;
+		dat[ 3 * ( PC - 1 - j + p)] = t;
+		dat[ 3 * ( PC + j + p)] = t;
+	}
+	p += PW;
+}
+const dat_tex = new THREE.DataTexture( dat, PW, PW, THREE.RGBFormat);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const MAX_PARTICLE_NUM = 3000;
+
+const rt = new THREE.WebGLRenderTarget( W, W);
+
+const pos = new Float32Array( 3 * MAX_PARTICLE_NUM); //★ 2 しか使わないけど 3 にする。
+const col = new Uint8Array( 4 * MAX_PARTICLE_NUM);
+const geo = new THREE.BufferGeometry();
+geo.setAttribute( "position", new THREE.BufferAttribute( pos, 3)); //★ 使わないけど必要。
+geo.setAttribute( "po", new THREE.BufferAttribute( pos, 2));
+geo.setAttribute( "co", new THREE.BufferAttribute( col, 4));
+
+const liquid = new THREE.Points( geo, new THREE.ShaderMaterial( {
+	uniforms : { s : { value : 50}, f : {}, g : {}, tex : { value : dat_tex}},
+	vertexShader : `
+		uniform float s;
+
+		attribute vec2 po;
+		attribute vec4 co;
+
+		varying vec4 c;
+
+		void main(){
+			c = co / 255.0;
+			gl_PointSize = s;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( po.x, po.y, 0.0, 1.0);
+		}
+	`,
+	fragmentShader : `
+		uniform float f, g;
+		uniform sampler2D tex;
+
+		varying vec4 c;
+
+		void main(){
+			float a;
+			vec3 d;
+
+			a = texture2D( tex, gl_PointCoord).r;
+			d = f * c.rgb + g * c.gbr;
+			gl_FragColor = vec4( a * d, 1.0);
+		}
+	`,
+	blending : THREE.AdditiveBlending
+}));
+liquid.position.set( -5, -5, 1);
+t = ( W + 10) / WW;
+liquid.scale.set( t, t, 1);
+
+const scene_o = new THREE.Scene();
+//scene_o.background = new THREE.Color( "black");
+scene_o.add( liquid);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const MY_VS = `
+	precision mediump float;
+
+	varying vec2 v;
+
+	void main(){
+		v = uv;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, 0.0, 1.0);
+	}
+`;
+
+const MY_FS = `
+	precision mediump float;
+	precision mediump sampler2D;
+
+	varying vec2 v;
+`;
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const rt_2 = rt.clone();
+
+const mat_edge = new THREE.ShaderMaterial( {
+	uniforms : { s : { value : 3 / W}, tex : { value : rt.texture}},
+	vertexShader : MY_VS,
+	fragmentShader : MY_FS + `
+		uniform float s;
+		uniform sampler2D tex;
+
+		void main(){
+			vec3 c, d;
+
+			c = texture2D( tex, v).rgb;
+			d = c - texture2D( tex, vec2( v.x, v.y + s)).rgb;
+			c += vec3( 0.2 * max( 0.0, max( d.r, max( d.g, d.b))));
+			gl_FragColor = vec4( c, 1.0);
+		}
+	`
+});
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const rt_neon = new Array( 8);
+for( i = 0; i < 8; i++){
+	p = Math.pow( 2, 8 - i);
+	rt_neon[ i] = new THREE.WebGLRenderTarget( p, p, {
+		type : THREE.HalfFloatType,
+		format : THREE.RGBAFormat
+	});
+}
+
+const mat_neon = new THREE.ShaderMaterial( {
+	uniforms : { tex : { value : rt_2.texture}},
+	vertexShader : MY_VS,
+	fragmentShader : MY_FS + `
+		uniform sampler2D tex;
+
+		void main(){
+			float a;
+			vec3 c;
+
+			c = texture2D( tex, v).rgb;
+			a = 3.0 * c.r * c.g * c.b;
+			gl_FragColor = vec4( c * a * a / max( a, 0.001), 1.0);
+		}
+	`
+});
+
+const mat_neon_diff = new THREE.ShaderMaterial( {
+	uniforms : { s : { value : 1 / 256}, tex : {}},
+	vertexShader : MY_VS,
+	fragmentShader : MY_FS + `
+		uniform float s;
+		uniform sampler2D tex;
+
+		void main(){
+			gl_FragColor = 0.25 * (
+				texture2D( tex, v - vec2( s, 0.0))
+				+ texture2D( tex, v + vec2( s, 0.0))
+				+ texture2D( tex, v + vec2( 0.0, s))
+				+ texture2D( tex, v - vec2( 0.0, s))
+			);
+		}
+	`
+});
+
+function neon(){
+	//★ 絵を元に、256 を作成。
+	plane.material = mat_neon;
+	//mat_neon.uniforms.tex.value = rt.texture;
+	ren.setRenderTarget( rt_neon[ 0]);
+	ren.render( scene, cam);
+
+	plane.material = mat_neon_diff;
+	//★ ぼかしながら、256→128、128→64、64→32、32→16、16→8 (、8→4、4→2)。
+	for( i = 1; i <= 5; i++){
+		mat_neon_diff.uniforms.tex.value = rt_neon[ i - 1].texture;
+		ren.setRenderTarget( rt_neon[ i]);
+		ren.render( scene, cam);
+	}
+	//★ ぼかしながら (、2→4、4→8)、8→16、16→32、32→64、64→128、128→256。
+	for( i = 4; 0 <= i; i--){
+		mat_neon_diff.uniforms.tex.value = rt_neon[ i + 1].texture;
+		ren.setRenderTarget( rt_neon[ i]);
+		ren.render( scene, cam);
+	}
+}
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+const mat_show = new THREE.ShaderMaterial( {
+		uniforms : { tex : { value : rt_2.texture}, tex_ne : { value : rt_neon[ 0].texture}},
+		vertexShader : MY_VS,
+		fragmentShader : MY_FS + `
+			uniform sampler2D tex, tex_ne;
+
+			void main(){
+				gl_FragColor = texture2D( tex, v) + 1.2 * texture2D( tex_ne, v);
+			}
+		`
+	});
+const plane = new THREE.Mesh( new THREE.PlaneGeometry( W, W), mat_show);
+plane.position.set( W / 2, W / 2, 0);
+
+scene.add( plane);
+
+//◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
+
+let count;
+
+let world;
+let ps;
+let particle_num;
+
+init_world();
+pour( 0.755, 0.72, 0.25, 0x0000ff);
+pour( 0.245, 0.72, 0.25, 0x00ff00);
+pour( 0.5, 0.28, 0.25, 0xff0000);
+console.log( "particle num : " + particle_num);
+
+const pb = ps.GetPositionBuffer();
+const vb = ps.GetVelocityBuffer();
+const cb = ps.GetColorBuffer();
+col.set( cb);
+//geo.attributes.co.needsUpdate = true;
+
+const WX = 0.06 * WW, WY = 0.5 * WW, WU = 0.06 * WW;
+
+count = 0;
+tic();
+
+function tic(){
+	let i, p;
+	let t, u;
+
+	requestAnimationFrame( tic);
+
+	if( 99 < count || count % 3 < 1) world.Step( 1 / 60, 6, 2);
+
+	if( 99 < count){
+		p = 0;
+		t = ( 0.5 + 0.3 * Math.sin( 0.007 * count)) * WW;
+		for( i = 0; i < particle_num; i++){
+			if( Math.abs( pos[ p] - t) < WX){
+				vb[ p + 1] += WU;
+			} else{
+				if( pos[ p + 1] < WY){
+					if( 0 < cb[ 2 * p]) u = 0.5;
+					else if( 0 < cb[ 2 * p + 1]) u = 1.5;
+					else u = 2.5;
+					vb[ p + 1] += 1.5 * ( u * WW / 6 - pb[ p + 1]);
+				}
+			}
+
+			p += 2;
+		}
+	}
+
+	pos.set( pb);
+	geo.attributes.po.needsUpdate = true;
+
+	t = Math.max( 0, Math.min( 1, -1 - 3 * Math.sin( 0.01 * count)));
+	liquid.material.uniforms.f.value = 1 - 0.5 * t;
+	liquid.material.uniforms.g.value = 0.5 * t;
+	ren.setRenderTarget( rt);
+	ren.render( scene_o, cam);
+
+	plane.material = mat_edge;
+	ren.setRenderTarget( rt_2);
+	ren.render( scene, cam);
+
+	neon();
+
+	plane.material = mat_show;
+	ren.setRenderTarget( null);
+	ren.render( scene, cam);
+
+	count++;
+}
+
+function init_world(){
+	let r, v, w;
+	let b;
+	let psd;
+
+	world = new b2World( new b2Vec2( 0, -2 * WW));
+
+	w = WW;
+	v = w / 2;
+	r = WW / 50;
+
+	b = world.CreateBody( new b2BodyDef());
+	box( v, -r, v + r, r);
+	box( v, w + r, v + r, r);
+	box( -r, v - r, r, v + r);
+	box( w + r, v - r, r, v + r);
+
+	function box( x, y, w, h){
+		let s;
+
+		s = new b2PolygonShape();
+		s.SetAsBoxXYCenterAngle( w, h, new b2Vec2( x, y), 0);
+		b.CreateFixtureFromShape( s, 0);
+	}
+
+	//◍◍◍◍◍◍◍◍◍◍
+
+	psd = new b2ParticleSystemDef();
+	psd.radius = 0.01 * WW;
+	psd.maxCount = MAX_PARTICLE_NUM;
+	//psd.dampingStrength = 0.5;
+	ps = world.CreateParticleSystem( psd);
+	ps.SetDensity( 1);
+}
+
+function pour( x, y, r, c){
+	let s;
+	let pgd;
+
+	s = new b2CircleShape;
+	s.position = new b2Vec2( WW * x, WW * y);
+	s.radius = WW * r;
+
+	pgd = new b2ParticleGroupDef;
+	pgd.shape = s;
+	pgd.flags |= b2_tensileParticle;
+	pgd.flags |= b2_repulsiveParticle;
+	//pgd.flags |= b2_staticPressureParticle;
+	pgd.linearVelocity = new b2Vec2( 0, 2);
+	pgd.color = new b2ParticleColor( c / 256 / 256, c / 256 % 256, c % 256, 255);
+	ps.CreateParticleGroup( pgd);
+	particle_num = ps.GetParticleCount() / 2;
+	geo.setDrawRange( 0, particle_num);
+}
+
+</script>
+
+</body>
+
+</html>
