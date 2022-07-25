@@ -45,7 +45,6 @@
 
 <canvas id="canvas_1" style="
 	width : 512px; height : 512px;
-	user-select : none;
 	-webkit-tap-highlight-color : rgba( 0, 0, 0, 0);
 	touch-action : none;
 "></canvas><br>
@@ -59,13 +58,13 @@
 
 
 
-<script src="skeleton_touch_2.js"></script>
+<script src="skeleton_touch_3.js"></script>
 
 <script src="three_130_min.js"></script>
 
 <script>
 
-'use strict';
+"use strict";
 
 const W = 512;
 
@@ -561,7 +560,7 @@ function aloha(){
 }
 
 //◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍ ◍◍◍◍◍◍◍◍◍◍
-//★ skeleton_touch_2.js のための設定。
+//★ skeleton_touch_3.js のための設定。
 const REFW = W, REFH = W, MAXTOUCH = 5, CAN_PINCH = false;
 function touch_event_hook(){
 	if( skt.can_ios_audio_start){
@@ -627,9 +626,9 @@ function tac(){
 			vol = 0;
 			sp = 0;
 			next_state = STATE_WORKING;
-		} else if( count == 120){
+		} else if( count == 60){
 			//★ 長押しの後の pointerup で作った AudioContext は、いつまでたっても suspended のまま。
-			//★ 2 秒間待っても suspended のままだったら、close() して、タッチ要求をやりなおす。
+			//★ 1 秒間待っても suspended のままだったら、close() して、タッチ要求をやりなおす。
 			ac.close();
 			o_tap.visible = true;
 			next_state = STATE_MUTED;
